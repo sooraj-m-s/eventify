@@ -11,8 +11,6 @@ from .serializers import UserRegistrationSerializer
 
 @permission_classes([AllowAny])
 class RegisterView(APIView):
-    permission_classes = [AllowAny]
-
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         
@@ -20,6 +18,7 @@ class RegisterView(APIView):
             user = serializer.save()
             return Response({
                 'user_id': str(user.user_id),
+                'full_name': user.full_name,
                 'email': user.email,
                 'role': user.role,
                 'message': 'Registration successful'
