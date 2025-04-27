@@ -1,9 +1,28 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.utils import timezone
 import uuid
 
 
 # Create your models here.
+
+
+class TemporaryUserOTP(models.Model):
+    temp_user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    full_name = models.CharField(max_length=255, null=False)
+    email = models.EmailField(max_length=255, null=False)
+    mobile = models.BigIntegerField(null=False)
+    profile_image = models.CharField(max_length=255, null=True, blank=True)
+    password = models.TextField(null=False)
+    otp = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        """Check if the OTP has expired (2 minutes after creation)."""
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=2)
+
+    def __str__(self):
+        return self.email
 
 
 class UsersManager(BaseUserManager):
@@ -37,10 +56,10 @@ class Users(AbstractBaseUser, BaseUserManager):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255, null=False)
     email = models.EmailField(max_length=255, unique=True, null=False)
+    mobile = models.BigIntegerField(unique=True, null=False)
+    profile_image = models.CharField(max_length=255, null=True, blank=True)
     password = models.TextField(null=False)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='user')
-    profile_image = models.CharField(max_length=255, null=True, blank=True)
-    mobile = models.BigIntegerField(unique=True, null=False)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)

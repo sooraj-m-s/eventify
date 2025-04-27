@@ -3,9 +3,17 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { GoogleLogin } from '@react-oauth/google';
+import { useDispatch, useSelector } from 'react-redux';
+import { setLoading, setUserId } from '../../store/slices/userSlice';
+import OtpModal from '../../components/OTPModal';
+
 
 const Register = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const loading = useSelector((state) => state.user.loading)
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -15,6 +23,11 @@ const Register = () => {
     profile_image: null
   });
   const [errors, setErrors] = useState({});
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -67,6 +80,7 @@ const Register = () => {
     if (!validateForm()) return;
 
     const formDataToSend = new FormData();
+    dispatch(setLoading(true));
     for (const key in formData) {
       if (formData[key] !== null) {
         formDataToSend.append(key, formData[key]);
@@ -80,10 +94,11 @@ const Register = () => {
         }
       });
 
-      toast.success('Registration successful! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 2000);
+      const tempUserId = response.data.temp_user_id;
+      dispatch(setUserId(tempUserId));
+      toast.success('OTP sent to your email. Please verify.');
     } catch (error) {
-      console.log('Backend error:', error.response?.data); // Debug
+      console.log('Backend error:', error.response?.data);
       if (error.response?.data) {
         const newErrors = {};
         for (const field in formData) {
@@ -102,6 +117,27 @@ const Register = () => {
       } else {
         toast.error('An error occurred. Please try again.');
       }
+      dispatch(setLoading(false));
+    }
+  };
+
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      const response = await axios.post('http://localhost:8000/users/auth/google/', {
+        id_token: credentialResponse.credential,
+      });
+
+      if (response.data.status === 'exists') {
+        localStorage.setItem('token', response.data.token);
+        toast.success('Login successful! Redirecting to home...');
+        setTimeout(() => navigate('/client/login'), 2000);
+      } else if (response.data.status === 'new') {
+        toast.success('New user registered successfully! Redirecting to complete registration...');
+        setTimeout(() => navigate('/client/register/complete', { state: response.data.user_data }), 2000);
+      }
+    } catch (error) {
+      toast.error('Google authentication failed');
+      console.error(error);
     }
   };
 
@@ -128,7 +164,7 @@ const Register = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Email</label>
           <input
-            type="email"
+            type="text"
             name="email"
             value={formData.email}
             onChange={handleChange}
@@ -141,7 +177,7 @@ const Register = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Password</label>
           <input
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             name="password"
             value={formData.password}
             onChange={handleChange}
@@ -154,7 +190,7 @@ const Register = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Confirm Password</label>
           <input
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             name="confirm_password"
             value={formData.confirm_password}
             onChange={handleChange}
@@ -191,11 +227,46 @@ const Register = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          className={`w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors ${
+            loading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          disabled={loading} // Disable the button when loading is true
         >
-          Register
+          {loading ? (
+            <span>
+              <svg
+                className="animate-spin h-5 w-5 mr-2 inline"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Loading...
+            </span>
+          ) : (
+            'Register'
+          )}
         </button>
+        <GoogleLogin
+          onSuccess={handleGoogleLogin}
+          onError={() => toast.error('Google login failed')}
+          useOneTap={false}
+        />
       </form>
+      <OtpModal />
     </div>
   );
 };
