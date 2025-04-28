@@ -18,7 +18,6 @@ class TemporaryUserOTP(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def is_expired(self):
-        """Check if the OTP has expired (2 minutes after creation)."""
         return timezone.now() > self.created_at + timezone.timedelta(minutes=2)
 
     def __str__(self):
