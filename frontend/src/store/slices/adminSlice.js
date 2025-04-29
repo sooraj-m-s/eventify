@@ -4,12 +4,20 @@ const adminSlice = createSlice({
   name: 'admin',
   initialState: {
     userId: null,
+    userName: null,
+    userEmail: null,
     error: null,
     loading: false,
   },
   reducers: {
     setUserId: (state, action) => {
       state.userId = action.payload;
+    },
+    setUserName: (state, action) => {
+      state.userName = action.payload;
+    },
+    setUserEmail: (state, action) => {
+      state.userEmail = action.payload;
     },
     setError: (state, action) => {
       state.error = action.payload;
