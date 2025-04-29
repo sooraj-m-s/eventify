@@ -73,3 +73,12 @@ class Users(AbstractBaseUser, BaseUserManager):
     def __str__(self):
         return self.email
 
+
+class OrganizerProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='organizer_profiles')
+    id_proof = models.CharField(max_length=255, blank=True, null=True)
+    is_approved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"OrganizerProfile of {self.user.email}"

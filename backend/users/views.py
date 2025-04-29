@@ -10,7 +10,8 @@ from django.conf import settings
 from django.utils import timezone
 import random, requests
 from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer
-from .models import TemporaryUserOTP, Users
+from .models import TemporaryUserOTP, Users, OrganizerProfile
+from .serializers import OrganizerProfileSerializer
 
 
 # Create your views here.
@@ -189,4 +190,12 @@ class CompleteRegistrationView(APIView):
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@permission_classes([AllowAny])
+class OrganizerListView(APIView):
+    def get(self, request):
+        organizers = OrganizerProfile.objects.select_related('user').all()
+        serializer = OrganizerProfileSerializer(organizers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 

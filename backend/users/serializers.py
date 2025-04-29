@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users
+from .models import Users, OrganizerProfile
 from django.contrib.auth.hashers import make_password, check_password
 
 
@@ -85,3 +85,17 @@ class CompleteRegistrationSerializer(serializers.Serializer):
             mobile=validated_data['mobile'],
             password=validated_data['password']
         )
+
+
+class UsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Users
+        exclude = ['password', 'role', 'is_superuser', 'is_staff', 'is_blocked', 'created_at', 'updated_at']
+
+
+class OrganizerProfileSerializer(serializers.ModelSerializer):
+    user = UsersSerializer(read_only=True)
+    class Meta:
+        model = OrganizerProfile
+        fields = '__all__' 
+
