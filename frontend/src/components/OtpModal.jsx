@@ -3,13 +3,13 @@ import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { clearUser, setError, setLoading } from '../store/slices/userSlice';
+import { logout, setError, setLoading } from '../store/slices/authSlice';
 
 const OtpModal = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const tempUserId = useSelector((state) => state.user.userId);
-  const loading = useSelector((state) => state.user.loading);
+  const tempUserId = useSelector((state) => state.auth.userId);
+  const loading = useSelector((state) => state.auth.loading);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef([]);
 
@@ -50,7 +50,7 @@ const OtpModal = () => {
         otp: otpValue,
       });
       toast.success('OTP verified successfully! Redirecting to login...');
-      dispatch(clearUser());
+      dispatch(logout());
       setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'OTP verification failed';

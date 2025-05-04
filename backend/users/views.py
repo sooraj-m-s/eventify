@@ -6,9 +6,10 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.html import strip_tags
-from django.conf import settings
 from django.utils import timezone
+from rest_framework_simplejwt.tokens import RefreshToken
 import random, requests
+from django.conf import settings
 from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer
 from .models import TemporaryUserOTP, Users, OrganizerProfile
 from .serializers import OrganizerProfileSerializer
@@ -131,21 +132,50 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
 
-        return Response(
+        refresh = RefreshToken.for_user(user)
+        response = Response(
             {
                 'detail': 'Login successful',
-                'user_id': user.id,
-                'token': 'auth-token'
+                'user_id': user.user_id,
+                'full_name': user.full_name,
+                'email': user.email,
+                'role': user.role
             },
             status=status.HTTP_200_OK
         )
+        response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='Lax')
+        response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='Lax')
+
+        return response
+
+
+@permission_classes([AllowAny])
+class RefreshTokenView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        
+        if not refresh_token:
+            return Response({'detail': 'Refresh token not found'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        try:
+            # Verify the refresh token
+            token = RefreshToken(refresh_token)
+            
+            # Create new access token
+            access_token = str(token.access_token)
+            
+            response = Response({'detail': 'Token refreshed successfully'}, status=status.HTTP_200_OK)
+            response.set_cookie(key='access_token', value=access_token, httponly=True, secure=True, samesite='Lax')
+            
+            return response
+        except Exception as e:
+            return Response({'detail': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @permission_classes([AllowAny])
 class GoogleAuthView(APIView):
     def post(self, request):
         id_token = request.data.get('id_token')
-        
         try:
             response = requests.get(f'https://oauth2.googleapis.com/tokeninfo?id_token={id_token}')
             if response.status_code != 200:
@@ -159,17 +189,24 @@ class GoogleAuthView(APIView):
             return Response({'detail': 'Failed to verify token'}, status=status.HTTP_400_BAD_REQUEST)
         user = Users.objects.filter(email=email).first()
         if user:
-            return Response(
+            refresh = RefreshToken.for_user(user)
+            response = Response(
                 {
                     'status': 'exists',
-                    'redirect': 'home',
                     'user_id': user.user_id,
-                    'token': 'auth-token'
+                    'full_name': user.full_name,
+                    'email': user.email,
+                    'role': user.role
                 },
                 status=status.HTTP_200_OK
             )
+            response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='Lax')
+            response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='Lax')
+
+            return response
         else:
             user_data = {
+                'status': 'new',
                 'email': email,
                 'name': name,
                 'picture': picture

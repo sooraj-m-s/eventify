@@ -1,15 +1,16 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearUser } from '../store/slices/userSlice';
+import { logout } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+
 
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate()
-  const { userId, userName } = useSelector((state) => state.user);
+  const { userId, userName } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
-    dispatch(clearUser());
+    dispatch(logout());
     console.log('Logged out');
   };
 
@@ -36,12 +37,10 @@ const Header = () => {
           </>
         ) : (
           <>
-            <button className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            <button onClick={()=>navigate('/client/login')} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
               Login
             </button>
-            <button 
-            onClick={()=>navigate('/client/register')}
-            className="bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300">
+            <button onClick={()=>navigate('/client/register')} className="bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300">
               Signup
             </button>
           </>

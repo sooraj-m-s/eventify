@@ -29,10 +29,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'channels',
-    'users',
-    'admin',
-    'categories',
-    'events',
+    'django_celery_beat',
+    'users.apps.UsersConfig',
+    'admin.apps.AdminConfig',
+    'categories.apps.CategoriesConfig',
+    'events.apps.EventsConfig',
 ]
 
 MIDDLEWARE = [
@@ -49,14 +50,42 @@ MIDDLEWARE = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
 
+SIMPLE_JWT = {
+    'USER_ID_FIELD': 'user_id',
+}
+
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv())
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Allow these HTTP methods
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 ROOT_URLCONF = 'eventify.urls'
 

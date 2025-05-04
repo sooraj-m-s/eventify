@@ -12,24 +12,30 @@ import AdminHeader from './pages/admin/components/AdminHeader';
 import UserManagement from './pages/admin/UserManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import EventManagement from './pages/admin/EventManagement';
+import UserProfile from './pages/user/UserProfile';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import NotFound from './pages/NotFound';
+import { PublicRoute } from './components/PublicRoute';
 
 
 function App() {
 
   return (
     <>
-      {/* Client Routes */}
       <Routes>
+        {/* Client Routes */}
         <Route path="client/*"
           element={
             <>
               <Header />
               <div className="pt-16">
                 <Routes>
-                  <Route path="register" element={<Register />} />
-                  <Route path="register/complete" element={<CompleteRegistration />} />
-                  <Route path="login" element={<Login />} />
-                  <Route path="home" element={<Home />} />
+                  <Route path="register" element={<PublicRoute><Register /></PublicRoute>} />
+                  <Route path="register/complete" element={<PublicRoute><CompleteRegistration /></PublicRoute>} />
+                  <Route path="login" element={<PublicRoute><Login /></PublicRoute>} />
+                  <Route path="" element={<Home />} />
+                  <Route path="userprofile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
               <Footer />
@@ -44,13 +50,15 @@ function App() {
               <AdminHeader />
               <Routes>
                 <Route path="login" element={<AdminLogin />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="events" element={<EventManagement />} />
+                <Route path="dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+                <Route path="users" element={<ProtectedRoute requiredRole="admin"><UserManagement /></ProtectedRoute>} />
+                <Route path="events" element={<ProtectedRoute requiredRole="admin"><EventManagement /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </>
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       
       <ToastContainer autoClose={2000}/>
@@ -59,4 +67,3 @@ function App() {
 }
 
 export default App
-

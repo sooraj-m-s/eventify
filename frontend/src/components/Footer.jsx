@@ -1,5 +1,5 @@
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react"
-import LogoSvg from "../assets/logo-svg.svg"
+import LogoSvg from "../assets/logo/logo-svg.svg"
 
 const Footer = () => {
   return (
