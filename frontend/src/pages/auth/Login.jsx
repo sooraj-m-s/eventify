@@ -90,7 +90,7 @@ const Login = () => {
         role: response.data.role
       }))
       toast.success("Login successful! Redirecting to home...")
-      setTimeout(() => navigate("client"), 2000)
+      navigate("/client")
     } catch (error) {
       if (error.response?.data?.detail) {
         if (Array.isArray(error.response.data.detail)) {

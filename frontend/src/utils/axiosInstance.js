@@ -15,7 +15,7 @@ let failedQueue = [];
 
 // Process the queue of failed requests
 const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -34,15 +34,21 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // If the error is not 401 or the request has already been retried, reject
-    if (error.response?.status !== 401 || originalRequest._retry) {
-      return Promise.reject(error);
+    // Don't attempt to refresh token for these specific cases
+    if (
+      // If it's a 401 from /users/me/ endpoint (normal when not logged in)
+      (originalRequest.url === "/users/me/" && error.response?.status === 401) ||
+      // If it's a 401 from refresh token endpoint (token is invalid/expired)
+      (originalRequest.url === "/users/refresh_token/" && error.response?.status === 401) ||
+      // If this request has already been retried once
+      originalRequest._retry
+    ) {
+      return Promise.reject(error)
     }
-    
-    // If the failed request is the refresh token request itself, logout
-    if (originalRequest.url === '/users/refresh_token/') {
-      store.dispatch(logout());
-      return Promise.reject(error);
+
+    // Only attempt token refresh for 401 errors
+    if (error.response?.status !== 401) {
+      return Promise.reject(error)
     }
     
     // Mark this request as retried to avoid infinite loops
@@ -80,12 +86,6 @@ axiosInstance.interceptors.response.use(
       
       // Dispatch logout action to clear auth state
       store.dispatch(logout());
-      
-      // Optionally set an error message
-      store.dispatch(setError('Session expired. Please login again.'));
-      
-      // Redirect to login page
-      window.location.href = '/client/login';
       
       return Promise.reject(refreshError);
     }

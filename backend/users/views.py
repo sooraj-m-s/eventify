@@ -8,6 +8,8 @@ from django.core.mail import send_mail
 from django.utils.html import strip_tags
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenError, ExpiredTokenError
 import random, requests
 from django.conf import settings
 from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer
@@ -108,7 +110,7 @@ class VerifyOTPView(APIView):
 
             user = Users.objects.create_user(
                 email=temp_user.email,
-                password=temp_user.password,  # Already hashed
+                password=temp_user.password,
                 full_name=temp_user.full_name,
                 mobile=temp_user.mobile,
             )
@@ -143,8 +145,44 @@ class LoginView(APIView):
             },
             status=status.HTTP_200_OK
         )
-        response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='Lax')
-        response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='Lax')
+        response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
+        response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
+
+        return response
+
+
+@permission_classes([IsAuthenticated])
+class UserMeView(APIView):
+    def get(self, request):
+        user = request.user
+        return Response({
+            'user_id': user.user_id,
+            'full_name': user.full_name,
+            'email': user.email,
+            'role': user.role
+        }, status=status.HTTP_200_OK)
+
+
+@permission_classes([IsAuthenticated])
+class LogoutView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get("refresh_token")
+        print("Logout refresh_token:", refresh_token)
+
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except ExpiredTokenError:
+                print("Token already expired — skipping blacklist.")
+            except SimpleJWTTokenError as e:
+                print("Other token error:", e)
+            except Exception as e:
+                print("Unexpected logout error:", e)
+
+        response = Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+        response.set_cookie(key='access_token', value='', httponly=True, secure=True, samesite='None')
+        response.set_cookie(key='refresh_token', value='', httponly=True, secure=True, samesite='None')
 
         return response
 
@@ -165,7 +203,7 @@ class RefreshTokenView(APIView):
             access_token = str(token.access_token)
             
             response = Response({'detail': 'Token refreshed successfully'}, status=status.HTTP_200_OK)
-            response.set_cookie(key='access_token', value=access_token, httponly=True, secure=True, samesite='Lax')
+            response.set_cookie(key='access_token', value=access_token, httponly=True, secure=True, samesite='None')
             
             return response
         except Exception as e:
@@ -200,9 +238,8 @@ class GoogleAuthView(APIView):
                 },
                 status=status.HTTP_200_OK
             )
-            response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='Lax')
-            response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='Lax')
-
+            response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
+            response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
             return response
         else:
             user_data = {

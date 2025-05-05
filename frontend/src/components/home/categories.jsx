@@ -1,8 +1,6 @@
-"use client"
-
 import { useState, useEffect } from "react"
-import axios from "axios"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import axiosInstance from "../../utils/axiosInstance"
 
 const Categories = () => {
   const [categories, setCategories] = useState([])
@@ -15,7 +13,7 @@ const Categories = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true)
-        const response = await axios.get("http://localhost:8000/categories/")
+        const response = await axiosInstance("/categories/")
         console.log(response.data);
         
         setCategories(response.data.categories || [])

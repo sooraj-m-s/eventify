@@ -2,6 +2,8 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../utils/axiosInstance';
+import { toast } from 'react-toastify';
 
 
 const Header = () => {
@@ -9,9 +11,15 @@ const Header = () => {
   const navigate = useNavigate()
   const { userId, userName } = useSelector((state) => state.auth);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    console.log('Logged out');
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/users/logout/")
+      dispatch(logout());
+      toast.success("Logged out successfully");
+    }  catch (error) {
+      console.error("Error during logout:", error)
+      dispatch(logout())
+    }
   };
 
   return (

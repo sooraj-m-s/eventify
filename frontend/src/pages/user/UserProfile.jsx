@@ -4,6 +4,7 @@ import axios from "axios"
 import { toast } from "react-toastify"
 import ProfileSidebar from "./components/ProfileSidebar"
 
+
 const UserProfile = () => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)

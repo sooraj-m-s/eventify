@@ -1,8 +1,6 @@
-"use client"
-
 import { useState, useEffect } from "react"
-import axios from "axios"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import axiosInstance from "../../utils/axiosInstance"
 
 const Events = () => {
   const [events, setEvents] = useState([])
@@ -16,7 +14,7 @@ const Events = () => {
     const fetchEvents = async () => {
       try {
         setLoading(true)
-        const response = await axios.get("http://localhost:8000/events/")
+        const response = await axiosInstance("/events/")
 
         // Check the structure of the response and extract events properly
         // Make sure we always have an array, even if the API returns something unexpected
@@ -77,28 +75,7 @@ const Events = () => {
     )
   }
 
-  // Also update the displayEvents and currentEvents logic to ensure they're always arrays:
-
-  // If no events, show placeholder
-  const displayEvents =
-    Array.isArray(events) && events.length > 0
-      ? events
-      : [
-          {
-            eventId: "1",
-            title: "HackerEarth Kochi",
-            posterImage: "/placeholder.svg?height=200&width=300",
-            location: "Kochi",
-          },
-          {
-            eventId: "2",
-            title: "Bridge Global Webinar",
-            posterImage: "/placeholder.svg?height=200&width=300",
-            location: "Chennai",
-          },
-          { eventId: "3", title: "GDG", posterImage: "/placeholder.svg?height=200&width=300", location: "Trivandrum" },
-          { eventId: "4", title: "AI Day", posterImage: "/placeholder.svg?height=200&width=300", location: "Delhi" },
-        ]
+  const displayEvents = Array.isArray(events) && events
 
   const totalPages = Math.ceil(displayEvents.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage

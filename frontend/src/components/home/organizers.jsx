@@ -1,8 +1,6 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
-import axios from "axios"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import axiosInstance from "../../utils/axiosInstance"
 
 const Organizers = () => {
   const [organizers, setOrganizers] = useState([])
@@ -15,7 +13,7 @@ const Organizers = () => {
     const fetchOrganizers = async () => {
       try {
         setLoading(true)
-        const response = await axios.get("http://localhost:8000/users/organizers/")
+        const response = await axiosInstance("/users/organizers/")
         setOrganizers(response.data || [])
         setError(null)
       } catch (err) {

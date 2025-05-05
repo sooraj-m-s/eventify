@@ -1,20 +1,18 @@
-"use client"
-
 import { useState } from "react"
-import axios from "axios"
 import { useEffect } from "react"
+import axiosInstance from "../../utils/axiosInstance"
+
 
 const HeroSection = () => {
   const [category, setCategory] = useState("")
   const [location, setLocation] = useState("")
   const [categories, setCategories] = useState([])
-  const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/categories/")
+        const response = await axiosInstance("/categories/")
         setCategories(response.data.categories || [])
       } catch (error) {
         console.error("Error fetching categories:", error)
