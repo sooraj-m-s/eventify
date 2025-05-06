@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
 import HeroSection from "../../components/home/HeroSection"
 import Categories from "../../components/home/categories"
 import Events from "../../components/home/events"
 import Organizers from "../../components/home/organizers"
+import axiosInstance from "../../utils/axiosInstance"
+
 
 const Home = () => {
   const [categories, setCategories] = useState([])
@@ -23,7 +24,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const categoriesResponse = await axios.get("/api/categories/")
+        const categoriesResponse = await axiosInstance.get("/categories/")
         setCategories(categoriesResponse.data.categories || [])
         setLoading((prev) => ({ ...prev, categories: false }))
       } catch (err) {
@@ -33,7 +34,7 @@ const Home = () => {
       }
 
       try {
-        const eventsResponse = await axios.get("/api/events/")
+        const eventsResponse = await axiosInstance.get("/events/")
         setEvents(eventsResponse.data || [])
         setLoading((prev) => ({ ...prev, events: false }))
       } catch (err) {
@@ -43,7 +44,7 @@ const Home = () => {
       }
 
       try {
-        const organizersResponse = await axios.get("/api/users/organizers/")
+        const organizersResponse = await axiosInstance.get("/users/organizers/")
         setOrganizers(organizersResponse.data || [])
         setLoading((prev) => ({ ...prev, organizers: false }))
       } catch (err) {

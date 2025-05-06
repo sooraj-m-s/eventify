@@ -12,7 +12,7 @@ const HeroSection = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance("/categories/")
+        const response = await axiosInstance.get("/categories/")
         setCategories(response.data.categories || [])
       } catch (error) {
         console.error("Error fetching categories:", error)

@@ -1,227 +1,252 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import axios from "axios"
-import { toast } from "react-toastify"
+import { Pencil } from "lucide-react"
 import ProfileSidebar from "./components/ProfileSidebar"
+import axiosInstance from "../../utils/axiosInstance"
 
 
 const UserProfile = () => {
-  const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     email: "",
-    contactNumber: "",
+    mobile: "",
+    location: "",
+    additional_info: "",
   })
 
-  const navigate = useNavigate()
-
-  // Fetch user data
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchProfile = async () => {
       try {
         setLoading(true)
-        // Get token from localStorage
-        const token = localStorage.getItem("userToken")
-
-        if (!token) {
-          navigate("/client/login")
-          return
-        }
-
-        const response = await axios.get("/users/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        setUser(response.data)
+        const response = await axiosInstance.get("/users/profile/")
+        setProfile(response.data)
         setFormData({
-          firstName: response.data.firstName || "",
-          lastName: response.data.lastName || "",
+          full_name: response.data.full_name || "",
           email: response.data.email || "",
-          contactNumber: response.data.contactNumber || "",
+          phone: response.data.mobile || "",
+          location: response.data.location || "",
+          additional_info: response.data.additional_info || "",
         })
-      } catch (err) {
-        console.error("Error fetching user data:", err)
-        setError("Failed to load user profile")
-        toast.error("Failed to load profile data")
+      } catch (error) {
+        console.error("Error fetching profile:", error)
+        setError("Failed to load profile data")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUserData()
-  }, [navigate])
+    fetchProfile()
+  }, [])
 
-  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    })
+    }))
   }
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     try {
-      const token = localStorage.getItem("userToken")
-
-      await axios.put("/users/profile", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      setLoading(true)
+      const response = await axiosInstance.patch("/users/profile/", formData, {
+        withCredentials: true,
       })
-
-      // Update local user state
-      setUser({
-        ...user,
-        ...formData,
-      })
-
+      setProfile(response.data)
       setIsEditing(false)
-      toast.success("Profile updated successfully")
-    } catch (err) {
-      console.error("Error updating profile:", err)
-      toast.error("Failed to update profile")
+    } catch (error) {
+      console.error("Error updating profile:", error)
+      setError("Failed to update profile")
+    } finally {
+      setLoading(false)
     }
   }
 
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem("userToken")
-    localStorage.removeItem("userData")
-    navigate("/client/login")
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f5f0e8] flex items-center justify-center">
-        <p>Loading profile...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#f5f0e8] flex items-center justify-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    )
-  }
-
-  const getInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : "C"
-  }
-
-  return (
-    <div className="min-h-screen bg-[#f5f0e8] flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl bg-white rounded-lg border-2 border-black overflow-hidden flex flex-col md:flex-row">
-        {/* Use the ProfileSidebar component */}
-        <ProfileSidebar user={user} onLogout={handleLogout} />
-
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="flex justify-between items-start mb-8">
-            <div className="flex items-center">
-              <div className="w-16 h-16 bg-[#333] rounded-full flex items-center justify-center text-white text-xl font-semibold mr-4">
-                {getInitial(user?.firstName)}
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold uppercase">
-                  {user?.firstName} {user?.lastName}
-                </h2>
-                <p className="text-sm text-gray-600 lowercase">{user?.email}</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="px-6 py-2 bg-black text-white rounded font-medium"
-            >
-              {isEditing ? "Cancel" : "Edit"}
-            </button>
+  // Profile View Component
+  const ProfileView = () => (
+    <div className="p-6 space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-gray-500">Full Name</p>
+            <p className="font-medium">{profile?.full_name}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-              <div>
-                <label className="block mb-2 font-medium">First Name</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full p-3 border border-gray-300 rounded bg-white"
-                  placeholder="First Name"
-                />
-              </div>
+          <div>
+            <p className="text-sm text-gray-500">Mobile</p>
+            <p className="font-medium">{profile?.mobile || "N/A"}</p>
+          </div>
 
-              <div>
-                <label className="block mb-2 font-medium">Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full p-3 border border-gray-300 rounded bg-white"
-                  placeholder="Last Name"
-                />
-              </div>
+          <div>
+            <p className="text-sm text-gray-500">Joined</p>
+            <p className="font-medium">{profile?.created_at}</p>
+          </div>
+        </div>
 
-              <div>
-                <label className="block mb-2 font-medium">Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full p-3 border border-gray-300 rounded bg-white"
-                  placeholder="sample@example.com"
-                />
-              </div>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-gray-500">Email</p>
+            <p className="font-medium">{profile?.email}</p>
+          </div>
 
-              <div>
-                <label className="block mb-2 font-medium">Contact Number</label>
-                <input
-                  type="text"
-                  name="contactNumber"
-                  value={formData.contactNumber}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full p-3 border border-gray-300 rounded bg-white"
-                  placeholder="(123) 456789"
-                />
-              </div>
-            </div>
+          <div>
+            <p className="text-sm text-gray-500">Status</p>
+            <p className="font-medium">{profile?.status}</p>
+          </div>
 
-            <div className="flex justify-end mt-4">
+          <div>
+            <p className="text-sm text-gray-500">Location</p>
+            <p className="font-medium">{profile?.location || "N/A"}</p>
+          </div>
+        </div>
+      </div>
+
+      {profile?.additional_info && (
+        <div className="pt-4 border-t">
+          <h3 className="text-lg font-medium mb-2">Additional Info</h3>
+          <p className="text-gray-700">{profile.additional_info}</p>
+        </div>
+      )}
+    </div>
+  )
+
+  // Profile Edit Component
+  const ProfileEdit = () => (
+    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* First Name */}
+        <div>
+          <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+            Full Name
+          </label>
+          <input
+            type="text"
+            id="first_name"
+            name="first_name"
+            value={formData.full_name}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+          />
+        </div>
+
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            Email
+          </label>
+          <input
+            type="text"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+          />
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            value={formData.mobile}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+          />
+        </div>
+
+        {/* Location */}
+        <div className="md:col-span-2">
+          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+            Location
+          </label>
+          <input
+            type="text"
+            id="location"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+          />
+        </div>
+
+        {/* Additional Info */}
+        <div className="md:col-span-2">
+          <label htmlFor="additional_info" className="block text-sm font-medium text-gray-700 mb-1">
+            Additional Info
+          </label>
+          <textarea
+            id="additional_info"
+            name="additional_info"
+            rows={4}
+            value={formData.additional_info}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+          />
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end space-x-4 pt-4 border-t">
+        <button
+          type="button"
+          onClick={() => setIsEditing(false)}
+          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+        <button type="submit" className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  )
+
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      {/* ProfileSidebar */}
+      <ProfileSidebar />
+      {/* Main Content */}
+      <div className="flex-1 p-6">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="flex justify-between items-center p-6 border-b">
+            <h1 className="text-2xl font-semibold">Profile</h1>
+            {!isEditing && (
               <button
-                type="button"
-                onClick={() => navigate("/client/reset-password")}
-                className="text-sm text-gray-700 hover:underline"
+                onClick={() => setIsEditing(true)}
+                className="flex items-center text-gray-700 hover:text-gray-900"
               >
-                Reset Password
+                <Pencil className="h-5 w-5 mr-1" />
+                <span>Edit</span>
               </button>
-            </div>
-
-            {isEditing && (
-              <div className="flex justify-center mt-6">
-                <button type="submit" className="px-8 py-2 bg-green-600 text-white rounded font-medium">
-                  Save Changes
-                </button>
-              </div>
             )}
-          </form>
+          </div>
+
+          {loading ? (
+            <div className="p-6">
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="p-6 text-red-500">{error}</div>
+          ) : isEditing ? (
+            <ProfileEdit />
+          ) : (
+            <ProfileView />
+          )}
         </div>
       </div>
     </div>

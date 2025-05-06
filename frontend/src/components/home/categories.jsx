@@ -13,7 +13,7 @@ const Categories = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true)
-        const response = await axiosInstance("/categories/")
+        const response = await axiosInstance.get("/categories/")
         console.log(response.data);
         
         setCategories(response.data.categories || [])

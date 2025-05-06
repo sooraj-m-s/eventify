@@ -13,7 +13,7 @@ import UserManagement from './pages/admin/UserManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import EventManagement from './pages/admin/EventManagement';
 import UserProfile from './pages/user/UserProfile';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
 import { PublicRoute } from './components/PublicRoute';
 
@@ -34,7 +34,7 @@ function App() {
                   <Route path="register/complete" element={<PublicRoute><CompleteRegistration /></PublicRoute>} />
                   <Route path="login" element={<PublicRoute><Login /></PublicRoute>} />
                   <Route path="" element={<Home />} />
-                  <Route path="userprofile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+                  <Route path="profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

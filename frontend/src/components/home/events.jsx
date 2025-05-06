@@ -14,7 +14,7 @@ const Events = () => {
     const fetchEvents = async () => {
       try {
         setLoading(true)
-        const response = await axiosInstance("/events/")
+        const response = await axiosInstance.get("/events/")
 
         // Check the structure of the response and extract events properly
         // Make sure we always have an array, even if the API returns something unexpected

@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenError, ExpiredTokenError
 import random, requests
 from django.conf import settings
-from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer
+from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer, UserProfileSerializer
 from .models import TemporaryUserOTP, Users, OrganizerProfile
 from .serializers import OrganizerProfileSerializer
 
@@ -130,6 +130,7 @@ class VerifyOTPView(APIView):
 @permission_classes([AllowAny])
 class LoginView(APIView):
     def post(self, request):
+        print(request.data)
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
@@ -164,10 +165,39 @@ class UserMeView(APIView):
 
 
 @permission_classes([IsAuthenticated])
+class UserProfileView(APIView):
+    def get(self, request):
+        try:
+            user = request.user
+            serializer = UserProfileSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to retrieve profile: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def patch(self, request):
+        try:
+            user = request.user
+            serializer = UserProfileSerializer(user, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to update profile: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+@permission_classes([IsAuthenticated])
 class LogoutView(APIView):
     def post(self, request):
         refresh_token = request.COOKIES.get("refresh_token")
-        print("Logout refresh_token:", refresh_token)
 
         if refresh_token:
             try:

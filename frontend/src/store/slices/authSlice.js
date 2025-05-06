@@ -6,6 +6,7 @@ const authSlice = createSlice({
     userId: null,
     userName: null,
     userEmail: null,
+    profile_image: null,
     userRole: null,
     error: null,
     loading: false,
@@ -16,6 +17,7 @@ const authSlice = createSlice({
       state.userId = action.payload.id;
       state.userName = action.payload.name;
       state.userEmail = action.payload.email;
+      state.profile_image = action.payload.profile_image;
       state.userRole = action.payload.role;
       state.isAuthenticated = true;
     },

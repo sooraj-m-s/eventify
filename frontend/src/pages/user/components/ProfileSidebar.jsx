@@ -1,61 +1,143 @@
+import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
+import axios from "axios"
+import { User, Calendar, BookOpen, PenSquare, Wallet, BarChart3, MessageSquare } from "lucide-react"
+import axiosInstance from "../../../utils/axiosInstance"
 
-const ProfileSidebar = ({ user, onLogout }) => {
+
+const ProfileSidebar = () => {
+  const [userData, setUserData] = useState(null)
+  const [loading, setLoading] = useState(true)
   const location = useLocation()
 
-  const getInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : "C"
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true)
+        const response = await axiosInstance.get("/users/me/")
+        setUserData(response.data)
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [])
+
+  // Get initials for avatar
+  const getInitials = (name) => {
+    if (!name) return "U"
+    return name
+      .split(" ")
+      .map((part) => part.charAt(0))
+      .join("")
+      .toUpperCase()
   }
 
-  return (
-    <div className="w-full md:w-80 border-r-2 border-black">
-      <div className="flex flex-col items-center py-8">
-        <div className="w-24 h-24 bg-[#333] rounded-full flex items-center justify-center text-white text-3xl font-semibold mb-4">
-          {getInitial(user?.firstName)}
+  if (loading) {
+    return (
+      <div className="w-64 bg-white shadow-md p-6 flex flex-col h-screen">
+        <div className="animate-pulse flex items-center mb-8">
+          <div className="w-12 h-12 rounded-full bg-gray-200"></div>
+          <div className="ml-3">
+            <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-32"></div>
+          </div>
         </div>
-        <h2 className="text-lg font-semibold text-center">
-          {user?.firstName} {user?.lastName}
-        </h2>
+        {[1, 2, 3, 4, 5, 6].map((item) => (
+          <div key={item} className="h-10 bg-gray-200 rounded mb-3 w-full"></div>
+        ))}
+      </div>
+    )
+  }
+
+  const navItems = [
+    { name: "Profile", path: "/profile", icon: <User className="h-5 w-5" /> },
+    { name: "Events", path: "/events", icon: <Calendar className="h-5 w-5" /> },
+    { name: "Bookings", path: "/bookings", icon: <BookOpen className="h-5 w-5" /> },
+    // Only show Host Events for organizers
+    ...(userData?.role === "organizer"
+      ? [{ name: "Host Events", path: "/host-events", icon: <PenSquare className="h-5 w-5" /> }]
+      : []),
+    { name: "Wallet", path: "/wallet", icon: <Wallet className="h-5 w-5" /> },
+    { name: "Transactions", path: "/transactions", icon: <BarChart3 className="h-5 w-5" /> },
+    { name: "Messages", path: "/messages", icon: <MessageSquare className="h-5 w-5" /> },
+  ]
+
+  return (
+    <div className="w-64 bg-white shadow-md flex flex-col h-screen">
+      {/* User Info */}
+      <div className="p-6 border-b">
+        <div className="flex items-center">
+          {userData?.profile_image ? (
+            <img
+              src={userData.profile_image || "/placeholder.svg"}
+              alt={userData.full_name}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center font-semibold">
+              {getInitials(userData?.full_name)}
+            </div>
+          )}
+          <div className="ml-3">
+            <h3 className="font-semibold text-gray-900">{userData?.full_name}</h3>
+            <p className="text-sm text-gray-500">
+              {userData?.role === "organizer" ? "Event Organizer" : "Event Enthusiast"}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="px-6 space-y-3 mb-6">
-        <Link
-          to="/client/profile"
-          className={`block w-full py-3 text-white text-center font-medium rounded ${
-            location.pathname === "/client/profile" ? "bg-[#4a4a4a]" : "bg-black"
-          }`}
-        >
-          My Profile
-        </Link>
-        <Link
-          to="/client/bookings"
-          className={`block w-full py-3 text-white text-center font-medium rounded ${
-            location.pathname === "/client/bookings" ? "bg-[#4a4a4a]" : "bg-black"
-          }`}
-        >
-          Bookings
-        </Link>
-        <Link
-          to="/client/wallet"
-          className={`block w-full py-3 text-white text-center font-medium rounded ${
-            location.pathname === "/client/wallet" ? "bg-[#4a4a4a]" : "bg-black"
-          }`}
-        >
-          Wallet
-        </Link>
-        <Link
-          to="/client/hosted-events"
-          className={`block w-full py-3 text-white text-center font-medium rounded ${
-            location.pathname === "/client/hosted-events" ? "bg-[#4a4a4a]" : "bg-[#8a8a8a]"
-          }`}
-        >
-          Hosted Events
-        </Link>
-      </div>
+      {/* Navigation */}
+      <nav className="flex-1 p-4">
+        <ul className="space-y-1">
+          {navItems.map((item) => (
+            <li key={item.name}>
+              <Link
+                to={item.path}
+                className={`flex items-center px-4 py-3 rounded-md transition-colors ${
+                  location.pathname === item.path
+                    ? "bg-gray-100 text-black font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {item.icon}
+                <span className="ml-3">{item.name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-      <div className="px-6 mt-auto pt-8 pb-6">
-        <button onClick={onLogout} className="w-full py-3 bg-[#d9d9d9] text-black text-center font-medium rounded">
-          Logout
+      {/* Logout */}
+      <div className="p-4 border-t">
+        <button
+          onClick={async () => {
+            try {
+              await axios.post("/api/auth/logout", {}, { withCredentials: true })
+              window.location.href = "/login"
+            } catch (error) {
+              console.error("Error logging out:", error)
+            }
+          }}
+          className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span className="ml-3">Logout</span>
         </button>
       </div>
     </div>

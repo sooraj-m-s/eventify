@@ -24,14 +24,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         return data
 
-    def create(self, validated_data):
-        validated_data.pop('confirm_password')
-        validated_data['password'] = make_password(validated_data['password'])
-        return Users.objects.create(
-            role='user',
-            **validated_data
-        )
-
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -99,3 +91,32 @@ class OrganizerProfileSerializer(serializers.ModelSerializer):
         model = OrganizerProfile
         fields = '__all__' 
 
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Users
+        fields = [
+            'user_id', 
+            'full_name', 
+            'email', 
+            'mobile',
+            'profile_image',
+            'created_at',
+        ]
+        read_only_fields = ['user_id', 'email', 'mobile', 'created_at']
+
+    def get_created_at(self, obj):
+        """
+        Format the user's created_at field to a simple readable string.
+        """
+        if hasattr(obj, 'created_at'):
+            # Format as "Apr 25, 2025" (or use your preferred format)
+            return obj.created_at.strftime('%b %d, %Y')
+        
+        # If your field is named differently (e.g., created_at)
+        elif hasattr(obj, 'created_at'):
+            return obj.created_at.strftime('%b %d, %Y')
+            
+        return None

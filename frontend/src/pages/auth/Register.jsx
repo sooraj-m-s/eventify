@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +7,9 @@ import OtpModal from '../../components/OTPModal';
 import image_1 from "../../assets/login/img-1.jpg"
 import ImageSlider from '../../components/ImageSlider';
 import CustomGoogleButton from '../../components/CustomGoogleButton';
+import axiosInstance from '../../utils/axiosInstance';
+import uploadToCloudinary from '../../utils/cloudinaryUpload';
+import { Eye, EyeOff } from 'lucide-react';
 
 
 const Register = () => {
@@ -62,13 +64,18 @@ const Register = () => {
     if (!formData.password) {
       newErrors.password = 'Password is required';
       isValid = false;
-    } else if (formData.password.length < 8) {
+    } else if (formData.password.trim().length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
       isValid = false;
     }
 
     if (formData.password !== formData.confirm_password) {
       newErrors.confirm_password = 'Passwords do not match';
+      isValid = false;
+    }
+
+    if (formData.mobile && !/^\d{10}$/.test(formData.mobile)) {
+      newErrors.mobile = 'Mobile number must be 10 digits';
       isValid = false;
     }
 
@@ -80,17 +87,26 @@ const Register = () => {
     e.preventDefault();
 
     if (!validateForm()) return;
-
-    const formDataToSend = new FormData();
     dispatch(setLoading(true));
-    for (const key in formData) {
-      if (formData[key] !== null) {
-        formDataToSend.append(key, formData[key]);
-      }
-    }
+    let profileImageUrl = null
 
     try {
-      const response = await axios.post('http://localhost:8000/users/register/', formDataToSend, {
+      // If there's a profile image, upload it to Cloudinary
+      if (formData.profile_image) {
+        profileImageUrl = await uploadToCloudinary(formData.profile_image)
+      }
+
+      // Prepare data for backend
+      const userData = {
+        full_name: formData.full_name,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirm_password,
+        mobile: formData.mobile,
+        profile_image_url: profileImageUrl,
+      }
+      
+      const response = await axiosInstance.post('/users/register/', userData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -119,8 +135,9 @@ const Register = () => {
       } else {
         toast.error('An error occurred. Please try again.');
       }
+    } finally {
       dispatch(setLoading(false));
-    }
+  }
   };
 
   return (
@@ -160,26 +177,52 @@ const Register = () => {
           {/* Password */}
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-md ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+            </div>
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>
 
           {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium mb-1">Confirm Password</label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="confirm_password"
-              value={formData.confirm_password}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md ${errors.confirm_password ? 'border-red-500' : 'border-gray-300'}`}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="confirm_password"
+                value={formData.confirm_password}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-md ${errors.confirm_password ? 'border-red-500' : 'border-gray-300'}`}
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+            </div>
             {errors.confirm_password && <p className="text-red-500 text-sm mt-1">{errors.confirm_password}</p>}
           </div>
 

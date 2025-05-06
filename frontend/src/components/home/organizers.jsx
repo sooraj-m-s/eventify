@@ -13,7 +13,7 @@ const Organizers = () => {
     const fetchOrganizers = async () => {
       try {
         setLoading(true)
-        const response = await axiosInstance("/users/organizers/")
+        const response = await axiosInstance.get("/users/organizers/")
         setOrganizers(response.data || [])
         setError(null)
       } catch (err) {
