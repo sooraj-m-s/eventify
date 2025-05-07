@@ -13,9 +13,9 @@ import UserManagement from './pages/admin/UserManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import EventManagement from './pages/admin/EventManagement';
 import UserProfile from './pages/user/UserProfile';
-import ProtectedRoute from './components/ProtectedRoute';
+import { UserProtectedRoute, OrganizerProtectedRoute, AdminProtectedRoute } from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
-import { PublicRoute } from './components/PublicRoute';
+import { UserPublicRoute, AdminPublicRoute } from './components/PublicRoute';
 
 
 function App() {
@@ -30,11 +30,11 @@ function App() {
               <Header />
               <div className="pt-16">
                 <Routes>
-                  <Route path="register" element={<PublicRoute><Register /></PublicRoute>} />
-                  <Route path="register/complete" element={<PublicRoute><CompleteRegistration /></PublicRoute>} />
-                  <Route path="login" element={<PublicRoute><Login /></PublicRoute>} />
+                  <Route path="register" element={<UserPublicRoute><Register /></UserPublicRoute>} />
+                  <Route path="register/complete" element={<UserPublicRoute><CompleteRegistration /></UserPublicRoute>} />
+                  <Route path="login" element={<UserPublicRoute><Login /></UserPublicRoute>} />
                   <Route path="" element={<Home />} />
-                  <Route path="profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+                  <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
@@ -49,10 +49,10 @@ function App() {
             <>
               <AdminHeader />
               <Routes>
-                <Route path="login" element={<AdminLogin />} />
-                <Route path="dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-                <Route path="users" element={<ProtectedRoute requiredRole="admin"><UserManagement /></ProtectedRoute>} />
-                <Route path="events" element={<ProtectedRoute requiredRole="admin"><EventManagement /></ProtectedRoute>} />
+                <Route path="login" element={<AdminPublicRoute><AdminLogin /></AdminPublicRoute>} />
+                <Route path="dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+                <Route path="users" element={<AdminProtectedRoute><UserManagement /></AdminProtectedRoute>} />
+                <Route path="events" element={<AdminProtectedRoute><EventManagement /></AdminProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </>

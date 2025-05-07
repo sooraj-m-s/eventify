@@ -1,23 +1,80 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { logout, setError, setLoading } from '../store/slices/authSlice';
+import axiosInstance from '../utils/axiosInstance';
+
 
 const OtpModal = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const tempUserId = useSelector((state) => state.auth.userId);
-  const loading = useSelector((state) => state.auth.loading);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const inputRefs = useRef([]);
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const tempUserId = useSelector((state) => state.auth.userId)
+  const loading = useSelector((state) => state.auth.loading)
+  const [otp, setOtp] = useState(["", "", "", "", "", ""])
+  const [resendDisabled, setResendDisabled] = useState(false)
+  const [countdown, setCountdown] = useState(120)
+  const [resendCountdown, setResendCountdown] = useState(0)
+  const inputRefs = useRef([])
+  const timerRef = useRef(null)
+  const resendTimerRef = useRef(null)
 
   useEffect(() => {
     if (tempUserId) {
       inputRefs.current[0].focus();
+      setCountdown(120)
     }
   }, [tempUserId]);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      timerRef.current = setInterval(() => {
+        setCountdown((prev) => prev - 1)
+      }, 1000)
+    } else if (countdown === 0) {
+      toast.error("OTP has expired. Please request a new one.")
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [countdown])
+
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      resendTimerRef.current = setInterval(() => {
+        setResendCountdown((prev) => prev - 1)
+      }, 1000)
+    } else if (resendCountdown === 0) {
+      setResendDisabled(false)
+      if (resendTimerRef.current) clearInterval(resendTimerRef.current)
+    }
+
+    return () => {
+      if (resendTimerRef.current) clearInterval(resendTimerRef.current)
+    }
+  }, [resendCountdown])
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+      if (resendTimerRef.current) clearInterval(resendTimerRef.current)
+    }
+  }, [])
+
+  // Enable resend button after 30 seconds
+  useEffect(() => {
+    if (tempUserId) {
+      setResendCountdown(30)
+    }
+  }, [tempUserId])
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`
+  }
 
   const handleChange = (index, value) => {
     if (isNaN(value)) return;
@@ -43,15 +100,19 @@ const OtpModal = () => {
       return;
     }
     dispatch(setLoading(true));
+    if (countdown === 0) {
+      toast.error("OTP has expired. Please request a new one.")
+      return
+    }
 
     try {
-      const response = await axios.post('http://localhost:8000/users/verify_otp/', {
+      const response = await axiosInstance.post('/users/verify_otp/', {
         temp_user_id: tempUserId,
         otp: otpValue,
       });
       toast.success('OTP verified successfully! Redirecting to login...');
       dispatch(logout());
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/client/login'), 2000);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'OTP verification failed';
       dispatch(setError(errorMsg));
@@ -61,6 +122,33 @@ const OtpModal = () => {
       }
   };
 
+  const handleResendOtp = async () => {
+    if (resendDisabled) return
+
+    dispatch(setLoading(true))
+    setResendDisabled(true)
+
+    try {
+      const response = await axiosInstance.post("/users/resend_otp/", {
+        temp_user_id: tempUserId,
+      })
+
+      toast.success("New OTP sent to your email")
+
+      setOtp(["", "", "", "", "", ""])
+      inputRefs.current[0].focus()
+
+      setCountdown(120)
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || "Failed to resend OTP"
+      dispatch(setError(errorMsg))
+      toast.error(errorMsg)
+      setResendDisabled(false)
+    } finally {
+      dispatch(setLoading(false))
+    }
+  }
+
   if (!tempUserId) return null;
 
   return (
@@ -68,6 +156,14 @@ const OtpModal = () => {
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-2xl font-bold mb-4 text-center">Enter OTP</h2>
         <p className="text-center mb-6">Check your email for the 6-digit code.</p>
+
+        {/* OTP Expiration Timer */}
+        <div className="text-center mb-4">
+          <span className={`font-medium ${countdown < 30 ? "text-red-500" : "text-gray-600"}`}>
+            OTP expires in: {formatTime(countdown)}
+          </span>
+        </div>
+
         <div className="flex justify-center space-x-2 mb-6">
           {otp.map((digit, index) => (
             <input
@@ -79,15 +175,27 @@ const OtpModal = () => {
               onKeyDown={(e) => handleKeyDown(index, e)}
               ref={(el) => (inputRefs.current[index] = el)}
               className="w-12 h-12 text-center text-2xl border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+              disabled={loading || countdown === 0}
             />
           ))}
         </div>
         <button
           onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          disabled={loading || countdown === 0}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed mb-3"
         >
-          Verify OTP
+          {loading ? "Verifying..." : "Verify OTP"}
         </button>
+
+        <div className="text-center mt-4">
+          <button
+            onClick={handleResendOtp}
+            disabled={resendDisabled || loading}
+            className="text-blue-600 hover:text-blue-800 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            {resendDisabled ? `Resend OTP in ${countdown}s` : loading ? "Sending..." : "Resend OTP"}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,18 +1,49 @@
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-// Simple protected route that only checks if user exists
-const ProtectedRoute = ({ children }) => {
-  const { userId, loading } = useSelector((state) => state.auth);
+
+const UserProtectedRoute = ({ children }) => {
+  const { userRole, loading } = useSelector((state) => state.auth)
   
-  // Show loading indicator while checking authentication
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  // If user exists, render the protected content
-  // If not, redirect to home page
-  return userId ? children : <Navigate to="/client" replace />;
+  if (!userRole) {
+    return <Navigate to="/client/unauthorized" replace />
+  }
+
+  return children
 };
 
-export default ProtectedRoute;
+
+const OrganizerProtectedRoute = ({ children }) => {
+  const { userRole, loading } = useSelector((state) => state.auth)
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (userRole !== 'organizer') {
+    return <Navigate to="/client" replace />
+  }
+
+  return children
+};
+
+
+const AdminProtectedRoute = ({ children }) => {
+  const { userRole, loading } = useSelector((state) => state.auth)
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (userRole !== 'admin') {
+    return <Navigate to="/client" replace />
+  }
+
+  return children
+};
+
+export { UserProtectedRoute, OrganizerProtectedRoute, AdminProtectedRoute };

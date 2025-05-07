@@ -91,19 +91,19 @@ const Register = () => {
     let profileImageUrl = null
 
     try {
-      // If there's a profile image, upload it to Cloudinary
-      if (formData.profile_image) {
-        profileImageUrl = await uploadToCloudinary(formData.profile_image)
-      }
+      // if (formData.profile_image) {
+      //   profileImageUrl = await uploadToCloudinary(formData.profile_image)
+      // }
+      console.log('Profile Image URL:', profileImageUrl);
+      
 
-      // Prepare data for backend
       const userData = {
         full_name: formData.full_name,
         email: formData.email,
         password: formData.password,
         confirm_password: formData.confirm_password,
         mobile: formData.mobile,
-        profile_image_url: profileImageUrl,
+        profile_image: profileImageUrl,
       }
       
       const response = await axiosInstance.post('/users/register/', userData, {
@@ -240,7 +240,7 @@ const Register = () => {
           </div>
 
           {/* Profile Image */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium mb-1">Profile Image</label>
             <input
               type="file"
@@ -250,7 +250,7 @@ const Register = () => {
               accept="image/*"
             />
             {errors.profile_image && <p className="text-red-500 text-sm mt-1">{errors.profile_image}</p>}
-          </div>
+          </div> */}
 
           <button
             type="submit"

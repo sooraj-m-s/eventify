@@ -5,6 +5,8 @@ import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
 import EventDetailModal from "./components/EventDetailModal"
 import { Search, Calendar, Eye } from "lucide-react"
+import axiosInstance from "../../utils/axiosInstance"
+
 
 const EventManagement = () => {
   const [events, setEvents] = useState([])
@@ -22,7 +24,7 @@ const EventManagement = () => {
       setError(null)
 
       try {
-        const response = await axios.get("http://localhost:8000/events/", {
+        const response = await axiosInstance.get("/events/", {
           params: { page: currentPage, search: searchTerm },
         })
         setEvents(response.data.results || [])

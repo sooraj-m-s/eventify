@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from "react"
 import { toast } from 'react-toastify';
 import axiosInstance from '../utils/axiosInstance';
@@ -12,8 +12,9 @@ const Header = () => {
   const { userId, userName, userEmail, profile_image } = useSelector((state) => state.auth)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
+  console.log("profile_image", profile_image);
+  
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -30,6 +31,7 @@ const Header = () => {
       await axiosInstance.post("/users/logout/")
       dispatch(logout());
       toast.success("Logged out successfully");
+      Navigate("/client/login")
     }  catch (error) {
       console.error("Error during logout:", error)
       dispatch(logout())
@@ -114,7 +116,7 @@ const Header = () => {
                   }}
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
-                  New Team
+                  About
                 </button>
 
                 <div className="border-t border-gray-100 my-1"></div>

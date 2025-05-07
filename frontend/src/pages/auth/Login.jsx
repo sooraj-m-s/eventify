@@ -87,6 +87,7 @@ const Login = () => {
         id: response.data.user_id,
         name: response.data.full_name,
         email: response.data.email,
+        profile_image: response.data.profile_image,
         role: response.data.role
       }))
       toast.success("Login successful! Redirecting to home...")

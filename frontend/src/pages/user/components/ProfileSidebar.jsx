@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
-import axios from "axios"
 import { User, Calendar, BookOpen, PenSquare, Wallet, BarChart3, MessageSquare } from "lucide-react"
 import axiosInstance from "../../../utils/axiosInstance"
 
@@ -111,35 +110,6 @@ const ProfileSidebar = () => {
           ))}
         </ul>
       </nav>
-
-      {/* Logout */}
-      <div className="p-4 border-t">
-        <button
-          onClick={async () => {
-            try {
-              await axios.post("/api/auth/logout", {}, { withCredentials: true })
-              window.location.href = "/login"
-            } catch (error) {
-              console.error("Error logging out:", error)
-            }
-          }}
-          className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          <span className="ml-3">Logout</span>
-        </button>
-      </div>
     </div>
   )
 }

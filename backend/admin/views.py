@@ -1,5 +1,121 @@
-from django.shortcuts import render
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
+from .permissions import IsAdminUser
+from .serializers import UserListSerializer
+from users.models import Users
 
 
-# Create your views here.
+@permission_classes([AllowAny])
+class AdminLoginView(APIView):
+    # permission_classes = [IsAuthenticated, IsAdminUser]
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        user = authenticate(username=email, password=password)
+        if not user:
+            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if user.role != 'admin':
+            return Response(
+                {"error": "Access denied. Admin privileges required."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        refresh = RefreshToken.for_user(user)
+        response = Response(
+            {
+                'detail': 'Login successful',
+                'user_id': user.user_id,
+                'full_name': user.full_name,
+                'email': user.email,
+                'role': user.role
+            },
+            status=status.HTTP_200_OK
+        )
+        
+        response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
+        response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
+        return response
+
+
+class UserPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    page_query_param = 'page'
+
+
+class UserListView(APIView):
+    permission_classes = [IsAdminUser]
+    pagination_class = UserPagination
+    
+    def get(self, request):
+        search_query = request.query_params.get('search', '')
+        role = request.query_params.get('role')
+        page = request.query_params.get('page', 1)
+        page_size = request.query_params.get('page_size', 10)
+        
+        queryset = Users.objects.exclude(role='admin')
+        
+        if search_query:
+            queryset = queryset.filter(full_name__icontains=search_query)
+        
+        queryset = queryset.filter(role=role).order_by('-created_at')
+        
+        # Apply pagination
+        paginator = UserPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        
+        if page is not None:
+            serializer = UserListSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = UserListSerializer(queryset, many=True)
+        return Response({'count': queryset.count(), 'results': serializer.data})
+
+
+class UserStatusUpdateView(APIView):
+    permission_classes = [IsAdminUser]
+    
+    def patch(self, request, user_id):
+        try:
+            user = Users.objects.get(user_id=user_id)
+            
+            is_blocked = request.data.get('is_blocked')
+            
+            if is_blocked is not None:
+                user.is_blocked = is_blocked
+                user.save()
+                
+                serializer = UserListSerializer(user)
+                return Response({
+                    'status': 'success',
+                    'message': f"User {'blocked' if is_blocked else 'unblocked'} successfully",
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'status': 'error',
+                    'message': "is_blocked field is required"
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Users.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': "User not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

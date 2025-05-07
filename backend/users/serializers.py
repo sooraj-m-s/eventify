@@ -38,6 +38,8 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError({'detail': 'Invalid email or password'})
         if not check_password(password, user.password):
             raise serializers.ValidationError({'detail': 'Invalid email or password'})
+        if user.is_blocked:
+            raise serializers.ValidationError({'detail': 'Your account is blocked, please contact support'})
 
         data['user'] = user
         return data
@@ -108,15 +110,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user_id', 'email', 'mobile', 'created_at']
 
     def get_created_at(self, obj):
-        """
-        Format the user's created_at field to a simple readable string.
-        """
         if hasattr(obj, 'created_at'):
-            # Format as "Apr 25, 2025" (or use your preferred format)
             return obj.created_at.strftime('%b %d, %Y')
         
-        # If your field is named differently (e.g., created_at)
         elif hasattr(obj, 'created_at'):
             return obj.created_at.strftime('%b %d, %Y')
             
         return None
+

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useEffect } from "react"
 import axiosInstance from "../../utils/axiosInstance"
+import heroBackground from "../../assets/home-banner.jpg"
 
 
 const HeroSection = () => {
@@ -39,7 +40,7 @@ const HeroSection = () => {
     <div
       className="relative h-[400px] md:h-[500px] bg-cover bg-center"
       style={{
-        backgroundImage: `url('/placeholder.svg?height=500&width=1200')`,
+        backgroundImage: `url(${heroBackground})`,
         backgroundBlendMode: "overlay",
         backgroundColor: "rgba(0,0,0,0.5)",
       }}

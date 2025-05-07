@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 
+
 const Categories = () => {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -56,23 +57,9 @@ const Categories = () => {
     )
   }
 
-  const displayCategories =
-    categories.length > 0
-      ? categories
-      : [
-          { categoryId: "1", categoryName: "Conferences/Tech Meetups", image: "/placeholder.svg?height=200&width=300" },
-          {
-            categoryId: "2",
-            categoryName: "Startup & Innovation Pitches",
-            image: "/placeholder.svg?height=200&width=300",
-          },
-          { categoryId: "3", categoryName: "Tech Networking Events", image: "/placeholder.svg?height=200&width=300" },
-          { categoryId: "4", categoryName: "Training Sessions", image: "/placeholder.svg?height=200&width=300" },
-        ]
-
-  const totalPages = Math.ceil(displayCategories.length / itemsPerPage)
+  const totalPages = Math.ceil(categories.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
-  const currentCategories = displayCategories.slice(startIndex, startIndex + itemsPerPage)
+  const currentCategories = categories.slice(startIndex, startIndex + itemsPerPage)
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
@@ -90,7 +77,7 @@ const Categories = () => {
     <div className="my-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Browse By Category</h2>
-        <div className="text-sm">View all ({displayCategories.length})</div>
+        <div className="text-sm">View all ({categories.length})</div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

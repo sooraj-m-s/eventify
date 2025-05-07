@@ -1,17 +1,24 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Instagram, Facebook, Linkedin, Menu } from 'lucide-react';
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import { logout } from "../../../store/slices/authSlice";
+import axiosInstance from "../../../utils/axiosInstance";
 
 const AdminHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleLogout = () => {
-    // Clear admin authentication
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminUser");
-    
-    navigate("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/users/logout/")
+      dispatch(logout());
+      toast.success("Logged out successfully");
+    }  catch (error) {
+      console.error("Error during logout:", error)
+      dispatch(logout())
+    }
   };
 
   return (

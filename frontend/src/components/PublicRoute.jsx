@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-export const PublicRoute = ({ children }) => {
-  // Get authentication state from Redux store
+
+const UserPublicRoute = ({ children }) => {
   const { isAuthenticated } = useSelector(state => state.auth);
   
   // If user is authenticated, redirect to home page
@@ -10,6 +10,20 @@ export const PublicRoute = ({ children }) => {
     return <Navigate to="/client" replace />;
   }
   
-  // Otherwise, render the children (login/register page)
   return children;
 };
+
+
+const AdminPublicRoute = ({ children }) => {
+  const { isAuthenticated, userRole } = useSelector((state) => state.auth)
+  
+  // If user is authenticated, redirect to home page
+  if (isAuthenticated && userRole === "admin") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  
+  return children;
+};
+
+
+export { UserPublicRoute, AdminPublicRoute };

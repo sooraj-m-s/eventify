@@ -6,7 +6,6 @@ const uploadToCloudinary = async (file) => {
     const cloudName = import.meta.env.VITE_CLOUD_NAME;
     const uploadPreset = import.meta.env.VITE_UPLOAD_PRESET;
 
-    // Check if file is an image
     if (!file.type.match('image.*')) {
         toast.error("Please select an image file");
         throw new Error("Invalid file type");
@@ -18,7 +17,6 @@ const uploadToCloudinary = async (file) => {
         throw new Error("File too large");
     }
 
-    // Check supported formats
     const supportedFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
     if (!supportedFormats.includes(file.type)) {
         toast.error("Unsupported image format. Please use JPEG, PNG, GIF, WebP, or BMP");

@@ -2,13 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.html import strip_tags
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenError, ExpiredTokenError
 import random, requests
 from django.conf import settings
@@ -29,21 +28,20 @@ class RegisterView(APIView):
             email = serializer.validated_data['email'].lower()
             mobile = serializer.validated_data['mobile']
 
-            # Check if email or mobile already exists in Users table
             if Users.objects.filter(email=email).exists():
                 return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
             if Users.objects.filter(mobile=mobile).exists():
                 return Response({'error': 'Mobile number already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
             otp = random.randint(100000, 999999)
+            print(f"Generated OTP: {otp}")
             
-            # Check if email exists in TemporaryUserOTP
             temp_user = TemporaryUserOTP.objects.filter(email=email).first()
             if temp_user:
                 # Update existing OTP if email is found
                 temp_user.otp = otp
-                temp_user.created_at = timezone.now()  # Reset creation time for new 2-minute window
-                temp_user.password = make_password(serializer.validated_data['password'])  # Update password
+                temp_user.created_at = timezone.now() 
+                temp_user.password = serializer.validated_data['password']
                 temp_user.save()
             else:
                 # Create new temporary user record
@@ -51,7 +49,7 @@ class RegisterView(APIView):
                     full_name=serializer.validated_data['full_name'],
                     email=email,
                     mobile=mobile,
-                    password=make_password(serializer.validated_data['password']),
+                    password=serializer.validated_data['password'],
                     profile_image=serializer.validated_data.get('profile_image', None),
                     otp=otp
                 )
@@ -94,6 +92,57 @@ class RegisterView(APIView):
 
 
 @permission_classes([AllowAny])
+class ResendOTPView(APIView):
+    def post(self, request):
+        temp_user_id = request.data.get('temp_user_id')
+        
+        try:
+            temp_user = TemporaryUserOTP.objects.get(temp_user_id=temp_user_id)
+
+            otp = random.randint(100000, 999999)
+            print(f"Generated new OTP: {otp}")
+            
+            temp_user.otp = otp
+            temp_user.created_at = timezone.now()
+            temp_user.save()
+            
+            first_name = temp_user.full_name.split()[0]
+            html_message = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h2 style="color: #4CAF50; text-align: center;">Your New Verification Code</h2>
+                        <p>Hi {first_name.title()},</p>
+                        <p>You requested a new verification code. Please use the code below to complete your registration. <strong>Note: This code will expire in 2 minutes.</strong></p>
+                        <p style="font-size: 24px; font-weight: bold; text-align: center; color: #4CAF50; margin: 20px 0;">{otp}</p>
+                        <p>If you didn't request this email, no action is needed. Simply ignore this message.</p>
+                        <p>Thank you for choosing Eventify!</p>
+                        <p style="margin-top: 20px;">Best regards,<br><strong>The Eventify Team</strong></p>
+                    </div>
+                    <footer style="text-align: center; font-size: 12px; color: #aaa; margin-top: 20px;">
+                        © {timezone.now().year} Eventify. All rights reserved.
+                    </footer>
+                </body>
+            </html>
+            """
+            plain_message = strip_tags(html_message)
+            send_mail(
+                'Eventify: Your New Verification Code',
+                plain_message,
+                settings.EMAIL_HOST_USER,
+                [temp_user.email],
+                fail_silently=False,
+                html_message=html_message,
+            )
+            
+            return Response({'message': 'New OTP sent to your email'}, status=status.HTTP_200_OK)
+        except TemporaryUserOTP.DoesNotExist:
+            return Response({'error': 'Invalid temporary user ID'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'Failed to resend OTP: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@permission_classes([AllowAny])
 class VerifyOTPView(APIView):
     def post(self, request):
         temp_user_id = request.data.get('temp_user_id')
@@ -113,9 +162,9 @@ class VerifyOTPView(APIView):
                 password=temp_user.password,
                 full_name=temp_user.full_name,
                 mobile=temp_user.mobile,
+                profile_image=temp_user.profile_image,
             )
 
-            # Delete the temporary record
             temp_user.delete()
 
             return Response({
@@ -130,7 +179,6 @@ class VerifyOTPView(APIView):
 @permission_classes([AllowAny])
 class LoginView(APIView):
     def post(self, request):
-        print(request.data)
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
@@ -142,6 +190,7 @@ class LoginView(APIView):
                 'user_id': user.user_id,
                 'full_name': user.full_name,
                 'email': user.email,
+                'profile_image': user.profile_image,
                 'role': user.role
             },
             status=status.HTTP_200_OK
@@ -160,6 +209,7 @@ class UserMeView(APIView):
             'user_id': user.user_id,
             'full_name': user.full_name,
             'email': user.email,
+            'profile_image': user.profile_image,
             'role': user.role
         }, status=status.HTTP_200_OK)
 
@@ -226,14 +276,10 @@ class RefreshTokenView(APIView):
             return Response({'detail': 'Refresh token not found'}, status=status.HTTP_401_UNAUTHORIZED)
             
         try:
-            # Verify the refresh token
             token = RefreshToken(refresh_token)
             
-            # Create new access token
-            access_token = str(token.access_token)
-            
             response = Response({'detail': 'Token refreshed successfully'}, status=status.HTTP_200_OK)
-            response.set_cookie(key='access_token', value=access_token, httponly=True, secure=True, samesite='None')
+            response.set_cookie(key='access_token', value=str(token.access_token), httponly=True, secure=True, samesite='None')
             
             return response
         except Exception as e:

@@ -1,7 +1,10 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import axios from "axios"
 import { Eye, EyeOff } from 'lucide-react'
+import axiosInstance from "../../utils/axiosInstance"
+import { toast } from "react-toastify"
+import { useDispatch } from "react-redux"
+import { setUser } from "../../store/slices/authSlice"
 
 
 const AdminLogin = () => {
@@ -11,6 +14,7 @@ const AdminLogin = () => {
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,15 +22,17 @@ const AdminLogin = () => {
     setLoading(true)
 
     try {
-      const response = await axios.post("http://localhost:8000/admin/login", {
+      const response = await axiosInstance.post("/admin/login/", {
         email,
         password,
       })
-
-      localStorage.setItem("adminToken", response.data.token)
-      localStorage.setItem("adminUser", JSON.stringify(response.data.user))
-
-      // Redirect to admin dashboard
+      dispatch(setUser({
+        id: response.data.user_id,
+        name: response.data.full_name,
+        email: response.data.email,
+        role: response.data.role
+      }))
+      toast.success("Login successful! Redirecting to dashboard...")
       navigate("/admin/dashboard")
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please check your credentials.")

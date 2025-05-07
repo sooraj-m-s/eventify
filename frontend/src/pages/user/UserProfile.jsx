@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react"
-import { Pencil } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Pencil, Upload, X } from "lucide-react"
 import ProfileSidebar from "./components/ProfileSidebar"
 import axiosInstance from "../../utils/axiosInstance"
+import uploadToCloudinary from "../../utils/cloudinaryUpload"
+import { toast } from "react-toastify"
 
 
 const UserProfile = () => {
@@ -9,14 +11,12 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [imageUploading, setImageUploading] = useState(false)
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    mobile: "",
-    location: "",
-    additional_info: "",
+    full_name: "",
+    profile_image: "",
   })
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -27,9 +27,6 @@ const UserProfile = () => {
         setFormData({
           full_name: response.data.full_name || "",
           email: response.data.email || "",
-          phone: response.data.mobile || "",
-          location: response.data.location || "",
-          additional_info: response.data.additional_info || "",
         })
       } catch (error) {
         console.error("Error fetching profile:", error)
@@ -50,15 +47,44 @@ const UserProfile = () => {
     }))
   }
 
+  const handleImageClick = () => {
+    fileInputRef.current.click()
+  }
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    try {
+      setImageUploading(true)
+      const imageUrl = await uploadToCloudinary(file)
+      setFormData((prev) => ({
+        ...prev,
+        profile_image: imageUrl,
+      }))
+      toast.success("Image uploaded successfully")
+    } catch (error) {
+      console.error("Error uploading image:", error)
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      profile_image: "",
+    }))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       setLoading(true)
-      const response = await axiosInstance.patch("/users/profile/", formData, {
-        withCredentials: true,
-      })
+      const response = await axiosInstance.patch("/users/profile/", formData)
       setProfile(response.data)
       setIsEditing(false)
+      toast.success("Profile updated successfully")
     } catch (error) {
       console.error("Error updating profile:", error)
       setError("Failed to update profile")
@@ -67,7 +93,6 @@ const UserProfile = () => {
     }
   }
 
-  // Profile View Component
   const ProfileView = () => (
     <div className="p-6 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -105,36 +130,73 @@ const UserProfile = () => {
           </div>
         </div>
       </div>
-
-      {profile?.additional_info && (
-        <div className="pt-4 border-t">
-          <h3 className="text-lg font-medium mb-2">Additional Info</h3>
-          <p className="text-gray-700">{profile.additional_info}</p>
-        </div>
-      )}
     </div>
   )
 
-  // Profile Edit Component
   const ProfileEdit = () => (
     <form onSubmit={handleSubmit} className="p-6 space-y-6">
+      {/* Profile Image Upload */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="relative">
+          {formData.profile_image ? (
+            <>
+              <img
+                src={formData.profile_image || "/placeholder.svg"}
+                alt="Profile"
+                className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                title="Remove image"
+              >
+                <X size={16} />
+              </button>
+            </>
+          ) : (
+            <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-500 text-xl font-medium">
+                {formData.full_name?.charAt(0)?.toUpperCase() || "U"}
+              </span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleImageClick}
+            disabled={imageUploading}
+            className="absolute bottom-0 right-0 bg-white text-gray-700 rounded-full p-2 shadow-md hover:bg-gray-100"
+          >
+            {imageUploading ? (
+              <div className="w-5 h-5 border-2 border-t-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <Upload size={16} />
+            )}
+          </button>
+
+          <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+        </div>
+        <p className="text-sm text-gray-500 mt-2">Click to change profile picture</p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* First Name */}
+        {/* Full Name - Editable */}
         <div>
-          <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
             Full Name
           </label>
           <input
             type="text"
-            id="first_name"
-            name="first_name"
+            id="full_name"
+            name="full_name"
             value={formData.full_name}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
           />
         </div>
 
-        {/* Email */}
+        {/* Email - Disabled */}
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email
@@ -143,54 +205,39 @@ const UserProfile = () => {
             type="text"
             id="email"
             name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+            value={profile?.email || ""}
+            disabled
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
           />
         </div>
 
-        {/* Phone */}
+        {/* Phone - Disabled */}
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">
             Phone Number
           </label>
           <input
             type="tel"
-            id="phone"
-            name="phone"
-            value={formData.mobile}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+            id="mobile"
+            name="mobile"
+            value={profile?.mobile || ""}
+            disabled
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
           />
         </div>
 
-        {/* Location */}
-        <div className="md:col-span-2">
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-            Location
+        {/* Role - Disabled */}
+        <div>
+          <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+            Role
           </label>
           <input
             type="text"
-            id="location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-          />
-        </div>
-
-        {/* Additional Info */}
-        <div className="md:col-span-2">
-          <label htmlFor="additional_info" className="block text-sm font-medium text-gray-700 mb-1">
-            Additional Info
-          </label>
-          <textarea
-            id="additional_info"
-            name="additional_info"
-            rows={4}
-            value={formData.additional_info}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+            id="role"
+            name="role"
+            value={profile?.role || ""}
+            disabled
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
           />
         </div>
       </div>
@@ -204,8 +251,12 @@ const UserProfile = () => {
         >
           Cancel
         </button>
-        <button type="submit" className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
-          Save Changes
+        <button
+          type="submit"
+          className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400"
+          disabled={loading || imageUploading}
+        >
+          {loading ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </form>

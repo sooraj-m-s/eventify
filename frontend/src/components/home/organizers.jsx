@@ -16,6 +16,8 @@ const Organizers = () => {
         const response = await axiosInstance.get("/users/organizers/")
         setOrganizers(response.data || [])
         setError(null)
+        console.log("Organizers:", response.data);
+        
       } catch (err) {
         console.error("Error fetching organizers:", err)
         setError("Failed to load organizers. Please try again later.")

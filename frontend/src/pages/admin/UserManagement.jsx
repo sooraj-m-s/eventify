@@ -1,19 +1,20 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
 import { toast } from "react-toastify"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
-import { Search } from "lucide-react"
+import { Loader2, Search } from "lucide-react"
+import axiosInstance from "../../utils/axiosInstance"
+
 
 const UserManagement = () => {
   const [activeTab, setActiveTab] = useState("clients")
   const [users, setUsers] = useState([])
-  const [organizers, setOrganizers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [updatingUserId, setUpdatingUserId] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,19 +22,26 @@ const UserManagement = () => {
       setError(null)
 
       try {
+        const role = activeTab === "clients" ? "user" : "organizer"
+
+        const response = await axiosInstance.get("/admin/user_list/", {
+          params: {
+            role: role,
+            page: currentPage,
+            search: searchTerm,
+          },
+        })
+
+        console.log("Response data:", response.data)
+
+        // Set the users data based on the active tab
         if (activeTab === "clients") {
-          const response = await axios.get("/users/clients", {
-            params: { page: currentPage, search: searchTerm },
-          })
           setUsers(response.data.results || [])
-          setTotalPages(response.data.total_pages || 1)
         } else {
-          const response = await axios.get("/users/organizers", {
-            params: { page: currentPage, search: searchTerm },
-          })
-          setOrganizers(response.data.results || [])
-          setTotalPages(response.data.total_pages || 1)
+          setUsers(response.data.results || [])
         }
+
+        setTotalPages(Math.ceil(response.data.count / 10) || 1)
       } catch (err) {
         console.error("Error fetching data:", err)
         setError("Failed to load data. Please try again.")
@@ -46,43 +54,31 @@ const UserManagement = () => {
     fetchData()
   }, [activeTab, currentPage, searchTerm])
 
-  // Handle user status change (block/unblock)
-  const handleStatusChange = async (userId, currentStatus) => {
+  const handleStatusChange = async (userId, isBlocked) => {
+    setUpdatingUserId(userId)
     try {
-      const newStatus = currentStatus === "BLOCK" ? "UNBLOCK" : "BLOCK"
-      await axios.patch(`/users/${userId}/status`, {
-        status: newStatus === "BLOCK" ? false : true,
+      const newStatus = !isBlocked
+
+      await axiosInstance.patch(`/admin/users_status/${userId}/`, {
+        is_blocked: newStatus,
       })
 
       // Update local state
-      if (activeTab === "clients") {
-        setUsers(
-          users.map((user) => (user.id === userId ? { ...user, status: newStatus === "BLOCK" ? false : true } : user)),
-        )
-      } else {
-        setOrganizers(
-          organizers.map((organizer) =>
-            organizer.id === userId ? { ...organizer, status: newStatus === "BLOCK" ? false : true } : organizer,
-          ),
-        )
-      }
+      setUsers(users.map((user) => (user.user_id === userId ? { ...user, is_blocked: newStatus } : user)))
 
-      toast.success(`User ${newStatus.toLowerCase()}ed successfully`)
+      toast.success(`User ${newStatus ? "blocked" : "unblocked"} successfully`)
     } catch (err) {
       console.error("Error updating user status:", err)
       toast.error("Failed to update user status")
+    } finally {
+      setUpdatingUserId(null)
     }
   }
 
   // Handle search
   const handleSearch = (e) => {
     e.preventDefault()
-    setCurrentPage(1) // Reset to first page on new search
-  }
-
-  // Get data based on active tab
-  const getData = () => {
-    return activeTab === "clients" ? users : organizers
+    setCurrentPage(1)
   }
 
   return (
@@ -155,27 +151,27 @@ const UserManagement = () => {
                         {error}
                       </td>
                     </tr>
-                  ) : getData().length === 0 ? (
+                  ) : users.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                         No {activeTab} found
                       </td>
                     </tr>
                   ) : (
-                    getData().map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
+                    users.map((user) => (
+                      <tr key={user.user_id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.user_id}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {user.name || user.full_name}
+                          {user.full_name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phone}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.mobile}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                             {user.profile_image ? (
                               <img
                                 src={user.profile_image || "/placeholder.svg"}
-                                alt={user.name || user.full_name}
+                                alt={user.full_name}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -185,14 +181,23 @@ const UserManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => handleStatusChange(user.id, user.is_active ? "BLOCK" : "UNBLOCK")}
+                            onClick={() => handleStatusChange(user.user_id, user.is_blocked)}
                             className={`px-4 py-1 text-xs font-medium rounded ${
-                              user.is_active
+                              user.is_blocked
                                 ? "bg-red-200 text-red-800 hover:bg-red-300"
                                 : "bg-green-200 text-green-800 hover:bg-green-300"
                             }`}
                           >
-                            {user.is_active ? "BLOCK" : "UNBLOCK"}
+                            {updatingUserId === user.user_id ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Loading...
+                              </>
+                            ) : !user.is_blocked ? (
+                              "Active"
+                            ) : (
+                              "Blocked"
+                            )}
                           </button>
                         </td>
                       </tr>
@@ -203,7 +208,7 @@ const UserManagement = () => {
             </div>
 
             {/* Pagination */}
-            {!loading && !error && getData().length > 0 && (
+            {!loading && !error && users.length > 0 && (
               <div className="flex justify-center items-center space-x-2 p-4 border-t">
                 <button
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
