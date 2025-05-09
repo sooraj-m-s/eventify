@@ -38,13 +38,11 @@ class RegisterView(APIView):
             
             temp_user = TemporaryUserOTP.objects.filter(email=email).first()
             if temp_user:
-                # Update existing OTP if email is found
                 temp_user.otp = otp
                 temp_user.created_at = timezone.now() 
                 temp_user.password = serializer.validated_data['password']
                 temp_user.save()
             else:
-                # Create new temporary user record
                 temp_user = TemporaryUserOTP(
                     full_name=serializer.validated_data['full_name'],
                     email=email,
@@ -164,7 +162,6 @@ class VerifyOTPView(APIView):
                 mobile=temp_user.mobile,
                 profile_image=temp_user.profile_image,
             )
-
             temp_user.delete()
 
             return Response({
@@ -174,6 +171,91 @@ class VerifyOTPView(APIView):
 
         except TemporaryUserOTP.DoesNotExist:
             return Response({'error': 'Invalid temporary user ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@permission_classes([AllowAny])
+class ForgotPasswordEmailCheckView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        
+        try:
+            user = Users.objects.get(email=email)
+        except Users.DoesNotExist:
+            return Response({"message": "If your email is registered, you will receive an OTP shortly"}, status=status.HTTP_200_OK)
+        
+        otp = random.randint(100000, 999999)
+        print(f"Generated OTP: {otp}")
+        
+        try:
+            temp = TemporaryUserOTP.objects.get(email=email)
+            temp.otp = otp
+            temp.created_at = timezone.now()
+            temp.save()
+        except TemporaryUserOTP.DoesNotExist:
+            temp = TemporaryUserOTP(
+                full_name=user.full_name,
+                email=user.email,
+                mobile=user.mobile,
+                password=user.password,
+                profile_image=user.profile_image,
+                otp=otp
+            )
+            temp.save()
+        
+        html_message = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #FF5722; text-align: center;">Password Reset Request</h2>
+                    <p>Hi {user.full_name.title()},</p>
+                    <p>We received a request to reset your password. Use the OTP below to proceed. <strong>This code will expire in 2 minutes.</strong></p>
+                    <p style="font-size: 24px; font-weight: bold; text-align: center; color: #FF5722; margin: 20px 0;">{otp}</p>
+                    <p>If you did not request this, please ignore this email. Your account is still safe.</p>
+                    <p style="margin-top: 20px;">Best regards,<br><strong>The Eventify Team</strong></p>
+                </div>
+                <footer style="text-align: center; font-size: 12px; color: #aaa; margin-top: 20px;">
+                    © {timezone.now().year} Eventify. All rights reserved.
+                </footer>
+            </body>
+        </html>
+        """
+
+        plain_message = strip_tags(html_message)
+        send_mail(
+            'Eventify: Password Reset OTP',
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+            html_message=html_message,
+        )
+        return Response({'temp_user_id': str(temp.temp_user_id), 'message': 'OTP sent to your email'}, status=status.HTTP_200_OK)
+
+
+@permission_classes([AllowAny])
+class ForgotPasswordSetView(APIView):
+    def post(self, request):
+        temp_user_id = request.data.get('temp_user_id')
+        otp = request.data.get('otp')
+        new_password = request.data.get('new_password')
+        
+        try:
+            temp_user = TemporaryUserOTP.objects.get(temp_user_id=temp_user_id, otp=otp)
+        except TemporaryUserOTP.DoesNotExist:
+            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if temp_user.is_expired():
+            return Response({'error': 'OTP expired'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = Users.objects.get(email=temp_user.email)
+        except Users.DoesNotExist:
+            return Response({{"error": "Unexpected error occurred"}}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        user.password = make_password(new_password)
+        user.save()
+        temp_user.delete()
+        
+        return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
 
 
 @permission_classes([AllowAny])

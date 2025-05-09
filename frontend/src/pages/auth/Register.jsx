@@ -257,7 +257,7 @@ const Register = () => {
             className={`w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
-            disabled={loading} // Disable the button when loading is true
+            disabled={loading}
           >
             {loading ? (
               <span>
