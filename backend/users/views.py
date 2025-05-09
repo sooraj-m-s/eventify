@@ -170,7 +170,7 @@ class VerifyOTPView(APIView):
             }, status=status.HTTP_200_OK)
 
         except TemporaryUserOTP.DoesNotExist:
-            return Response({'error': 'Invalid temporary user ID'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'An unexpected error occurred. Please try again later.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @permission_classes([AllowAny])

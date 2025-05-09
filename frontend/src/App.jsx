@@ -16,6 +16,8 @@ import UserProfile from './pages/user/UserProfile';
 import { UserProtectedRoute, OrganizerProtectedRoute, AdminProtectedRoute } from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
 import { UserPublicRoute, AdminPublicRoute } from './components/PublicRoute';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 
 function App() {
@@ -33,6 +35,8 @@ function App() {
                   <Route path="register" element={<UserPublicRoute><Register /></UserPublicRoute>} />
                   <Route path="register/complete" element={<UserPublicRoute><CompleteRegistration /></UserPublicRoute>} />
                   <Route path="login" element={<UserPublicRoute><Login /></UserPublicRoute>} />
+                  <Route path="forgot_password" element={<UserPublicRoute><ForgotPassword /></UserPublicRoute>} />
+                  <Route path="reset_password/" element={<UserPublicRoute><ResetPassword /></UserPublicRoute>} />
                   <Route path="" element={<Home />} />
                   <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
