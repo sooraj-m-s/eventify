@@ -1,9 +1,9 @@
 import { GoogleLogin } from "@react-oauth/google"
 import { toast } from "react-toastify"
-import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { setUser } from "../store/slices/authSlice"
+import axiosInstance from "../utils/axiosInstance"
 
 
 const CustomGoogleButton = () => {
@@ -12,7 +12,7 @@ const CustomGoogleButton = () => {
 
   const handleGoogleResponse = async (tokenResponse) => {
     try {
-      const response = await axios.post("http://localhost:8000/users/auth/google/", {
+      const response = await axiosInstance.post("/users/auth/google/", {
         id_token: tokenResponse.credential,
       })
 
@@ -21,6 +21,7 @@ const CustomGoogleButton = () => {
                 id: response.data.user_id,
                 name: response.data.full_name,
                 email: response.data.email,
+                profile_image: response.data.profile_image,
                 role: response.data.role
               }))
         toast.success("Login successful! Redirecting...")

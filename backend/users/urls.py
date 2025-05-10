@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import RegisterView, VerifyOTPView, GoogleAuthView, LoginView, CompleteRegistrationView, OrganizerListView, RefreshTokenView, LogoutView, UserMeView, UserProfileView, ResendOTPView, ForgotPasswordEmailCheckView, ForgotPasswordSetView
+from .views import (
+    RegisterView, VerifyOTPView, GoogleAuthView, LoginView, CompleteRegistrationView, OrganizerListView,
+    RefreshTokenView, LogoutView, UserMeView, UserProfileView, ResendOTPView, ForgotPasswordEmailCheckView,
+    ForgotPasswordSetView
+)
 
 
 urlpatterns = [

@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux"
 import axiosInstance from "../../utils/axiosInstance"
 import { setUser } from "../../store/slices/authSlice"
 import ImageSlider from "../../components/ImageSlider"
-import image_1 from "../../assets/login/img-1.jpg"
+import image from "../../assets/login/img-1.jpeg"
 import CustomGoogleButton from "../../components/CustomGoogleButton"
 
 
@@ -20,9 +20,6 @@ const Login = () => {
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-
-  // replace these with actual image URLs
-  const sliderImages = [image_1]
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -112,7 +109,7 @@ const Login = () => {
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Image Slider - Left Side */}
       <div className="hidden md:block md:w-1/2 h-screen">
-        <ImageSlider images={sliderImages} />
+        <ImageSlider images={image} />
       </div>
 
       {/* Login Form - Right Side */}
@@ -120,7 +117,7 @@ const Login = () => {
         <div className="w-full max-w-md">
           {/* Mobile Slider (only visible on mobile) */}
           <div className="md:hidden h-48 mb-8 rounded-lg overflow-hidden">
-            <ImageSlider images={sliderImages} />
+            <ImageSlider images={image} />
           </div>
 
           <div className="mb-8">

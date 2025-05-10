@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { setLoading, setUserId } from '../../store/slices/authSlice';
 import OtpModal from '../../components/OTPModal';
-import image_1 from "../../assets/login/img-1.jpg"
+import image from "../../assets/login/img-2.jpg"
 import ImageSlider from '../../components/ImageSlider';
 import CustomGoogleButton from '../../components/CustomGoogleButton';
 import axiosInstance from '../../utils/axiosInstance';
@@ -26,7 +26,7 @@ const Register = () => {
   });
   const [errors, setErrors] = useState({});
 
-  const sliderImages = [image_1]
+  const sliderImages = [image]
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -91,12 +91,10 @@ const Register = () => {
     let profileImageUrl = null
 
     try {
-      // if (formData.profile_image) {
-      //   profileImageUrl = await uploadToCloudinary(formData.profile_image)
-      // }
-      console.log('Profile Image URL:', profileImageUrl);
+      if (formData.profile_image) {
+        profileImageUrl = await uploadToCloudinary(formData.profile_image)
+      }
       
-
       const userData = {
         full_name: formData.full_name,
         email: formData.email,
@@ -240,7 +238,7 @@ const Register = () => {
           </div>
 
           {/* Profile Image */}
-          {/* <div>
+          <div>
             <label className="block text-sm font-medium mb-1">Profile Image</label>
             <input
               type="file"
@@ -250,7 +248,7 @@ const Register = () => {
               accept="image/*"
             />
             {errors.profile_image && <p className="text-red-500 text-sm mt-1">{errors.profile_image}</p>}
-          </div> */}
+          </div>
 
           <button
             type="submit"

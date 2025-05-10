@@ -392,6 +392,7 @@ class GoogleAuthView(APIView):
                     'user_id': user.user_id,
                     'full_name': user.full_name,
                     'email': user.email,
+                    'profile_image': user.profile_image,
                     'role': user.role
                 },
                 status=status.HTTP_200_OK
