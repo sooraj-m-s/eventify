@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from "react"
-import { toast } from 'react-toastify';
+import { toast } from "sonner";
 import axiosInstance from '../utils/axiosInstance';
 
 
@@ -12,8 +12,6 @@ const Header = () => {
   const { userId, userName, userEmail, profile_image } = useSelector((state) => state.auth)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
-  console.log("profile_image", profile_image);
-  
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -31,7 +29,6 @@ const Header = () => {
       await axiosInstance.post("/users/logout/")
       dispatch(logout());
       toast.success("Logged out successfully");
-      Navigate("/client/login")
     }  catch (error) {
       console.error("Error during logout:", error)
       dispatch(logout())
@@ -52,7 +49,7 @@ const Header = () => {
     <header className="bg-black text-white p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 shadow-md">
       <div className="text-xl font-bold">Eventify</div>
       <nav className="flex space-x-6">
-        <a href="/client" className="hover:text-gray-300">Home</a>
+        <a href="/" className="hover:text-gray-300">Home</a>
         <a href="/venue" className="hover:text-gray-300">Venue</a>
         <a href="/organizers" className="hover:text-gray-300">Organizers</a>
         <a href="/about" className="hover:text-gray-300">About</a>
@@ -91,7 +88,7 @@ const Header = () => {
 
                 <button
                   onClick={() => {
-                    navigate("/client/profile")
+                    navigate("/profile")
                     setDropdownOpen(false)
                   }}
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -101,7 +98,7 @@ const Header = () => {
 
                 <button
                   onClick={() => {
-                    navigate("/client/settings")
+                    navigate("/settings")
                     setDropdownOpen(false)
                   }}
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -111,7 +108,7 @@ const Header = () => {
 
                 <button
                   onClick={() => {
-                    navigate("/client/new-team")
+                    navigate("/new-team")
                     setDropdownOpen(false)
                   }}
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -136,13 +133,13 @@ const Header = () => {
         ) : (
           <>
             <button
-              onClick={() => navigate("/client/login")}
+              onClick={() => navigate("/login")}
               className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
             >
               Login
             </button>
             <button
-              onClick={() => navigate("/client/register")}
+              onClick={() => navigate("/register")}
               className="bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300"
             >
               Signup

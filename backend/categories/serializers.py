@@ -6,3 +6,4 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['categoryId', 'categoryName', 'image']
+

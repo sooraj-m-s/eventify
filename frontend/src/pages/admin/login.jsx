@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Eye, EyeOff } from 'lucide-react'
 import axiosInstance from "../../utils/axiosInstance"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import { useDispatch } from "react-redux"
 import { setUser } from "../../store/slices/authSlice"
 

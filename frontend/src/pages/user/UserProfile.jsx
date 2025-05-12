@@ -1,12 +1,16 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { Pencil, Upload, X } from "lucide-react"
 import ProfileSidebar from "./components/ProfileSidebar"
 import axiosInstance from "../../utils/axiosInstance"
 import uploadToCloudinary from "../../utils/cloudinaryUpload"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
+import { useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
 
 
 const UserProfile = () => {
+  const navigate = useNavigate()
+  const role = useSelector((state) => state.auth.userRole)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -298,6 +302,32 @@ const UserProfile = () => {
           ) : (
             <ProfileView />
           )}
+          
+          {/* Role-based buttons */}
+          <div className="p-6 border-t">
+            {role != "organizer" && (
+              <div className="mt-4">
+                <p className="mb-2 text-gray-700">Want to become an organizer? Click here.</p>
+                <button
+                  onClick={() => navigate("/become_organizer")}
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+                >
+                  Become an Organizer
+                </button>
+              </div>
+            )}
+
+            {role == "organizer" && (
+              <div className="mt-4">
+                <button
+                  onClick={() => navigate("/organizer/events")}
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+                >
+                  Go to Organizer Dashboard
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

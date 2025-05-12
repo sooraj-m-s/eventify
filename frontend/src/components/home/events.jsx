@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 
+
 const Events = () => {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -9,27 +10,20 @@ const Events = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 4
 
-  // Fetch events directly in this component
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true)
         const response = await axiosInstance.get("/events/")
-
-        // Check the structure of the response and extract events properly
-        // Make sure we always have an array, even if the API returns something unexpected
         let eventsData = []
 
         if (response.data) {
-          // If response.data is already an array, use it directly
           if (Array.isArray(response.data)) {
             eventsData = response.data
           }
-          // If it's an object with an events property that's an array
           else if (response.data.events && Array.isArray(response.data.events)) {
             eventsData = response.data.events
           }
-          // Otherwise, log the structure to help with debugging
           else {
             console.log("Unexpected API response structure:", response.data)
           }

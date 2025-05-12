@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import store from './store/store';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Toaster } from 'sonner'
 import './index.css'
 import App from './App.jsx'
 import AuthProvider from './components/AuthProvider.jsx';
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')).render(
         </BrowserRouter>
       </Provider>
     </GoogleOAuthProvider>
+    <Toaster position="top-right" expand={false} richColors />
   </StrictMode>,
 )
 

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import axiosInstance from "../../utils/axiosInstance"
 
 
@@ -35,7 +35,7 @@ const ForgotPassword = () => {
 
       toast.success(response.data.message || "Verification code sent! Check your email.")
       setTimeout(() => {
-        navigate("/client/reset_password", {
+        navigate("/reset_password", {
           state: {
             tempUserId: response.data.temp_user_id,
             email: email,
@@ -133,7 +133,7 @@ const ForgotPassword = () => {
             </button>
 
             <div className="text-center mt-4">
-              <Link to="/client/login" className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+              <Link to="/login" className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
                 Back to Login
               </Link>
             </div>
@@ -143,7 +143,7 @@ const ForgotPassword = () => {
         <div className="bg-gray-50 px-8 py-4 border-t border-gray-100">
           <p className="text-xs text-gray-500 text-center">
             Remember your password?{" "}
-            <Link to="/client/login" className="text-blue-600 hover:text-blue-700">
+            <Link to="/login" className="text-blue-600 hover:text-blue-700">
               Sign in
             </Link>
           </p>

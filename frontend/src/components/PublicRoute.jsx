@@ -7,7 +7,7 @@ const UserPublicRoute = ({ children }) => {
   
   // If user is authenticated, redirect to home page
   if (isAuthenticated) {
-    return <Navigate to="/client" replace />;
+    return <Navigate to="/" replace />;
   }
   
   return children;

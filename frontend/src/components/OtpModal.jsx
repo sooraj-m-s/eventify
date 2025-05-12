@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from "sonner";
 import { logout, setError, setLoading } from '../store/slices/authSlice';
 import axiosInstance from '../utils/axiosInstance';
 
@@ -112,7 +112,7 @@ const OtpModal = () => {
       });
       toast.success('OTP verified successfully! Redirecting to login...');
       dispatch(logout());
-      setTimeout(() => navigate('/client/login'), 2000);
+      setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'OTP verification failed';
       dispatch(setError(errorMsg));

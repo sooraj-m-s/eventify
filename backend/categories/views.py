@@ -15,3 +15,4 @@ class CategoryListView(APIView):
         categories = Category.objects.all()
         serializer = CategorySerializer(categories, many=True)
         return Response({'categories': serializer.data})
+

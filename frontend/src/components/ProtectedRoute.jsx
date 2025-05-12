@@ -10,7 +10,7 @@ const UserProtectedRoute = ({ children }) => {
   }
   
   if (!userRole) {
-    return <Navigate to="/client/unauthorized" replace />
+    return <Navigate to="/" replace />
   }
 
   return children
@@ -25,7 +25,7 @@ const OrganizerProtectedRoute = ({ children }) => {
   }
   
   if (userRole !== 'organizer') {
-    return <Navigate to="/client" replace />
+    return <Navigate to="/" replace />
   }
 
   return children
@@ -40,7 +40,7 @@ const AdminProtectedRoute = ({ children }) => {
   }
   
   if (userRole !== 'admin') {
-    return <Navigate to="/client" replace />
+    return <Navigate to="/" replace />
   }
 
   return children

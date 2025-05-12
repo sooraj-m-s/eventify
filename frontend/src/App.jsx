@@ -1,6 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
 import Register from './pages/auth/Register';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CompleteRegistration from './pages/auth/CompleteRegistration';
 import Login from './pages/auth/Login';
@@ -18,6 +17,7 @@ import NotFound from './pages/NotFound';
 import { UserPublicRoute, AdminPublicRoute } from './components/PublicRoute';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import BecomeOrganizer from './pages/organizer/BecomeOrganizer';
 
 
 function App() {
@@ -26,7 +26,7 @@ function App() {
     <>
       <Routes>
         {/* Client Routes */}
-        <Route path="client/*"
+        <Route path="*"
           element={
             <>
               <Header />
@@ -39,6 +39,7 @@ function App() {
                   <Route path="reset_password/" element={<UserPublicRoute><ResetPassword /></UserPublicRoute>} />
                   <Route path="" element={<Home />} />
                   <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
+                  <Route path="become_organizer" element={<UserProtectedRoute><BecomeOrganizer /></UserProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
@@ -64,8 +65,6 @@ function App() {
         />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      
-      <ToastContainer autoClose={2000}/>
     </>
   )
 }

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import store from '../store/store';
-import { logout, setError } from '../store/slices/authSlice';
+import { logout } from '../store/slices/authSlice';
 
 
 const axiosInstance = axios.create({
@@ -46,7 +46,6 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Only attempt token refresh for 401 errors
     if (error.response?.status !== 401) {
       return Promise.reject(error)
     }
@@ -67,11 +66,9 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(err);
         });
     }
-    
     isRefreshing = true;
     
     try {
-      // Call the refresh token endpoint
       await axiosInstance.post('/users/refresh_token/');
       
       // Token refresh successful, process the queue and retry the original request
@@ -84,9 +81,7 @@ axiosInstance.interceptors.response.use(
       processQueue(refreshError);
       isRefreshing = false;
       
-      // Dispatch logout action to clear auth state
       store.dispatch(logout());
-      
       return Promise.reject(refreshError);
     }
   }

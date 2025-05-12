@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import 'react-toastify/dist/ReactToastify.css';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import axiosInstance from '../../utils/axiosInstance';
+
 
 const CompleteRegistration = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const userData = location.state || {}; // Contains email, name, picture, google_id from backend
+  const userData = location.state || {};
 
   const [formData, setFormData] = useState({
     mobile: '',
@@ -65,8 +67,8 @@ const CompleteRegistration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
+    setLoading(true)
 
     const formDataToSend = new FormData();
     for (const key in formData) {
@@ -79,8 +81,7 @@ const CompleteRegistration = () => {
     formDataToSend.append('picture', userData.picture || '');
 
     try {
-      const response = await axios.post(
-        'http://localhost:8000/users/complete_registration/',
+      const response = await axiosInstance.post('/users/complete_registration/',
         formDataToSend,
         {
           headers: {
@@ -89,7 +90,7 @@ const CompleteRegistration = () => {
         }
       );
       toast.success('Registration completed successfully!');
-      setTimeout(() => navigate('/client/login'), 2000);
+      setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
       console.log('Backend error:', error.response?.data);
       if (error.response?.data) {
@@ -110,12 +111,13 @@ const CompleteRegistration = () => {
       } else {
         toast.error('An error occurred. Please try again.');
       }
+    } finally {
+      setLoading(false)
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <ToastContainer />
       <h2 className="text-2xl font-bold mb-6 text-center">Complete Your Registration</h2>
       <div className="space-y-4">
         {/* Display Google data */}
@@ -206,28 +208,41 @@ const CompleteRegistration = () => {
               <p className="text-red-500 text-sm mt-1">{errors.confirm_password}</p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Profile Image</label>
-            <input
-              type="file"
-              name="profile_image"
-              onChange={handleChange}
-              className={`mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${
-                errors.profile_image ? 'border-red-500' : 'border-gray-300'
-              }`}
-              accept="image/*"
-            />
-            {errors.profile_image && (
-              <p className="text-red-500 text-sm mt-1">{errors.profile_image}</p>
-            )}
-          </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            disabled={loading}
+            className={`w-full py-2 px-4 rounded-md transition-colors ${
+              loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
           >
-            Complete Registration
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Completing Registration...
+              </div>
+            ) : (
+              "Complete Registration"
+            )}
           </button>
         </form>
+
+        <div className="text-center mt-4">
+          <Link to="/login" className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+            Back to Login
+          </Link>
+        </div>
       </div>
     </div>
   );

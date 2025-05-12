@@ -10,6 +10,7 @@ import CustomGoogleButton from '../../components/CustomGoogleButton';
 import axiosInstance from '../../utils/axiosInstance';
 import uploadToCloudinary from '../../utils/cloudinaryUpload';
 import { Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 
 const Register = () => {
@@ -286,6 +287,12 @@ const Register = () => {
             )}
           </button>
           <CustomGoogleButton />
+
+          <div className="text-center mt-4">
+            <Link to="/login" className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+              Back to Login
+            </Link>
+          </div>
         </form>
         <OtpModal />
       </div>

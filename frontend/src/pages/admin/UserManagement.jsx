@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
 import { Loader2, Search } from "lucide-react"

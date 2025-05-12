@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 
+
 const Organizers = () => {
   const [organizers, setOrganizers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -16,7 +17,6 @@ const Organizers = () => {
         const response = await axiosInstance.get("/users/organizers/")
         setOrganizers(response.data || [])
         setError(null)
-        console.log("Organizers:", response.data);
         
       } catch (err) {
         console.error("Error fetching organizers:", err)

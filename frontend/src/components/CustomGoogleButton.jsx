@@ -1,5 +1,5 @@
 import { GoogleLogin } from "@react-oauth/google"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { setUser } from "../store/slices/authSlice"
@@ -25,10 +25,10 @@ const CustomGoogleButton = () => {
                 role: response.data.role
               }))
         toast.success("Login successful! Redirecting...")
-        setTimeout(() => navigate("/client"), 2000)
+        setTimeout(() => navigate("/"), 2000)
       } else if (response.data.status === "new") {
         toast.success("New user registered! Redirecting to complete registration...")
-        setTimeout(() => navigate("/client/register/complete", { state: response.data.user_data }), 2000)
+        setTimeout(() => navigate("/register/complete", { state: response.data.user_data }), 2000)
       }
     } catch (error) {
       console.error("Google auth error:", error)

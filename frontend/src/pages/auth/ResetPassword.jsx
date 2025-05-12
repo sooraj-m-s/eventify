@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate, useLocation, Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import { Eye, EyeOff } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 
@@ -10,13 +10,6 @@ const ResetPassword = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { tempUserId, email } = location.state || {}
-
-//   useEffect(() => {
-//     if (!tempUserId || !email) {
-//       toast.error("Missing information. Please restart the password reset process.")
-//       navigate("/client/forgot_password")
-//     }
-//   }, [tempUserId, email, navigate])
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const inputRefs = useRef([])
@@ -152,7 +145,7 @@ const ResetPassword = () => {
         new_password: password,
       })
       toast.success("Password reset successfully!")
-      setTimeout(() => {navigate("/client/login")}, 2000)
+      setTimeout(() => {navigate("/login")}, 2000)
     } catch (error) {
       console.error("Error resetting password:", error)
 
@@ -335,7 +328,7 @@ const ResetPassword = () => {
         <div className="bg-gray-50 px-8 py-4 border-t border-gray-100">
           <p className="text-xs text-gray-500 text-center">
             Remember your password?{" "}
-            <Link to="/client/login" className="text-blue-600 hover:text-blue-700">
+            <Link to="/login" className="text-blue-600 hover:text-blue-700">
               Sign in
             </Link>
           </p>

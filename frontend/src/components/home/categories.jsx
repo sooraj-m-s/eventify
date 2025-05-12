@@ -15,7 +15,6 @@ const Categories = () => {
       try {
         setLoading(true)
         const response = await axiosInstance.get("/categories/")
-        console.log(response.data);
         
         setCategories(response.data.categories || [])
         setError(null)

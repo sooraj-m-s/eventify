@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import { Eye, EyeOff } from "lucide-react"
 import { useDispatch } from "react-redux"
 import axiosInstance from "../../utils/axiosInstance"
@@ -88,7 +88,7 @@ const Login = () => {
         role: response.data.role
       }))
       toast.success("Login successful! Redirecting to home...")
-      navigate("/client")
+      navigate("/")
     } catch (error) {
       if (error.response?.data?.detail) {
         if (Array.isArray(error.response.data.detail)) {
@@ -172,7 +172,7 @@ const Login = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center"></div>
               <div className="text-sm">
-                <Link to="/client/forgot_password" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link to="/forgot_password" className="font-medium text-blue-600 hover:text-blue-500">
                   Forgot password?
                 </Link>
               </div>
@@ -191,7 +191,7 @@ const Login = () => {
             <div className="text-center mt-4">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <Link to="/client/register" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
                   Sign up
                 </Link>
               </p>
