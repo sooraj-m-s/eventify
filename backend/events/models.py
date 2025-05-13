@@ -7,7 +7,6 @@ import uuid
 
 class Event(models.Model):
     eventId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    userId = models.ForeignKey('users.Users', to_field='user_id', on_delete=models.CASCADE, related_name='events_created')
     title = models.CharField(max_length=255)
     category = models.ForeignKey('categories.Category', to_field='categoryId', on_delete=models.CASCADE)
     pricePerTicket = models.IntegerField()
@@ -20,6 +19,9 @@ class Event(models.Model):
     cancellationPolicy = models.TextField(blank=True, null=True)
     termsAndConditions = models.TextField(blank=True, null=True)
     date = models.DateField()
+    is_completed = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
+    on_hold = models.BooleanField(default=False)
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
 

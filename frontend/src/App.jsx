@@ -19,6 +19,8 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import BecomeOrganizer from './pages/user/BecomeOrganizer';
 import OrganizerProfile from './pages/organizer/OrganizerProfile';
+import CategoryManagement from './pages/admin/CategoryManagement';
+import OrganizerEventManagement from './pages/organizer/OrganizerEventManagement';
 
 
 function App() {
@@ -57,6 +59,7 @@ function App() {
               <div className='pt-16'>
                 <Routes>
                   <Route path="profile" element={<OrganizerProtectedRoute><OrganizerProfile /></OrganizerProtectedRoute>} />
+                  <Route path="events" element={<OrganizerProtectedRoute><OrganizerEventManagement /></OrganizerProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
@@ -74,6 +77,7 @@ function App() {
                 <Route path="login" element={<AdminPublicRoute><AdminLogin /></AdminPublicRoute>} />
                 <Route path="dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
                 <Route path="users" element={<AdminProtectedRoute><UserManagement /></AdminProtectedRoute>} />
+                <Route path="categories" element={<AdminProtectedRoute><CategoryManagement /></AdminProtectedRoute>} />
                 <Route path="events" element={<AdminProtectedRoute><EventManagement /></AdminProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

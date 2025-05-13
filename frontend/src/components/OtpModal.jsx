@@ -148,7 +148,6 @@ const OtpModal = () => {
       dispatch(setLoading(false))
     }
   }
-
   if (!tempUserId) return null;
 
   return (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Bell, MessageSquare, MapPin, Mail, User } from "lucide-react"
+import { Bell, MessageSquare, MapPin, Mail } from "lucide-react"
 import { useSelector } from "react-redux"
 import axiosInstance from "../../utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
@@ -9,8 +9,6 @@ const OrganizerProfile = () => {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // Get user data from Redux store
   const user = useSelector((state) => state.auth)
 
   useEffect(() => {
