@@ -62,13 +62,13 @@ const Home = () => {
       <HeroSection />
 
       <div className="container mx-auto px-4 py-8">
-        <Categories categories={categories} loading={loading.categories} error={error.categories} />
-
-        <Events events={events} loading={loading.events} error={error.events} />
-
         <Categories />
 
-        <Organizers organizers={organizers} loading={loading.organizers} error={error.organizers} />
+        <Events />
+        
+        <Categories />
+        
+        <Organizers />
 
         <div className="my-16 text-center">
           <h2 className="text-2xl font-semibold mb-8 relative inline-block">

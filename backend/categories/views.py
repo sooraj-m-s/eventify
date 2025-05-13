@@ -6,9 +6,6 @@ from .models import Category
 from .serializers import CategorySerializer
 
 
-# Create your views here.
-
-
 @permission_classes([AllowAny])
 class CategoryListView(APIView):
     def get(self, request):

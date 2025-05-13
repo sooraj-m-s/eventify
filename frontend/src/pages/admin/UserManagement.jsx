@@ -2,8 +2,9 @@ import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
-import { Loader2, Search } from "lucide-react"
+import { Loader2, Search, UserPlus } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
+import OrganizerRequestModal from "./components/OrganizerRequestModal"
 
 
 const UserManagement = () => {
@@ -15,6 +16,8 @@ const UserManagement = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [updatingUserId, setUpdatingUserId] = useState(null)
+  const [showOrganizerModal, setShowOrganizerModal] = useState(false)
+  const [pendingOrganizerCount, setPendingOrganizerCount] = useState(0)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,7 +34,6 @@ const UserManagement = () => {
             search: searchTerm,
           },
         })
-
         console.log("Response data:", response.data)
 
         // Set the users data based on the active tab
@@ -42,6 +44,7 @@ const UserManagement = () => {
         }
 
         setTotalPages(Math.ceil(response.data.count / 10) || 1)
+        fetchPendingOrganizerCount()
       } catch (err) {
         console.error("Error fetching data:", err)
         setError("Failed to load data. Please try again.")
@@ -53,6 +56,18 @@ const UserManagement = () => {
 
     fetchData()
   }, [activeTab, currentPage, searchTerm])
+
+  const fetchPendingOrganizerCount = async () => {
+    try {
+      const response = await axiosInstance.get("/admin/pending_organizers/", {
+        params: { status: "pending", count_only: true },
+      })
+      const pendingCount = response.data.profiles.filter(profile => !profile.is_approved && !profile.is_rejected).length;
+      setPendingOrganizerCount(pendingCount);
+    } catch (err) {
+      console.error("Error fetching pending organizer count:", err)
+    }
+  }
 
   const handleStatusChange = async (userId, isBlocked) => {
     setUpdatingUserId(userId)
@@ -75,7 +90,6 @@ const UserManagement = () => {
     }
   }
 
-  // Handle search
   const handleSearch = (e) => {
     e.preventDefault()
     setCurrentPage(1)
@@ -89,7 +103,23 @@ const UserManagement = () => {
         <Sidebar />
 
         <div className="flex-1 p-6">
-          <h1 className="text-2xl font-semibold mb-6">User Management</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold">User Management</h1>
+
+            {/* Organizer Requests Button */}
+            <button
+              onClick={() => setShowOrganizerModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              <UserPlus size={18} />
+              Organizer Requests
+              {pendingOrganizerCount > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {pendingOrganizerCount}
+                </span>
+              )}
+            </button>
+          </div>
 
           <div className="bg-white rounded-md shadow-sm">
             {/* Tabs and Search */}
@@ -206,6 +236,17 @@ const UserManagement = () => {
                 </tbody>
               </table>
             </div>
+
+            <OrganizerRequestModal
+              isOpen={showOrganizerModal}
+              onClose={() => setShowOrganizerModal(false)}
+              refreshData={() => {
+                fetchPendingOrganizerCount()
+                if (activeTab === "organizers") {
+                  setCurrentPage(1)
+                }
+              }}
+            />
 
             {/* Pagination */}
             {!loading && !error && users.length > 0 && (

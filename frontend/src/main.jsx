@@ -23,7 +23,7 @@ createRoot(document.getElementById('root')).render(
         </BrowserRouter>
       </Provider>
     </GoogleOAuthProvider>
-    <Toaster position="top-right" expand={false} richColors />
+    <Toaster position="top-right" expand={false} richColors closeButton />
   </StrictMode>,
 )
 

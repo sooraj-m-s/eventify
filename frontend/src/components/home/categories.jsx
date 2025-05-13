@@ -1,21 +1,19 @@
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 
 
 const Categories = () => {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 4
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true)
         const response = await axiosInstance.get("/categories/")
-        
+
         setCategories(response.data.categories || [])
         setError(null)
       } catch (err) {
@@ -56,22 +54,6 @@ const Categories = () => {
     )
   }
 
-  const totalPages = Math.ceil(categories.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const currentCategories = categories.slice(startIndex, startIndex + itemsPerPage)
-
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
-    }
-  }
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
-  }
-
   return (
     <div className="my-12">
       <div className="flex justify-between items-center mb-6">
@@ -79,58 +61,32 @@ const Categories = () => {
         <div className="text-sm">View all ({categories.length})</div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {currentCategories.map((category) => (
-          <div key={category.categoryId} className="relative group cursor-pointer">
-            <div className="overflow-hidden rounded-lg">
-              <img
-                src={category.image || `/placeholder.svg?height=200&width=300`}
-                alt={category.categoryName}
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            </div>
-            <h3 className="mt-2 text-center font-medium">{category.categoryName}</h3>
-          </div>
-        ))}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          <button
-            onClick={goToPreviousPage}
-            disabled={currentPage === 1}
-            className={`w-8 h-8 flex items-center justify-center rounded-full border ${
-              currentPage === 1 ? "text-gray-400 border-gray-200" : "text-black border-gray-300 hover:bg-gray-100"
-            }`}
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`w-8 h-8 flex items-center justify-center rounded-full ${
-                currentPage === i + 1 ? "bg-black text-white" : "border border-gray-300 hover:bg-gray-100"
-              }`}
-            >
-              {i + 1}
-            </button>
+      <Carousel
+        opts={{
+          align: "center",
+          loop: true,
+        }}
+        className="w-full"
+      >
+        <CarouselContent>
+          {categories.map((category) => (
+            <CarouselItem key={category.categoryId} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/5">
+              <div className="relative group cursor-pointer p-1">
+                <div className="overflow-hidden rounded-lg">
+                  <img
+                    src={category.image || `/placeholder.svg?height=200&width=300`}
+                    alt={category.categoryName}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <h3 className="mt-2 text-center font-medium">{category.categoryName}</h3>
+              </div>
+            </CarouselItem>
           ))}
-
-          <button
-            onClick={goToNextPage}
-            disabled={currentPage === totalPages}
-            className={`w-8 h-8 flex items-center justify-center rounded-full border ${
-              currentPage === totalPages
-                ? "text-gray-400 border-gray-200"
-                : "text-black border-gray-300 hover:bg-gray-100"
-            }`}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
+        </CarouselContent>
+        <CarouselPrevious className="left-2" />
+        <CarouselNext className="right-2" />
+      </Carousel>
     </div>
   )
 }

@@ -4,17 +4,18 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q
+from django.utils import timezone
+from users.models import Users
+from organizers.models import OrganizerProfile
+from organizers.serializers import OrganizerProfileSerializer
 from .permissions import IsAdminUser
 from .serializers import UserListSerializer
-from users.models import Users
 
 
 @permission_classes([AllowAny])
 class AdminLoginView(APIView):
-    # permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -22,12 +23,8 @@ class AdminLoginView(APIView):
         user = authenticate(username=email, password=password)
         if not user:
             return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
-        
         if user.role != 'admin':
-            return Response(
-                {"error": "Access denied. Admin privileges required."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "Access denied. Admin privileges required."}, status=status.HTTP_403_FORBIDDEN)
 
         refresh = RefreshToken.for_user(user)
         response = Response(
@@ -53,8 +50,8 @@ class UserPagination(PageNumberPagination):
     page_query_param = 'page'
 
 
+@permission_classes([IsAdminUser])
 class UserListView(APIView):
-    permission_classes = [IsAdminUser]
     pagination_class = UserPagination
     
     def get(self, request):
@@ -82,9 +79,8 @@ class UserListView(APIView):
         return Response({'count': queryset.count(), 'results': serializer.data})
 
 
+@permission_classes([IsAdminUser])
 class UserStatusUpdateView(APIView):
-    permission_classes = [IsAdminUser]
-    
     def patch(self, request, user_id):
         try:
             user = Users.objects.get(user_id=user_id)
@@ -102,20 +98,51 @@ class UserStatusUpdateView(APIView):
                     'data': serializer.data
                 }, status=status.HTTP_200_OK)
             else:
-                return Response({
-                    'status': 'error',
-                    'message': "is_blocked field is required"
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'status': 'error', 'message': "is_blocked field is required"}, status=status.HTTP_400_BAD_REQUEST)
                 
         except Users.DoesNotExist:
-            return Response({
-                'status': 'error',
-                'message': "User not found"
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response({'status': 'error', 'message': "User not found"}, status=status.HTTP_404_NOT_FOUND)
         
         except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+permission_classes([IsAdminUser])
+class PendingOrganizerProfilesView(APIView):
+    def get(self, request):
+        try:
+            profiles = OrganizerProfile.objects.filter(is_approved=False)
+            serializer = OrganizerProfileSerializer(profiles, many=True)
+            
+            return Response({"count": profiles.count(), "profiles": serializer.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        try:
+            profile_id = request.data.get('profile_id')
+            action = request.data.get('action')
+            reason = request.data.get('reason', None)
+            
+            try:
+                organizer_profile = OrganizerProfile.objects.get(id=profile_id)
+                
+                if action == 'approve':
+                    user = Users.objects.get(user_id=organizer_profile.user.user_id)
+                    user.role = 'organizer'
+                    user.save()
+                    organizer_profile.is_approved = True
+                    organizer_profile.approved_at = timezone.now()
+                elif action == 'reject':
+                    organizer_profile.is_rejected = True
+                    organizer_profile.rejected_reason = reason
+                else:
+                    return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+                organizer_profile.save()
+
+                return Response({"message": "Profile updated successfully"}, status=status.HTTP_200_OK)
+            except OrganizerProfile.DoesNotExist:
+                return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

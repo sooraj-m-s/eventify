@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import { Upload, Loader2, AlertCircle, CheckCircle, XCircle } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 import uploadToCloudinary from "../../utils/cloudinaryUpload"
-import ProfileSidebar from "../user/components/ProfileSidebar"
+import ProfileSidebar from "./components/ProfileSidebar"
 
 
 const BecomeOrganizer = () => {

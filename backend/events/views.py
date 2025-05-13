@@ -6,9 +6,6 @@ from .models import Event
 from .serializers import EventSerializer
 
 
-# Create your views here.
-
-
 @permission_classes([AllowAny])
 class EventListView(APIView):
     def get(self, request):

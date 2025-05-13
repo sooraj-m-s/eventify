@@ -113,7 +113,6 @@ const Register = () => {
 
       const tempUserId = response.data.temp_user_id;
       dispatch(setUserId(tempUserId));
-      toast.success('OTP sent to your email. Please verify.');
     } catch (error) {
       console.log('Backend error:', error.response?.data);
       if (error.response?.data) {

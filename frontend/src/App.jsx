@@ -17,7 +17,8 @@ import NotFound from './pages/NotFound';
 import { UserPublicRoute, AdminPublicRoute } from './components/PublicRoute';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
-import BecomeOrganizer from './pages/organizer/BecomeOrganizer';
+import BecomeOrganizer from './pages/user/BecomeOrganizer';
+import OrganizerProfile from './pages/organizer/OrganizerProfile';
 
 
 function App() {
@@ -40,6 +41,22 @@ function App() {
                   <Route path="" element={<Home />} />
                   <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                   <Route path="become_organizer" element={<UserProtectedRoute><BecomeOrganizer /></UserProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+              <Footer />
+            </>
+          }
+        />
+
+        {/* Organizer Routes */}
+        <Route path="organizer/*"
+          element={
+            <>
+              <Header />
+              <div className='pt-16'>
+                <Routes>
+                  <Route path="profile" element={<OrganizerProtectedRoute><OrganizerProfile /></OrganizerProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

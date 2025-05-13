@@ -152,7 +152,7 @@ const OtpModal = () => {
   if (!tempUserId) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+    <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-[9999]">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-2xl font-bold mb-4 text-center">Enter OTP</h2>
         <p className="text-center mb-6">Check your email for the 6-digit code.</p>

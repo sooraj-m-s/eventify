@@ -12,11 +12,9 @@ from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenErro
 import random, requests
 from django.conf import settings
 from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer, UserProfileSerializer
-from .models import TemporaryUserOTP, Users, OrganizerProfile
-from .serializers import OrganizerProfileSerializer
-
-
-# Create your views here.
+from .models import TemporaryUserOTP, Users
+from organizers.models import OrganizerProfile
+from organizers.serializers import OrganizerProfileSerializer
 
 
 @permission_classes([AllowAny])

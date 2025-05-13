@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 
 
 const Events = () => {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 4
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -20,11 +18,9 @@ const Events = () => {
         if (response.data) {
           if (Array.isArray(response.data)) {
             eventsData = response.data
-          }
-          else if (response.data.events && Array.isArray(response.data.events)) {
+          } else if (response.data.events && Array.isArray(response.data.events)) {
             eventsData = response.data.events
-          }
-          else {
+          } else {
             console.log("Unexpected API response structure:", response.data)
           }
         }
@@ -69,23 +65,7 @@ const Events = () => {
     )
   }
 
-  const displayEvents = Array.isArray(events) && events
-
-  const totalPages = Math.ceil(displayEvents.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const currentEvents = displayEvents.slice(startIndex, startIndex + itemsPerPage)
-
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
-    }
-  }
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
-  }
+  const displayEvents = Array.isArray(events) && events.length > 0 ? events : []
 
   return (
     <div className="my-12">
@@ -94,59 +74,33 @@ const Events = () => {
         <div className="text-sm">View all ({displayEvents.length})</div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {currentEvents.map((event) => (
-          <div key={event.eventId} className="cursor-pointer group">
-            <div className="overflow-hidden rounded-lg">
-              <img
-                src={event.posterImage || `/placeholder.svg?height=200&width=300`}
-                alt={event.title}
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            </div>
-            <h3 className="mt-2 font-medium">{event.title}</h3>
-            <p className="text-sm text-gray-600">{event.location}</p>
-          </div>
-        ))}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          <button
-            onClick={goToPreviousPage}
-            disabled={currentPage === 1}
-            className={`w-8 h-8 flex items-center justify-center rounded-full border ${
-              currentPage === 1 ? "text-gray-400 border-gray-200" : "text-black border-gray-300 hover:bg-gray-100"
-            }`}
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`w-8 h-8 flex items-center justify-center rounded-full ${
-                currentPage === i + 1 ? "bg-black text-white" : "border border-gray-300 hover:bg-gray-100"
-              }`}
-            >
-              {i + 1}
-            </button>
+      <Carousel
+        opts={{
+          align: "center",
+          loop: true,
+        }}
+        className="w-full"
+      >
+        <CarouselContent>
+          {displayEvents.map((event) => (
+            <CarouselItem key={event.eventId} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/5">
+              <div className="cursor-pointer group p-1">
+                <div className="overflow-hidden rounded-lg">
+                  <img
+                    src={event.posterImage || `/placeholder.svg?height=200&width=300`}
+                    alt={event.title}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <h3 className="mt-2 font-medium">{event.title}</h3>
+                <p className="text-sm text-gray-600">{event.location}</p>
+              </div>
+            </CarouselItem>
           ))}
-
-          <button
-            onClick={goToNextPage}
-            disabled={currentPage === totalPages}
-            className={`w-8 h-8 flex items-center justify-center rounded-full border ${
-              currentPage === totalPages
-                ? "text-gray-400 border-gray-200"
-                : "text-black border-gray-300 hover:bg-gray-100"
-            }`}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
+        </CarouselContent>
+        <CarouselPrevious className="left-2" />
+        <CarouselNext className="right-2" />
+      </Carousel>
     </div>
   )
 }
