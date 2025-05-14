@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react"
 import axiosInstance from "../../utils/axiosInstance"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import { useNavigate } from "react-router-dom"
 
 
 const Events = () => {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -37,6 +39,10 @@ const Events = () => {
 
     fetchEvents()
   }, [])
+
+  const handleEventClick = (eventId) => {
+    navigate(`/event_detial/${eventId}`)
+  }
 
   if (loading) {
     return (
@@ -84,7 +90,7 @@ const Events = () => {
         <CarouselContent>
           {displayEvents.map((event) => (
             <CarouselItem key={event.eventId} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/5">
-              <div className="cursor-pointer group p-1">
+              <div className="cursor-pointer group p-1" onClick={() => handleEventClick(event.eventId)}>
                 <div className="overflow-hidden rounded-lg">
                   <img
                     src={event.posterImage || `/placeholder.svg?height=200&width=300`}

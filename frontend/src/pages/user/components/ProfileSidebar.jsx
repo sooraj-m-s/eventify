@@ -54,7 +54,6 @@ const ProfileSidebar = () => {
 
   const navItems = [
     { name: "Profile", path: "/profile", icon: <User className="h-5 w-5" /> },
-    { name: "Events", path: "/events", icon: <Calendar className="h-5 w-5" /> },
     { name: "Bookings", path: "/bookings", icon: <BookOpen className="h-5 w-5" /> },
     { name: "Wallet", path: "/wallet", icon: <Wallet className="h-5 w-5" /> },
     { name: "Transactions", path: "/transactions", icon: <BarChart3 className="h-5 w-5" /> },
