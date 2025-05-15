@@ -1,17 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  DollarSign,
-  AlertCircle,
-  Eye,
-  Loader,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-} from "lucide-react"
+import { Calendar, Clock, MapPin, DollarSign, AlertCircle, Eye, Loader, CheckCircle,
+    XCircle, RefreshCw } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 import { toast } from "react-toastify"
 import BookingDetailsModal from "./components/UserBookingDetailsModal"
@@ -141,15 +131,13 @@ const UserBookings = () => {
   }
 
   const isBookingCancellable = (booking) => {
-    // Check if booking is already cancelled
     if (booking.payment_status === "cancelled" || booking.is_booking_cancelled) {
       return false
     }
 
-    // Check if event date has passed
     const eventDate = new Date(booking.event.date)
     const today = new Date()
-    today.setHours(0, 0, 0, 0) // Set to beginning of day for fair comparison
+    today.setHours(0, 0, 0, 0)
 
     return eventDate >= today
   }
@@ -190,9 +178,9 @@ const UserBookings = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       <ProfileSidebar />
-      <div className="flex-1 overflow-auto p-8">
+      <div className="flex-1 p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">My Bookings</h1>

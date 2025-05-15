@@ -21,7 +21,10 @@ class BookEventView(APIView):
         try:
             event = Event.objects.get(eventId=event_id)
             
-            # Check if tickets are available
+            if event.on_hold:
+                return Response({"error": "Sorry, this event is currently not available."}, status=status.HTTP_403_FORBIDDEN)
+            if event.date < timezone.now().date():
+                return Response({"error": "Sorry, this event has already taken place."}, status=status.HTTP_400_BAD_REQUEST)
             if event.ticketsSold >= event.ticketLimit:
                 return Response({"error": "Sorry, this event is sold out"}, status=status.HTTP_400_BAD_REQUEST)
             

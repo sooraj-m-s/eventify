@@ -4,6 +4,7 @@ import Header from "@/components/Header"
 import { OrganizerProtectedRoute } from "@/components/ProtectedRoute"
 import OrganizerEventManagement from "@/pages/organizer/OrganizerEventManagement"
 import OrganizerProfile from "@/pages/organizer/OrganizerProfile"
+import OrganizerBookings from "@/pages/organizer/OrganizerBookings"
 
 
 const OrganizerRoutes = () => {
@@ -14,6 +15,7 @@ const OrganizerRoutes = () => {
                 <Routes>
                     <Route path="profile" element={<OrganizerProtectedRoute><OrganizerProfile /></OrganizerProtectedRoute>} />
                     <Route path="events" element={<OrganizerProtectedRoute><OrganizerEventManagement /></OrganizerProtectedRoute>} />
+                    <Route path="bookings" element={<OrganizerProtectedRoute><OrganizerBookings /></OrganizerProtectedRoute>} />
                 </Routes>
             </div>
             <Footer />

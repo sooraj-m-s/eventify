@@ -304,7 +304,7 @@ const UserProfile = () => {
           )}
           
           {/* Role-based buttons */}
-          <div className="p-6 border-t">
+          <div className="p-6 border-t text-center">
             {role != "organizer" && (
               <div className="mt-4">
                 <p className="mb-2 text-gray-700">Want to become an organizer? Click here.</p>

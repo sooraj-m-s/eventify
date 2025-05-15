@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { User, Calendar, BookOpen, Wallet, BarChart3, MessageSquare } from "lucide-react"
+import { User, BookOpen, Wallet, BarChart3, MessageSquare } from "lucide-react"
 import axiosInstance from "../../../utils/axiosInstance"
 
 

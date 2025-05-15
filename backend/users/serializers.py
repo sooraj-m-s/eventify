@@ -84,7 +84,7 @@ class CompleteRegistrationSerializer(serializers.Serializer):
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        exclude = ['password', 'role', 'is_superuser', 'is_staff', 'is_blocked', 'created_at', 'updated_at']
+        exclude = ['password', 'role', 'is_superuser', 'is_staff', 'is_blocked', 'updated_at']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

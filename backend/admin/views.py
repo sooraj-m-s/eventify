@@ -7,11 +7,14 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
+from django.db.models import Q
 from users.models import Users
 from organizers.models import OrganizerProfile
 from organizers.serializers import OrganizerProfileSerializer
+from events.models import Event
+from events.serializers import EventSerializer
 from .permissions import IsAdminUser
-from .serializers import UserListSerializer
+from .serializers import UserListSerializer, EventDetailWithHostSerializer
 
 
 @permission_classes([AllowAny])
@@ -43,7 +46,7 @@ class AdminLoginView(APIView):
         return response
 
 
-class UserPagination(PageNumberPagination):
+class PaginationData(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
@@ -52,7 +55,7 @@ class UserPagination(PageNumberPagination):
 
 @permission_classes([IsAdminUser])
 class UserListView(APIView):
-    pagination_class = UserPagination
+    pagination_class = PaginationData
     
     def get(self, request):
         search_query = request.query_params.get('search', '')
@@ -67,8 +70,7 @@ class UserListView(APIView):
         
         queryset = queryset.filter(role=role).order_by('-created_at')
         
-        # Apply pagination
-        paginator = UserPagination()
+        paginator = PaginationData()
         page = paginator.paginate_queryset(queryset, request)
         
         if page is not None:
@@ -84,7 +86,6 @@ class UserStatusUpdateView(APIView):
     def patch(self, request, user_id):
         try:
             user = Users.objects.get(user_id=user_id)
-            
             is_blocked = request.data.get('is_blocked')
             
             if is_blocked is not None:
@@ -99,15 +100,13 @@ class UserStatusUpdateView(APIView):
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({'status': 'error', 'message': "is_blocked field is required"}, status=status.HTTP_400_BAD_REQUEST)
-                
         except Users.DoesNotExist:
             return Response({'status': 'error', 'message': "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        
         except Exception as e:
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-permission_classes([IsAdminUser])
+@permission_classes([IsAdminUser])
 class PendingOrganizerProfilesView(APIView):
     def get(self, request):
         try:
@@ -145,4 +144,84 @@ class PendingOrganizerProfilesView(APIView):
                 return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@permission_classes([IsAdminUser])
+class AdminEventListView(APIView):
+    pagination_class = PaginationData
+    
+    def get(self, request):
+        try:
+            paginator = self.pagination_class()
+            
+            organizer_id = request.query_params.get('organizer_id', None)
+            event_status = request.query_params.get('status', None)  # Renamed variable
+            search = request.query_params.get('search', None)
+            
+            events = Event.objects.all().order_by('-createdAt')
+            if organizer_id:
+                events = events.filter(hostedBy__user_id=organizer_id)
+                
+            if event_status:  # Use renamed variable
+                today = timezone.now().date()
+                if event_status == 'active':
+                    events = events.filter(date__gte=today, on_hold=False, is_completed=False)
+                elif event_status == 'on_hold':
+                    events = events.filter(on_hold=True)
+                elif event_status == 'completed':
+                    events = events.filter(is_completed=True)
+                elif event_status == 'expired':
+                    events = events.filter(date__lt=today, is_completed=False)
+            
+            if search:
+                events = events.filter(
+                    Q(title__icontains=search) | 
+                    Q(location__icontains=search)
+                )
+            
+            page = paginator.paginate_queryset(events, request)
+            serializer = EventDetailWithHostSerializer(page, many=True)
+            
+            return Response({
+                'success': True,
+                'count': events.count(),
+                'events': serializer.data,
+                'next': paginator.get_next_link(),
+                'previous': paginator.get_previous_link()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"Error in AdminEventListView: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'An error occurred while fetching events',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@permission_classes([IsAdminUser])
+class EventHoldStatusView(APIView):
+    def patch(self, request, event_id):
+        try:
+            event = Event.objects.get(pk=event_id)
+            
+            if 'on_hold' in request.data:
+                event.on_hold = request.data['on_hold']
+            else:
+                event.on_hold = not event.on_hold
+            
+            event.save()
+            serializer = EventSerializer(event)
+            
+            return Response({
+                "success": True,
+                "message": f"Event {'put on hold' if event.on_hold else 'removed from hold'} successfully",
+                "event": serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Event.DoesNotExist:
+            return Response({"success": False, "message": "Event not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"success": False, "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

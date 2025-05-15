@@ -5,13 +5,12 @@ import AdminRoutes from "./routes/AdminRoutes"
 import NotFound from "./pages/NotFound"
 
 
-
 function App() {
 
   return (
     <Routes>
       {/* Client Routes */}
-      <Route index element={<UserRoutes />} />
+      <Route path="/*" element={<UserRoutes />} />
 
       {/* Organizer Routes */}
       <Route path="organizer/*" element={<OrganizerRoutes />} />

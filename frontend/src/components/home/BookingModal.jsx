@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { X, Calendar, Clock, MapPin, Loader } from "lucide-react"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import axiosInstance from "@/utils/axiosInstance"
 import { useNavigate } from "react-router-dom"
 
@@ -41,7 +41,7 @@ const BookingModal = ({ event, onClose, user }) => {
         booking_name: user?.full_name || "Guest",
         notes: notes,
       })
-
+      
       setBookingData(response.data.booking)
       setBookingSuccess(true)
       toast.success("Booking successful!")
@@ -71,8 +71,8 @@ const BookingModal = ({ event, onClose, user }) => {
         {bookingSuccess ? (
           <div className="p-6 space-y-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
-              <h3 className="text-lg font-semibold mb-2">Booking Successful!</h3>
-              <p>Your booking has been confirmed. Here are your booking details:</p>
+              <h3 className="text-lg font-semibold mb-2 text-center">Booking Successful!</h3>
+              <p className="text-center">Your booking has been confirmed. Here are your booking details:</p>
             </div>
 
             <div className="border rounded-lg p-4 space-y-4">
