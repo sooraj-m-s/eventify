@@ -47,7 +47,7 @@ const Header = () => {
 
   return (
     <header className="bg-black text-white p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 shadow-md">
-      <div className="text-xl font-bold">Eventify</div>
+      <a href="/" className="text-xl font-bold">Eventify</a>
       <nav className="flex space-x-6">
         <a href="/" className="hover:text-gray-300">Home</a>
         <a href="/venue" className="hover:text-gray-300">Venue</a>

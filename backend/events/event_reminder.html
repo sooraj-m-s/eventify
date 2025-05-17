@@ -1,0 +1,22 @@
+<html>
+    <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <h2 style="color: #4CAF50; text-align: center;">Event Reminder</h2>
+            <p>Hi {{ user_name }},</p>
+            <p>This is a friendly reminder that you have an event tomorrow!</p>
+            
+            <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #333;">{{ event_title }}</h3>
+                <p><strong>Date:</strong> {{ event_date }}</p>
+                <p><strong>Location:</strong> {{ event_location }}</p>
+            </div>
+            
+            <p>We're looking forward to seeing you there!</p>
+            <p>Thank you for choosing Eventify!</p>
+            <p style="margin-top: 20px;">Best regards,<br><strong>The Eventify Team</strong></p>
+        </div>
+        <footer style="text-align: center; font-size: 12px; color: #aaa; margin-top: 20px;">
+            © {{ year }} Eventify. All rights reserved.
+        </footer>
+    </body>
+</html>

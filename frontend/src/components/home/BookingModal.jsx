@@ -208,7 +208,7 @@ const BookingModal = ({ event, onClose, user }) => {
                   <div className="text-xs text-gray-500 space-y-1 mb-6">
                     <p>* All prices are inclusive of taxes</p>
                     <p>* {event.termsAndConditions}</p>
-                    <p>* {event.cancellationPolicy}</p>
+                    <p>* Cancellation: {event.cancellationAvailable ? "Available" : "Not Available"}</p>
                   </div>
 
                   <h4 className="text-lg font-bold mb-4">Complete Your Payment</h4>
