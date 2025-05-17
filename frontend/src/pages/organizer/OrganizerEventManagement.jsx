@@ -50,7 +50,7 @@ const OrganizerEventManagement = () => {
     } catch (error) {
       console.error("Error fetching events:", error)
       setError(error.response?.data?.message || error.message || "Failed to fetch events")
-      toast.error("Failed to load events")
+      toast.error(error.response.data['detail'])
     } finally {
       setLoading(false)
     }

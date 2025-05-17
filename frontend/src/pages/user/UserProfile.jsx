@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, use } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Pencil, Upload, X } from "lucide-react"
 import ProfileSidebar from "./components/ProfileSidebar"
 import axiosInstance from "../../utils/axiosInstance"

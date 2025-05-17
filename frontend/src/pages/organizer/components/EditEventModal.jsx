@@ -20,7 +20,7 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
     location: "",
     category: "",
     posterImage: null,
-    cancellationPolicy: "",
+    cancellationAvailable: false,
     termsAndConditions: "",
     is_completed: false,
   })
@@ -43,7 +43,7 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
         location: event.location || "",
         category: event.category || "",
         posterImage: event.posterImage || null,
-        cancellationPolicy: event.cancellationPolicy || "",
+        cancellationAvailable: event.cancellationAvailable || false,
         termsAndConditions: event.termsAndConditions || "",
         is_completed: event.is_completed || false,
       })
@@ -69,11 +69,18 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
   }, [])
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    })
+    const { name, value } = e.target
+    if (e.target.type === "checkbox") {
+      setFormData({
+        ...formData,
+        [name]: e.target.checked,
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      })
+    }
   }
 
   const handleImageChange = async (e) => {
@@ -127,7 +134,7 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
         location: formData.location,
         category: formData.category,
         posterImage: formData.posterImage,
-        cancellationPolicy: formData.cancellationPolicy,
+        cancellationAvailable: formData.cancellationAvailable,
         termsAndConditions: formData.termsAndConditions,
         is_completed: formData.is_completed,
       }
@@ -357,21 +364,25 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
             )}
           </div>
 
-          {/* Cancellation Policy and Terms */}
+          {/* Cancellation Policy */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="cancellationPolicy" className="block text-sm font-medium text-gray-700 mb-1">
-                Cancellation Policy (Optional)
-              </label>
-              <textarea
-                id="cancellationPolicy"
-                name="cancellationPolicy"
-                value={formData.cancellationPolicy}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-                placeholder="Enter cancellation policy"
-              />
+            <div className="mb-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="cancellationAvailable"
+                  name="cancellationAvailable"
+                  checked={formData.cancellationAvailable}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                />
+                <label htmlFor="cancellationAvailable" className="ml-2 block text-sm font-medium text-gray-700">
+                  Allow cancellation for this event
+                </label>
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                If enabled, attendees will be able to cancel their bookings according to platform's cancellation policy.
+              </p>
             </div>
 
             <div>

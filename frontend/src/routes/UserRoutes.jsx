@@ -27,7 +27,7 @@ const UserRoutes = () => {
                     <Route path="forgot_password" element={<UserPublicRoute><ForgotPassword /></UserPublicRoute>} />
                     <Route path="reset_password/" element={<UserPublicRoute><ResetPassword /></UserPublicRoute>} />
                     <Route path="" element={<Home />} />
-                    <Route path="event_detial/:eventId" element={<UserProtectedRoute><EventDetail /></UserProtectedRoute>} />
+                    <Route path="event_detial/:eventId" element={<EventDetail />} />
                     <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                     <Route path="become_organizer" element={<UserProtectedRoute><BecomeOrganizer /></UserProtectedRoute>} />
                     <Route path="bookings" element={<UserProtectedRoute><UserBookings /></UserProtectedRoute>} />

@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Users
 from django.contrib.auth.hashers import make_password, check_password
+from .models import Users
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -105,7 +105,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_created_at(self, obj):
         if hasattr(obj, 'created_at'):
             return obj.created_at.strftime('%b %d, %Y')
-        
         elif hasattr(obj, 'created_at'):
             return obj.created_at.strftime('%b %d, %Y')
             

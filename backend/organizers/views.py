@@ -2,14 +2,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
+from rest_framework.permissions import IsAuthenticated
 from events.serializers import EventSerializer
 from booking.models import Booking
 from events.models import Event
+from .permissions import IsOrganizerUser
 from .validators import validate_event
 from .serializers import OrganizerBookingSerializer
 from .models import OrganizerProfile
@@ -81,7 +82,7 @@ class EventPagination(PageNumberPagination):
     page_query_param = 'page'
 
 
-permission_classes([IsAuthenticated])
+@permission_classes([IsOrganizerUser])
 class OrganizerEventsView(APIView):
     pagination_class = EventPagination
 
@@ -125,7 +126,7 @@ class OrganizerEventsView(APIView):
         return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-permission_classes([IsAuthenticated])
+@permission_classes([IsOrganizerUser])
 class OrganizerEventUpdateView(APIView):
     def patch(self, request, pk, format=None):
         try:
@@ -146,7 +147,7 @@ class OrganizerEventUpdateView(APIView):
             return Response({"success": False, "message": "Event not found or you don't have permission"}, status=status.HTTP_404_NOT_FOUND)
 
 
-@permission_classes([IsAuthenticated])
+@permission_classes([IsOrganizerUser])
 class OrganizerBookingsView(APIView):
     pagination_class = EventPagination
     

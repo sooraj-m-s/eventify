@@ -3,6 +3,7 @@ import { Bell, MessageSquare, MapPin, Mail } from "lucide-react"
 import { useSelector } from "react-redux"
 import axiosInstance from "../../utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
+import { toast } from "sonner"
 
 
 const OrganizerProfile = () => {
@@ -21,6 +22,7 @@ const OrganizerProfile = () => {
       } catch (err) {
         console.error("Error fetching organizer profile:", err)
         setError("Failed to load profile. Please try again later.")
+        toast.error(err.response.data['detail'])
       } finally {
         setLoading(false)
       }

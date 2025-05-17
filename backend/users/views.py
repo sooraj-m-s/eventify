@@ -11,10 +11,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenError, ExpiredTokenError
 import random, requests
 from django.conf import settings
-from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer, UserProfileSerializer
-from .models import TemporaryUserOTP, Users
 from organizers.models import OrganizerProfile
 from organizers.serializers import OrganizerProfileSerializer
+from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer, UserProfileSerializer
+from .models import TemporaryUserOTP, Users
 
 
 @permission_classes([AllowAny])

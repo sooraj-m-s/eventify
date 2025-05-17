@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { toast } from 'sonner';
 
 
 const UserProtectedRoute = ({ children }) => {
@@ -10,6 +11,7 @@ const UserProtectedRoute = ({ children }) => {
   }
   
   if (!userRole) {
+    toast.error("You're not authorized to access this page. Please log in.")
     return <Navigate to="/" replace />
   }
 
@@ -25,6 +27,7 @@ const OrganizerProtectedRoute = ({ children }) => {
   }
   
   if (userRole !== 'organizer') {
+    toast.error("You're not authorized to access this page. Organizer privileges required.")
     return <Navigate to="/" replace />
   }
 
@@ -40,6 +43,7 @@ const AdminProtectedRoute = ({ children }) => {
   }
   
   if (userRole !== 'admin') {
+    toast.error("You're not authorized to access this page. Admin privileges required.")
     return <Navigate to="/" replace />
   }
 

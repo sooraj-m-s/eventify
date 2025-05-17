@@ -25,7 +25,7 @@ class EventDetailWithHostSerializer(serializers.ModelSerializer):
             'hostedBy',
             'location', 
             'description', 
-            'cancellationPolicy', 
+            'cancellationAvailable', 
             'termsAndConditions', 
             'date',
             'is_completed',

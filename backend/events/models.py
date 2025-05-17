@@ -16,7 +16,7 @@ class Event(models.Model):
     hostedBy = models.ForeignKey('users.Users', to_field='user_id', on_delete=models.CASCADE, related_name='events_hosted')
     location = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField()
-    cancellationPolicy = models.TextField(blank=True, null=True)
+    cancellationAvailable = models.BooleanField(default=False)
     termsAndConditions = models.TextField(blank=True, null=True)
     date = models.DateField()
     is_completed = models.BooleanField(default=False)

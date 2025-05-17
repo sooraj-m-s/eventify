@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import { Calendar, Clock, MapPin, User, Loader, IndianRupee } from "lucide-react"
 import axiosInstance from "@/utils/axiosInstance"
 import { useSelector } from "react-redux"
@@ -46,7 +46,6 @@ const EventDetail = () => {
       navigate("/login", { state: { from: `/events/event_detail/${eventId}` } })
       return
     }
-
     setShowBookingModal(true)
   }
 

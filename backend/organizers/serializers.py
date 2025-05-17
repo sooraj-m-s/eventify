@@ -9,7 +9,7 @@ class OrganizerProfileSerializer(serializers.ModelSerializer):
     user = UsersSerializer(read_only=True)
     class Meta:
         model = OrganizerProfile
-        fields = '__all__' 
+        fields = '__all__'
 
 
 class OrganizerBookingSerializer(serializers.ModelSerializer):
@@ -19,16 +19,16 @@ class OrganizerBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = [
-            'booking_id', 
+            'booking_id',
             'event',
             'user',
             'booking_name',
-            'total_price', 
-            'booking_date', 
-            'payment_status', 
+            'total_price',
+            'booking_date',
+            'payment_status',
             'is_booking_cancelled',
-            'payment_id', 
-            'notes', 
+            'payment_id',
+            'notes',
             'created_at'
         ]
 

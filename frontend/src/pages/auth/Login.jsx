@@ -39,7 +39,6 @@ const Login = () => {
     setShowPassword(!showPassword)
   }
 
-  // Validate form and show toast for errors
   const validateForm = () => {
     let isValid = true
     const newErrors = {}
@@ -71,7 +70,6 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validate form and show toast errors
     if (!validateForm()) {
       return
     }

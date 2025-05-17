@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react"
 import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, RefreshCw, Search, Filter, ChevronLeft,
         ChevronRight, User, Eye, X, Mail, Phone, MapPin, CalendarIcon, IndianRupee } from "lucide-react"
 import axiosInstance from "@/utils/axiosInstance"
-import { toast } from "sonner"
 import OrganizerSidebar from "./components/OrganizerSidebar"
 
 
@@ -10,7 +9,6 @@ const OrganizerBookings = () => {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [events, setEvents] = useState([])
   const [selectedEvent, setSelectedEvent] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
@@ -22,11 +20,6 @@ const OrganizerBookings = () => {
   const [showModal, setShowModal] = useState(false)
   const searchTimeoutRef = useRef(null)
 
-  useEffect(() => {
-    fetchOrganizerEvents()
-  }, [])
-
-  // Debounce search query
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
@@ -47,24 +40,10 @@ const OrganizerBookings = () => {
     fetchBookings()
   }, [page, selectedEvent, selectedStatus, debouncedSearchQuery])
 
-  const fetchOrganizerEvents = async () => {
-    try {
-      const response = await axiosInstance.get("/organizer/organizer_bookings/")
-      if (response.data.success) {
-        setEvents(response.data.events)
-      }
-    } catch (err) {
-      console.error("Error fetching organizer events:", err)
-      toast.error("Failed to load events")
-      setEvents([])
-    }
-  }
-
   const fetchBookings = async () => {
     try {
       setLoading(true)
 
-      // Build query parameters
       let url = `/organizer/organizer_bookings/?page=${page}`
       if (selectedEvent) url += `&event_id=${selectedEvent}`
       if (selectedStatus) url += `&status=${selectedStatus}`
@@ -91,7 +70,7 @@ const OrganizerBookings = () => {
 
   const handleSearch = (e) => {
     e.preventDefault()
-    setPage(1) // Reset to first page when searching
+    setPage(1)
   }
 
   const handleReset = () => {

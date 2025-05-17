@@ -153,16 +153,15 @@ class AdminEventListView(APIView):
     def get(self, request):
         try:
             paginator = self.pagination_class()
-            
             organizer_id = request.query_params.get('organizer_id', None)
-            event_status = request.query_params.get('status', None)  # Renamed variable
+            event_status = request.query_params.get('status', None)
             search = request.query_params.get('search', None)
             
             events = Event.objects.all().order_by('-createdAt')
             if organizer_id:
                 events = events.filter(hostedBy__user_id=organizer_id)
-                
-            if event_status:  # Use renamed variable
+            
+            if event_status:
                 today = timezone.now().date()
                 if event_status == 'active':
                     events = events.filter(date__gte=today, on_hold=False, is_completed=False)
