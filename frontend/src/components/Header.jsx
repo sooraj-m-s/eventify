@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner";
 import axiosInstance from '../utils/axiosInstance';
+import NotificationBell from './NotificationBell';
 
 
 const Header = () => {
@@ -56,6 +57,7 @@ const Header = () => {
         <a href="/contact" className="hover:text-gray-300">Contact Us</a>
       </nav>
       <div className="flex items-center space-x-4">
+        <NotificationBell />
         {userId ? (
           <div className="relative" ref={dropdownRef}>
             <button
@@ -131,20 +133,20 @@ const Header = () => {
             )}
           </div>
         ) : (
-          <>
+          <div className="flex items-center space-x-3">
             <button
               onClick={() => navigate("/login")}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              className="bg-transparent border border-white text-white px-4 py-2 rounded-md hover:bg-white hover:text-black transition-colors duration-300"
             >
               Login
             </button>
             <button
               onClick={() => navigate("/register")}
-              className="bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300"
+              className="bg-white text-black px-4 py-2 rounded-md hover:bg-gray-200 transition-colors duration-300 font-medium"
             >
-              Signup
+              Sign Up
             </button>
-          </>
+          </div>
         )}
       </div>
     </header>

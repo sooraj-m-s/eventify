@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'categories.apps.CategoriesConfig',
     'events.apps.EventsConfig',
     'organizers.apps.OrganizersConfig',
-    'booking.apps.BookingConfig'
+    'booking.apps.BookingConfig',
+    'notifications.apps.NotificationsConfig',
 ]
 
 MIDDLEWARE = [
@@ -114,8 +115,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'eventify.wsgi.application'
 
-# ASGI_APPLICATION = 'eventify.asgi.application'
+ASGI_APPLICATION = 'eventify.asgi.application'
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
