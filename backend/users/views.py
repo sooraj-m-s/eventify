@@ -282,19 +282,6 @@ class LoginView(APIView):
 
 
 @permission_classes([IsAuthenticated])
-class UserMeView(APIView):
-    def get(self, request):
-        user = request.user
-        return Response({
-            'user_id': user.user_id,
-            'full_name': user.full_name,
-            'email': user.email,
-            'profile_image': user.profile_image,
-            'role': user.role
-        }, status=status.HTTP_200_OK)
-
-
-@permission_classes([IsAuthenticated])
 class UserProfileView(APIView):
     def get(self, request):
         try:

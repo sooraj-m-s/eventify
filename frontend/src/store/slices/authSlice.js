@@ -1,9 +1,20 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 
+const getStoredAuth = () => {
+  try {
+    const storedAuth = localStorage.getItem('auth');
+    return storedAuth ? JSON.parse(storedAuth) : null;
+  } catch (error) {
+    console.error('Error parsing stored auth:', error);
+    return null;
+  }
+};
+const storedAuth = getStoredAuth();
+
 const authSlice = createSlice({
   name: 'auth',
-  initialState: {
+  initialState: storedAuth || {
     userId: null,
     userName: null,
     userEmail: null,
@@ -21,6 +32,15 @@ const authSlice = createSlice({
       state.profile_image = action.payload.profile_image;
       state.userRole = action.payload.role;
       state.isAuthenticated = true;
+
+      localStorage.setItem('auth', JSON.stringify({
+        userId: action.payload.id,
+        userName: action.payload.name,
+        userEmail: action.payload.email,
+        profile_image: action.payload.profile_image,
+        userRole: action.payload.role,
+        isAuthenticated: true,
+      }));
     },
     setUserId: (state, action) => {
       state.userId = action.payload;
@@ -39,6 +59,8 @@ const authSlice = createSlice({
       state.error = null;
       state.loading = false;
       state.isAuthenticated = false;
+
+      localStorage.removeItem('auth');
     },
   },
 });

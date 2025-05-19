@@ -13,6 +13,7 @@ import Home from '@/pages/landing/home'
 import BecomeOrganizer from '@/pages/user/BecomeOrganizer'
 import UserBookings from '@/pages/user/UserBookings'
 import UserProfile from '@/pages/user/UserProfile'
+import NotFound from '@/pages/NotFound'
 
 
 const UserRoutes = () => {
@@ -31,6 +32,7 @@ const UserRoutes = () => {
                     <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                     <Route path="become_organizer" element={<UserProtectedRoute><BecomeOrganizer /></UserProtectedRoute>} />
                     <Route path="bookings" element={<UserProtectedRoute><UserBookings /></UserProtectedRoute>} />
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </div>
             <Footer />

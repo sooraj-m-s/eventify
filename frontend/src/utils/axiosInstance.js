@@ -1,6 +1,7 @@
 import axios from 'axios';
 import store from '../store/store';
 import { logout } from '../store/slices/authSlice';
+import { toast } from 'sonner';
 
 
 const axiosInstance = axios.create({
@@ -8,12 +9,9 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Track if we're currently refreshing the token
 let isRefreshing = false;
-// Store pending requests that should be retried after token refresh
 let failedQueue = [];
 
-// Process the queue of failed requests
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -26,40 +24,46 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
+    const status = error?.response?.status;
+    const detail = error?.response?.data?.detail;
+
+    if (status === 401 || status === 403) {
+      if (detail === "User is blocked.") {
+        toast.error("Your account has been blocked.");
+        store.dispatch(logout());
+      } else if (detail === "Token has been blacklisted.") {
+        toast.warning("Session expired. Please log in again.");
+        store.dispatch(logout());
+      } else if (detail === "Authentication credentials were not provided.") {
+        toast.warning("Something went wrong. Please log in again.");
+        store.dispatch(logout());
+      } else {
+        toast.error("Authentication failed.");
+        store.dispatch(logout());
+      }
+    }
     
-    // Don't attempt to refresh token for these specific cases
     if (
-      // If it's a 401 from /users/me/ endpoint (normal when not logged in)
-      (originalRequest.url === "/users/me/" && error.response?.status === 401) ||
-      // If it's a 401 from refresh token endpoint (token is invalid/expired)
-      (originalRequest.url === "/users/refresh_token/" && error.response?.status === 401) ||
-      // If this request has already been retried once
-      originalRequest._retry
+      (originalRequest.url === "/users/refresh_token/" && error.response?.status === 401) || originalRequest._retry
     ) {
       return Promise.reject(error)
     }
-
     if (error.response?.status !== 401) {
       return Promise.reject(error)
     }
-    
-    // Mark this request as retried to avoid infinite loops
     originalRequest._retry = true;
     
     if (isRefreshing) {
-      // If we're already refreshing, add this request to the queue
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       })
         .then(() => {
-          // Retry the request when token refresh is complete
           return axiosInstance(originalRequest);
         })
         .catch(err => {
@@ -70,17 +74,13 @@ axiosInstance.interceptors.response.use(
     
     try {
       await axiosInstance.post('/users/refresh_token/');
-      
-      // Token refresh successful, process the queue and retry the original request
       processQueue(null);
       isRefreshing = false;
       
       return axiosInstance(originalRequest);
     } catch (refreshError) {
-      // Token refresh failed, process the queue with error
       processQueue(refreshError);
       isRefreshing = false;
-      
       store.dispatch(logout());
       return Promise.reject(refreshError);
     }

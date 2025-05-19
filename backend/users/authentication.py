@@ -1,5 +1,6 @@
 from rest_framework_simplejwt.tokens import AccessToken, BlacklistedToken
 from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 from .models import Users
 
 
@@ -14,7 +15,10 @@ class JWTAuthenticationFromCookies(BaseAuthentication):
             user = Users.objects.get(user_id=token["user_id"])
 
             if BlacklistedToken.objects.filter(token__jti=token["jti"]).exists():
-                return None 
+                raise AuthenticationFailed("Token has been blacklisted.")
+            
+            if user.is_blocked:
+                raise AuthenticationFailed("User is blocked.")
 
         except Users.DoesNotExist:
             return None  

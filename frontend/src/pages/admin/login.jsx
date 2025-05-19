@@ -29,6 +29,7 @@ const AdminLogin = () => {
       dispatch(setUser({
         id: response.data.user_id,
         name: response.data.full_name,
+        profile_image: response.data.profile_image,
         email: response.data.email,
         role: response.data.role
       }))
@@ -40,8 +41,6 @@ const AdminLogin = () => {
       setLoading(false)
     }
   }
-
-  // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)
   }
@@ -67,7 +66,7 @@ const AdminLogin = () => {
 
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"} // Toggle between text and password
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"

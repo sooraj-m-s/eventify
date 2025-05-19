@@ -35,6 +35,7 @@ class AdminLoginView(APIView):
                 'detail': 'Login successful',
                 'user_id': user.user_id,
                 'full_name': user.full_name,
+                'profile_image': user.profile_image,
                 'email': user.email,
                 'role': user.role
             },

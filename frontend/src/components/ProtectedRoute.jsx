@@ -11,7 +11,9 @@ const UserProtectedRoute = ({ children }) => {
   }
   
   if (!userRole) {
-    toast.error("You're not authorized to access this page. Please log in.")
+    if (location.pathname !== '/') {
+      toast.error("You're not authorized to access this page. Please log in.");
+    }
     return <Navigate to="/" replace />
   }
 

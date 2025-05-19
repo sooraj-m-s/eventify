@@ -30,6 +30,7 @@ const Header = () => {
       await axiosInstance.post("/users/logout/")
       dispatch(logout());
       toast.success("Logged out successfully");
+      navigate('/')
     }  catch (error) {
       console.error("Error during logout:", error)
       dispatch(logout())
