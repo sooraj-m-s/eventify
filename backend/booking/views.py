@@ -50,6 +50,20 @@ class BookEventView(APIView):
 
 
 @permission_classes([IsAuthenticated])
+class BookingDetailView(APIView):
+    def get(self, request, booking_id):
+        try:
+            booking = Booking.objects.get(booking_id=booking_id, user=request.user)
+            serializer = UserBookingSerializer(booking)
+            return Response(serializer.data)
+        except Booking.DoesNotExist:
+            return Response(
+                {'error': 'Booking not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+@permission_classes([IsAuthenticated])
 class UserBookingsView(APIView):
     def get(self, request):
         try:

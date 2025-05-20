@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'organizers.apps.OrganizersConfig',
     'booking.apps.BookingConfig',
     'notifications.apps.NotificationsConfig',
+    'payments.apps.PaymentsConfig'
 ]
 
 MIDDLEWARE = [
@@ -201,4 +202,11 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
+# Stripe settings
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+FRONTEND_DOMAIN = config('FRONTEND_DOMAIN')
 

@@ -14,6 +14,8 @@ import BecomeOrganizer from '@/pages/user/BecomeOrganizer'
 import UserBookings from '@/pages/user/UserBookings'
 import UserProfile from '@/pages/user/UserProfile'
 import NotFound from '@/pages/NotFound'
+import PaymentPage from '@/pages/PaymentPage'
+import PaymentConfirmationPage from '@/pages/PaymentConfirmationPage'
 
 
 const UserRoutes = () => {
@@ -32,6 +34,8 @@ const UserRoutes = () => {
                     <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                     <Route path="become_organizer" element={<UserProtectedRoute><BecomeOrganizer /></UserProtectedRoute>} />
                     <Route path="bookings" element={<UserProtectedRoute><UserBookings /></UserProtectedRoute>} />
+                    <Route path="payment/:bookingId" element={<PaymentPage />} />
+                    <Route path="payment_confirmation" element={<PaymentConfirmationPage />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </div>

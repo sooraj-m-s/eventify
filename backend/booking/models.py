@@ -11,12 +11,13 @@ class Booking(models.Model):
         ('pending', 'Pending'),
         ('confirmed', 'Confirmed'),
         ('cancelled', 'Cancelled'),
+        ('failed', 'Failed'),
         ('refunded', 'Refunded'),
     )
     
     booking_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='bookings')
     user = models.ForeignKey('users.Users', on_delete=models.CASCADE, related_name='bookings')
+    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='bookings')
     booking_name = models.CharField(max_length=55)
     total_price = models.IntegerField()
     booking_date = models.DateTimeField(auto_now_add=True)
