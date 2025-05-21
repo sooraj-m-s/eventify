@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from events.serializers import EventSerializer
 from .models import Wallet, WalletTransaction, OrganizerWallet, OrganizerWalletTransaction
 
 
@@ -21,6 +22,8 @@ class OrganizerWalletSerializer(serializers.ModelSerializer):
 
 
 class OrganizerWalletTransactionSerializer(serializers.ModelSerializer):
+    event = EventSerializer(read_only=True)
+
     class Meta:
         model = OrganizerWalletTransaction
         fields = ['transaction_id', 'amount', 'transaction_type', 'reference_id', 'created_at', 'event']

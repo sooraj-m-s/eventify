@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
 
+
 const Sidebar = () => {
   const location = useLocation()
 
@@ -9,6 +10,7 @@ const Sidebar = () => {
     { name: "Category Management", path: "/admin/categories", icon: "🗂️" },
     { name: "Event Management", path: "/admin/events", icon: "🛠️" },
     { name: "Booking Management", path: "/admin/bookings", icon: "📅" },
+    { name: "Settlement", path: "/admin/settlement", icon: "💸" },
     { name: "Wallet", path: "/admin/wallet", icon: "💰" },
   ]
 

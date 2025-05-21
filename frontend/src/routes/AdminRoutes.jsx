@@ -4,6 +4,7 @@ import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminEventManagement from '@/pages/admin/AdminEventManagement'
 import CategoryManagement from '@/pages/admin/CategoryManagement'
 import AdminHeader from '@/pages/admin/components/AdminHeader'
+import EventSettlementPage from '@/pages/admin/EventSettlementPage'
 import AdminLogin from '@/pages/admin/login'
 import UserManagement from '@/pages/admin/UserManagement'
 import NotFound from '@/pages/NotFound'
@@ -20,6 +21,7 @@ const AdminRoutes = () => {
                 <Route path="users" element={<AdminProtectedRoute><UserManagement /></AdminProtectedRoute>} />
                 <Route path="categories" element={<AdminProtectedRoute><CategoryManagement /></AdminProtectedRoute>} />
                 <Route path="events" element={<AdminProtectedRoute><AdminEventManagement /></AdminProtectedRoute>} />
+                <Route path="settlement" element={<AdminProtectedRoute><EventSettlementPage /></AdminProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </>

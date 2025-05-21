@@ -230,7 +230,7 @@ const OrganizerWallet = () => {
                               <div className="text-sm text-gray-900">
                                 {transaction.event ? (
                                   <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs">
-                                    {transaction.event_details?.title || transaction.event}
+                                    {transaction.event?.title || transaction.event}
                                   </span>
                                 ) : (
                                   <span className="text-gray-500">-</span>

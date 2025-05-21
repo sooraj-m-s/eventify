@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, Search,
-        Filter, ChevronLeft, ChevronRight, Eye, User } from "lucide-react"
+        ChevronLeft, ChevronRight, Eye, User } from "lucide-react"
 import axiosInstance from "@/utils/axiosInstance"
 import AdminEventDetailsModal from "./components/AdminEventDetailsModal"
 import Sidebar from "./components/Sidebar"
@@ -234,13 +234,6 @@ const AdminEventManagement = () => {
                 </div>
 
                 <div className="flex items-end space-x-2">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 flex items-center"
-                  >
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filter
-                  </button>
                   <button
                     type="button"
                     onClick={handleReset}

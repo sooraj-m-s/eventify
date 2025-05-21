@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import  AdminLoginView, UserListView, UserStatusUpdateView, PendingOrganizerProfilesView, EventHoldStatusView, AdminEventListView
+from .views import (
+    AdminLoginView, UserListView, UserStatusUpdateView, PendingOrganizerProfilesView,
+    EventHoldStatusView, AdminEventListView, EventSettlementView
+)
 
 
 urlpatterns = [
@@ -9,5 +12,6 @@ urlpatterns = [
     path('pending_organizers/', PendingOrganizerProfilesView.as_view(), name='pending-organizers'),
     path('events/', AdminEventListView.as_view(), name='event-detail'),
     path('toggle_hold/<uuid:event_id>/', EventHoldStatusView.as_view(), name='toggle_event_hold'),
+    path('events/settle/', EventSettlementView.as_view(), name='event-settlement'),
 ]
 

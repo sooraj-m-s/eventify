@@ -21,6 +21,7 @@ class Event(models.Model):
     date = models.DateField()
     is_completed = models.BooleanField(default=False)
     on_hold = models.BooleanField(default=False)
+    is_settled_to_organizer = models.BooleanField(default=False)
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
 
