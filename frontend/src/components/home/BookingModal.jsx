@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom"
 const BookingModal = ({ event, onClose, user }) => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [bookingName, setBookingName] = useState("")
   const [notes, setNotes] = useState("")
 
   const formatDate = (dateString) => {
@@ -36,7 +37,7 @@ const BookingModal = ({ event, onClose, user }) => {
       axiosInstance
         .post("/booking/book/", {
           event_id: event.eventId,
-          booking_name: user?.full_name,
+          booking_name: bookingName.trim() || null,
           notes: notes,
         })
         .then((response) => {
@@ -110,10 +111,21 @@ const BookingModal = ({ event, onClose, user }) => {
               </div>
 
               <div className="mt-6">
-                <h4 className="font-medium mb-2">Your Information</h4>
-                <p className="text-sm text-gray-600 mb-4">Please provide your details for the booking</p>
-
                 <div className="space-y-4">
+                  <div>
+                    <label htmlFor="bookingName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Booking Name
+                    </label>
+                    <input
+                      id="bookingName"
+                      type="text"
+                      onChange={(e) => setBookingName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                      placeholder={user?.full_name || "Enter booking name"}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Leave empty to use your account name</p>
+                  </div>
+
                   <div>
                     <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
                       Special Requests or Notes (Optional)

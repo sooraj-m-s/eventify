@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { User, Briefcase, Calendar, Star, Wallet, BarChart2, MessageSquare } from "lucide-react"
+import { User, Briefcase, Calendar, Star, Wallet, MessageSquare } from "lucide-react"
 import { useSelector } from "react-redux"
 
 
@@ -28,19 +28,14 @@ const OrganizerSidebar = () => {
       path: "/organizer/bookings",
     },
     {
-      name: "Reviews",
-      icon: <Star size={20} />,
-      path: "/organizer/reviews",
-    },
-    {
       name: "Wallet",
       icon: <Wallet size={20} />,
       path: "/organizer/wallet",
     },
     {
-      name: "Transactions",
-      icon: <BarChart2 size={20} />,
-      path: "/organizer/transactions",
+      name: "Reviews",
+      icon: <Star size={20} />,
+      path: "/organizer/reviews",
     },
     {
       name: "Messages",

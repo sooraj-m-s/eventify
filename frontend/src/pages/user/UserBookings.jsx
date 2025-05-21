@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, MapPin, DollarSign, AlertCircle, Eye, Loader, CheckCircle,
-    XCircle, RefreshCw } from "lucide-react"
+import { Calendar, Clock, MapPin, AlertCircle, Eye, Loader, CheckCircle,
+    XCircle, RefreshCw, IndianRupee } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 import { toast } from "react-toastify"
 import BookingDetailsModal from "./components/UserBookingDetailsModal"
@@ -246,8 +246,8 @@ const UserBookings = () => {
                             <span>{booking.event.location || "Online"}</span>
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            <span>₹{booking.total_price}</span>
+                            <IndianRupee className="h-4 w-4 mr-2" />
+                            <span>{booking.total_price}</span>
                           </div>
                         </div>
                       </div>

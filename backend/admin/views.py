@@ -13,6 +13,7 @@ from organizers.models import OrganizerProfile
 from organizers.serializers import OrganizerProfileSerializer
 from events.models import Event
 from events.serializers import EventSerializer
+from wallet.models import OrganizerWallet
 from .permissions import IsAdminUser
 from .serializers import UserListSerializer, EventDetailWithHostSerializer
 
@@ -131,8 +132,15 @@ class PendingOrganizerProfilesView(APIView):
                     user = Users.objects.get(user_id=organizer_profile.user.user_id)
                     user.role = 'organizer'
                     user.save()
+                    
                     organizer_profile.is_approved = True
                     organizer_profile.approved_at = timezone.now()
+
+                    # Create organizer wallet
+                    OrganizerWallet.objects.create(
+                        user=user,
+                        balance=0
+                    )
                 elif action == 'reject':
                     organizer_profile.is_rejected = True
                     organizer_profile.rejected_reason = reason

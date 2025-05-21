@@ -16,6 +16,7 @@ import UserProfile from '@/pages/user/UserProfile'
 import NotFound from '@/pages/NotFound'
 import PaymentPage from '@/pages/PaymentPage'
 import PaymentConfirmationPage from '@/pages/PaymentConfirmationPage'
+import WalletPage from '@/pages/user/wallet'
 
 
 const UserRoutes = () => {
@@ -24,18 +25,26 @@ const UserRoutes = () => {
             <Header />
             <div className="pt-16">
                 <Routes>
+                    {/* Public Routes */}
+                    <Route path="" element={<Home />} />
+                    <Route path="event_detial/:eventId" element={<EventDetail />} />
+
+                    {/* Auth Routes */}
                     <Route path="register" element={<UserPublicRoute><Register /></UserPublicRoute>} />
                     <Route path="register/complete" element={<UserPublicRoute><CompleteRegistration /></UserPublicRoute>} />
                     <Route path="login" element={<UserPublicRoute><Login /></UserPublicRoute>} />
                     <Route path="forgot_password" element={<UserPublicRoute><ForgotPassword /></UserPublicRoute>} />
                     <Route path="reset_password/" element={<UserPublicRoute><ResetPassword /></UserPublicRoute>} />
-                    <Route path="" element={<Home />} />
-                    <Route path="event_detial/:eventId" element={<EventDetail />} />
+
+                    {/* Protected Routes */}
                     <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                     <Route path="become_organizer" element={<UserProtectedRoute><BecomeOrganizer /></UserProtectedRoute>} />
                     <Route path="bookings" element={<UserProtectedRoute><UserBookings /></UserProtectedRoute>} />
                     <Route path="payment/:bookingId" element={<PaymentPage />} />
                     <Route path="payment_confirmation" element={<PaymentConfirmationPage />} />
+                    <Route path="wallet" element={<WalletPage />} />
+
+                    {/* Fallback */}
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </div>

@@ -9,5 +9,6 @@ urlpatterns = [
     path('organizer/', include('organizers.urls')),
     path('booking/', include('booking.urls')),
     path('payments/', include('payments.urls')),
+    path('wallet/', include('wallet.urls')),
 ]
 

@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'organizers.apps.OrganizersConfig',
     'booking.apps.BookingConfig',
     'notifications.apps.NotificationsConfig',
-    'payments.apps.PaymentsConfig'
+    'payments.apps.PaymentsConfig',
+    'wallet.apps.WalletConfig',
 ]
 
 MIDDLEWARE = [

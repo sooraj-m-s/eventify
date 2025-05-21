@@ -16,7 +16,11 @@ from .serializers import UserBookingSerializer
 class BookEventView(APIView):
     def post(self, request):
         event_id = request.data.get('event_id')
+        booking_name = request.data.get('booking_name')
         notes = request.data.get('notes')
+        
+        if not booking_name:
+            booking_name = request.user.full_name
         
         try:
             event = Event.objects.get(eventId=event_id)
@@ -31,7 +35,7 @@ class BookEventView(APIView):
             booking = Booking.objects.create(
                 event=event,
                 user=request.user,
-                booking_name=request.user.full_name,
+                booking_name=booking_name,
                 total_price=event.pricePerTicket,
                 payment_status='pending',
                 notes=notes
