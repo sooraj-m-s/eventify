@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Eye, CheckCircle, Calendar, IndianRupee, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Eye, Calendar, IndianRupee, ChevronLeft, ChevronRight } from "lucide-react"
 import axiosInstance from "@/utils/axiosInstance"
 import Sidebar from "./components/Sidebar"
 import EventDetailsModal from "./components/EventDetailsModal"
@@ -99,44 +99,10 @@ const EventSettlementPage = () => {
     })
   }
 
-  const getTabHeader = () => {
-    switch (activeTab) {
-      case "settled":
-        return (
-          <div className="p-4 bg-green-50 border-b border-green-100">
-            <h2 className="text-lg font-semibold text-green-800 flex items-center">
-              <CheckCircle className="h-5 w-5 mr-2" />
-              Settled Events
-            </h2>
-          </div>
-        )
-      case "unsettled":
-        return (
-          <div className="p-4 bg-yellow-50 border-b border-yellow-100">
-            <h2 className="text-lg font-semibold text-yellow-800 flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              Unsettled Events
-            </h2>
-          </div>
-        )
-      case "ready":
-        return (
-          <div className="p-4 bg-blue-50 border-b border-blue-100">
-            <h2 className="text-lg font-semibold text-blue-800 flex items-center">
-              <IndianRupee className="h-5 w-5 mr-2" />
-              Ready to Settle
-            </h2>
-          </div>
-        )
-    }
-  }
-
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 pt-16">
       <Sidebar />
-      <div className="flex-1 p-8">
-        <h1 className="text-2xl font-bold mb-6">Event Settlements</h1>
-
+      <div className="flex-1 p-20">
         {/* Filter Buttons */}
         <div className="mb-6 flex space-x-4">
           <button
@@ -189,8 +155,6 @@ const EventSettlementPage = () => {
 
         {/* Events Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {getTabHeader()}
-
           {loading ? (
             <div className="p-8 flex justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -307,84 +271,82 @@ const EventSettlementPage = () => {
               </div>
 
               {/* Pagination */}
-              {events.length > 0 && (
-                <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button
-                      onClick={() => handlePageChange(pagination.currentPage - 1)}
-                      disabled={!pagination.previous}
-                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => handlePageChange(pagination.currentPage + 1)}
-                      disabled={!pagination.next}
-                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
+              <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => handlePageChange(pagination.currentPage - 1)}
+                    disabled={!pagination.previous}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(pagination.currentPage + 1)}
+                    disabled={!pagination.next}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Page <span className="font-medium">{pagination.currentPage}</span> of{" "}
+                      <span className="font-medium">{pagination.totalPages}</span>
+                    </p>
                   </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        Page <span className="font-medium">{pagination.currentPage}</span> of{" "}
-                        <span className="font-medium">{pagination.totalPages}</span>
-                      </p>
-                    </div>
-                    <div>
-                      <nav
-                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                        aria-label="Pagination"
+                  <div>
+                    <nav
+                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                      aria-label="Pagination"
+                    >
+                      <button
+                        onClick={() => handlePageChange(pagination.currentPage - 1)}
+                        disabled={!pagination.previous}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <button
-                          onClick={() => handlePageChange(pagination.currentPage - 1)}
-                          disabled={!pagination.previous}
-                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <span className="sr-only">Previous</span>
-                          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                        </button>
-                        {/* Page numbers */}
-                        {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
-                          let pageNumber
-                          if (pagination.totalPages <= 5) {
-                            pageNumber = i + 1
-                          } else if (pagination.currentPage <= 3) {
-                            pageNumber = i + 1
-                          } else if (pagination.currentPage >= pagination.totalPages - 2) {
-                            pageNumber = pagination.totalPages - 4 + i
-                          } else {
-                            pageNumber = pagination.currentPage - 2 + i
-                          }
+                        <span className="sr-only">Previous</span>
+                        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                      {/* Page numbers */}
+                      {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                        let pageNumber
+                        if (pagination.totalPages <= 5) {
+                          pageNumber = i + 1
+                        } else if (pagination.currentPage <= 3) {
+                          pageNumber = i + 1
+                        } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                          pageNumber = pagination.totalPages - 4 + i
+                        } else {
+                          pageNumber = pagination.currentPage - 2 + i
+                        }
 
-                          return (
-                            <button
-                              key={pageNumber}
-                              onClick={() => handlePageChange(pageNumber)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                pagination.currentPage === pageNumber
-                                  ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
-                                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                              }`}
-                            >
-                              {pageNumber}
-                            </button>
-                          )
-                        })}
-                        <button
-                          onClick={() => handlePageChange(pagination.currentPage + 1)}
-                          disabled={!pagination.next}
-                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <span className="sr-only">Next</span>
-                          <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                        </button>
-                      </nav>
-                    </div>
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => handlePageChange(pageNumber)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              pagination.currentPage === pageNumber
+                                ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
+                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        )
+                      })}
+                      <button
+                        onClick={() => handlePageChange(pagination.currentPage + 1)}
+                        disabled={!pagination.next}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span className="sr-only">Next</span>
+                        <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </nav>
                   </div>
                 </div>
-              )}
+              </div>
             </>
           )}
         </div>

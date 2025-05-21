@@ -17,6 +17,7 @@ from organizers.serializers import OrganizerProfileSerializer
 from events.models import Event
 from events.serializers import EventSerializer
 from wallet.models import OrganizerWallet, OrganizerWalletTransaction, CompanyWallet
+from wallet.serializers import CompanyWalletSerializer
 from .permissions import IsAdminUser
 from .serializers import UserListSerializer, EventDetailWithHostSerializer
 
@@ -281,15 +282,13 @@ class EventSettlementView(APIView):
                     transaction_type='CREDIT',
                 )
                 
-                latest_company_wallet = CompanyWallet.objects.order_by('-wallet_id').first()
-                if not latest_company_wallet:
-                    latest_company_wallet = 0
+                last = CompanyWallet.objects.order_by('-created_at').first()
+                previous_balance = last.total_balance if last else 0
                 CompanyWallet.objects.create(
                     event=event,
-                    total_balance=latest_company_wallet + platform_fee,
+                    total_balance=previous_balance + platform_fee,
                     transaction_amount=platform_fee,
                     transaction_type='CREDIT',
-                    reference_id=f"FEE-{event.eventId}"
                 )
                 
                 event.is_settled_to_organizer = True
@@ -307,4 +306,60 @@ class EventSettlementView(APIView):
             
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@permission_classes([IsAdminUser])
+class AdminWalletView(APIView):
+    pagination_class = PaginationData
+    
+    def get(self, request):
+        try:
+            paginator = self.pagination_class()
+            transaction_type = request.query_params.get('transaction_type', None)
+            search = request.query_params.get('search', None)
+            start_date = request.query_params.get('start_date', None)
+            end_date = request.query_params.get('end_date', None)
+            
+            transactions = CompanyWallet.objects.all().order_by('-created_at')
+            
+            if transaction_type:
+                transactions = transactions.filter(transaction_type=transaction_type)
+                
+            if search:
+                transactions = transactions.filter(
+                    Q(reference_id__icontains=search) | 
+                    Q(event__title__icontains=search)
+                )
+                
+            if start_date:
+                transactions = transactions.filter(created_at__date__gte=start_date)
+            if end_date:
+                transactions = transactions.filter(created_at__date__lte=end_date)
+            
+            latest_wallet = CompanyWallet.objects.order_by('-created_at').first()
+            current_balance = latest_wallet.total_balance if latest_wallet else 0
+            
+            total_credits = CompanyWallet.objects.filter(transaction_type='CREDIT').aggregate(total=Sum('transaction_amount'))['total'] or 0
+            total_withdrawals = CompanyWallet.objects.filter(transaction_type='WITHDRAWAL').aggregate(total=Sum('transaction_amount'))['total'] or 0
+            
+            page = paginator.paginate_queryset(transactions, request)
+            serializer = CompanyWalletSerializer(page, many=True)
+            
+            return Response({
+                'success': True,
+                'current_balance': current_balance,
+                'total_credits': total_credits,
+                'total_withdrawals': total_withdrawals,
+                'transactions': serializer.data,
+                'count': transactions.count(),
+                'next': paginator.get_next_link(),
+                'previous': paginator.get_previous_link()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': 'An error occurred while fetching wallet data',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

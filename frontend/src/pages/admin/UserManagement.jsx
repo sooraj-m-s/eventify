@@ -34,9 +34,7 @@ const UserManagement = () => {
             search: searchTerm,
           },
         })
-        console.log("Response data:", response.data)
 
-        // Set the users data based on the active tab
         if (activeTab === "clients") {
           setUsers(response.data.results || [])
         } else {

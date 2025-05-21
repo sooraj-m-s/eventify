@@ -2,6 +2,7 @@ import { AdminProtectedRoute } from '@/components/ProtectedRoute'
 import { AdminPublicRoute } from '@/components/PublicRoute'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminEventManagement from '@/pages/admin/AdminEventManagement'
+import AdminWallet from '@/pages/admin/AdminWallet'
 import CategoryManagement from '@/pages/admin/CategoryManagement'
 import AdminHeader from '@/pages/admin/components/AdminHeader'
 import EventSettlementPage from '@/pages/admin/EventSettlementPage'
@@ -22,6 +23,7 @@ const AdminRoutes = () => {
                 <Route path="categories" element={<AdminProtectedRoute><CategoryManagement /></AdminProtectedRoute>} />
                 <Route path="events" element={<AdminProtectedRoute><AdminEventManagement /></AdminProtectedRoute>} />
                 <Route path="settlement" element={<AdminProtectedRoute><EventSettlementPage /></AdminProtectedRoute>} />
+                <Route path="wallet" element={<AdminProtectedRoute><AdminWallet /></AdminProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </>

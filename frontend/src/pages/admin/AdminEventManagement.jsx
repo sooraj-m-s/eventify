@@ -178,9 +178,9 @@ const AdminEventManagement = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 pt-16">
       <Sidebar />
-      <div className="flex-1">
+      <div className="flex-1 pt-12">
         <div className="p-8 pb-16">
           <div className="max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">

@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     AdminLoginView, UserListView, UserStatusUpdateView, PendingOrganizerProfilesView,
-    EventHoldStatusView, AdminEventListView, EventSettlementView
+    EventHoldStatusView, AdminEventListView, EventSettlementView, AdminWalletView
 )
 
 
@@ -13,5 +13,6 @@ urlpatterns = [
     path('events/', AdminEventListView.as_view(), name='event-detail'),
     path('toggle_hold/<uuid:event_id>/', EventHoldStatusView.as_view(), name='toggle_event_hold'),
     path('events/settle/', EventSettlementView.as_view(), name='event-settlement'),
+    path('wallet/', AdminWalletView.as_view(), name='admin-wallet'),
 ]
 
