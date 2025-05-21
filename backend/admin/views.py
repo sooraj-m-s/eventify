@@ -20,6 +20,7 @@ from wallet.models import OrganizerWallet, OrganizerWalletTransaction, CompanyWa
 from wallet.serializers import CompanyWalletSerializer
 from .permissions import IsAdminUser
 from .serializers import UserListSerializer, EventDetailWithHostSerializer
+from .email_utils import send_organizer_approval_email, send_organizer_rejection_email
 
 
 @permission_classes([AllowAny])
@@ -130,9 +131,10 @@ class PendingOrganizerProfilesView(APIView):
             
             try:
                 organizer_profile = OrganizerProfile.objects.get(id=profile_id)
+                user = Users.objects.get(user_id=organizer_profile.user.user_id)
+                first_name = user.full_name.split()[0]
                 
                 if action == 'approve':
-                    user = Users.objects.get(user_id=organizer_profile.user.user_id)
                     user.role = 'organizer'
                     user.save()
                     
@@ -144,9 +146,16 @@ class PendingOrganizerProfilesView(APIView):
                         user=user,
                         balance=0
                     )
+
+                    # Send approval email
+                    send_organizer_approval_email(user.email, first_name)
+
                 elif action == 'reject':
                     organizer_profile.is_rejected = True
                     organizer_profile.rejected_reason = reason
+
+                    # Send rejection email
+                    send_organizer_rejection_email(user.email, first_name, reason)
                 else:
                     return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
                 organizer_profile.save()
