@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Instagram, Facebook, Linkedin, Menu } from 'lucide-react';
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { logout } from "../../../store/slices/authSlice";
 import axiosInstance from "../../../utils/axiosInstance";
 
+
 const AdminHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate()
   const dispatch = useDispatch();
 
   const handleLogout = async () => {
@@ -15,9 +17,11 @@ const AdminHeader = () => {
       await axiosInstance.post("/users/logout/")
       dispatch(logout());
       toast.success("Logged out successfully");
+      navigate('/')
     }  catch (error) {
       console.error("Error during logout:", error)
       dispatch(logout())
+      navigate('/')
     }
   };
 

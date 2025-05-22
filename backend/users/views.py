@@ -9,12 +9,15 @@ from django.utils.html import strip_tags
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenError, ExpiredTokenError
-import random, requests
+from django.core.cache import cache
+import random, requests, json
+from datetime import datetime
 from django.conf import settings
 from organizers.models import OrganizerProfile
 from organizers.serializers import OrganizerProfileSerializer
+from .email_templates import registration_email_template, resend_otp_email_template, password_reset_email_template
 from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer, UserProfileSerializer
-from .models import TemporaryUserOTP, Users
+from .models import Users
 
 
 @permission_classes([AllowAny])
@@ -34,56 +37,36 @@ class RegisterView(APIView):
             otp = random.randint(100000, 999999)
             print(f"Generated OTP: {otp}")
             
-            temp_user = TemporaryUserOTP.objects.filter(email=email).first()
-            if temp_user:
-                temp_user.otp = otp
-                temp_user.created_at = timezone.now() 
-                temp_user.password = serializer.validated_data['password']
-                temp_user.save()
-            else:
-                temp_user = TemporaryUserOTP(
-                    full_name=serializer.validated_data['full_name'],
-                    email=email,
-                    mobile=mobile,
-                    password=serializer.validated_data['password'],
-                    profile_image=serializer.validated_data.get('profile_image', None),
-                    otp=otp
-                )
-                temp_user.save()
-            first_name = temp_user.full_name.split()[0]
-            html_message = f"""
-            <html>
-                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                        <h2 style="color: #4CAF50; text-align: center;">Verify Your Email Address</h2>
-                        <p>Hi {first_name.title()},</p>
-                        <p>Thank you for signing up with Eventify! To complete your registration, please use the verification code below. <strong>Note: This code will expire in 2 minutes.</strong></p>
-                        <p style="font-size: 24px; font-weight: bold; text-align: center; color: #4CAF50; margin: 20px 0;">{otp}</p>
-                        <p>If you didn’t request this email, no action is needed. Simply ignore this message.</p>
-                        <p>Thank you for choosing Eventify!</p>
-                        <p style="margin-top: 20px;">Best regards,<br><strong>The Eventify Team</strong></p>
-                    </div>
-                    <footer style="text-align: center; font-size: 12px; color: #aaa; margin-top: 20px;">
-                        © {timezone.now().year} Eventify. All rights reserved.
-                    </footer>
-                </body>
-            </html>
-            """
+            temp_user_id = str(random.randint(1000000000, 9999999999))
+            redis_key = f"temp_user:{temp_user_id}"
+            
+            # Store user data in Redis
+            user_data = {
+                'temp_user_id': temp_user_id,
+                'full_name': serializer.validated_data['full_name'],
+                'email': email,
+                'mobile': mobile,
+                'password': serializer.validated_data['password'],
+                'profile_image': serializer.validated_data.get('profile_image', None),
+                'otp': otp,
+                'otp_created_at': timezone.now().isoformat()
+            }
+            
+            cache.set(redis_key, json.dumps(user_data), timeout=600)
+
+            first_name = user_data['full_name'].split()[0]
+            html_message = registration_email_template(first_name, otp)
             plain_message = strip_tags(html_message)
             send_mail(
                 'Eventify: Verify Your Email Address',
                 plain_message,
                 settings.EMAIL_HOST_USER,
-                [temp_user.email],
+                [email],
                 fail_silently=False,
                 html_message=html_message,
             )
 
-            return Response({
-                'temp_user_id': str(temp_user.temp_user_id),
-                'message': 'OTP sent to your email'
-            }, status=status.HTTP_201_CREATED)
-        
+            return Response({'temp_user_id': str(temp_user_id), 'message': 'OTP sent to your email'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -91,51 +74,34 @@ class RegisterView(APIView):
 class ResendOTPView(APIView):
     def post(self, request):
         temp_user_id = request.data.get('temp_user_id')
+        redis_key = f"temp_user:{temp_user_id}"
+        user_data_json = cache.get(redis_key)
         
-        try:
-            temp_user = TemporaryUserOTP.objects.get(temp_user_id=temp_user_id)
-
-            otp = random.randint(100000, 999999)
-            print(f"Generated new OTP: {otp}")
-            
-            temp_user.otp = otp
-            temp_user.created_at = timezone.now()
-            temp_user.save()
-            
-            first_name = temp_user.full_name.split()[0]
-            html_message = f"""
-            <html>
-                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                        <h2 style="color: #4CAF50; text-align: center;">Your New Verification Code</h2>
-                        <p>Hi {first_name.title()},</p>
-                        <p>You requested a new verification code. Please use the code below to complete your registration. <strong>Note: This code will expire in 2 minutes.</strong></p>
-                        <p style="font-size: 24px; font-weight: bold; text-align: center; color: #4CAF50; margin: 20px 0;">{otp}</p>
-                        <p>If you didn't request this email, no action is needed. Simply ignore this message.</p>
-                        <p>Thank you for choosing Eventify!</p>
-                        <p style="margin-top: 20px;">Best regards,<br><strong>The Eventify Team</strong></p>
-                    </div>
-                    <footer style="text-align: center; font-size: 12px; color: #aaa; margin-top: 20px;">
-                        © {timezone.now().year} Eventify. All rights reserved.
-                    </footer>
-                </body>
-            </html>
-            """
-            plain_message = strip_tags(html_message)
-            send_mail(
-                'Eventify: Your New Verification Code',
-                plain_message,
-                settings.EMAIL_HOST_USER,
-                [temp_user.email],
-                fail_silently=False,
-                html_message=html_message,
-            )
-            
-            return Response({'message': 'New OTP sent to your email'}, status=status.HTTP_200_OK)
-        except TemporaryUserOTP.DoesNotExist:
-            return Response({'error': 'Invalid temporary user ID'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': f'Failed to resend OTP: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if not user_data_json:
+            return Response({'error': 'Registration expired. Please register again.'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+        
+        user_data = json.loads(user_data_json)
+        new_otp = random.randint(100000, 999999)
+        print(f"Generated new OTP: {new_otp}")
+        
+        user_data['otp'] = new_otp
+        user_data['otp_created_at'] = timezone.now().isoformat()
+        cache.set(redis_key, json.dumps(user_data), timeout=300)
+        
+        first_name = user_data['full_name'].split()[0]
+        html_message = resend_otp_email_template(first_name, new_otp)
+        plain_message = strip_tags(html_message)
+        send_mail(
+            'Eventify: Your New Verification Code',
+            plain_message,
+            settings.EMAIL_HOST_USER,
+            [user_data['email']],
+            fail_silently=False,
+            html_message=html_message,
+        )
+        
+        return Response({'message': 'New OTP sent to your email'}, status=status.HTTP_200_OK)
 
 
 @permission_classes([AllowAny])
@@ -143,32 +109,54 @@ class VerifyOTPView(APIView):
     def post(self, request):
         temp_user_id = request.data.get('temp_user_id')
         otp = int(request.data.get('otp'))
+        redis_key = f"temp_user:{temp_user_id}"
+        user_data_json = cache.get(redis_key)
+
+        if not otp:
+            return Response({'error': 'OTP is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user_data_json:
+            return Response({'error': 'Registration expired. Please register again.'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+
+        user_data = json.loads(user_data_json)
+
+        if str(user_data['otp']) != str(otp):
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        otp_created_at = datetime.fromisoformat(user_data['otp_created_at'])
+        otp_age_seconds = (timezone.now() - otp_created_at).total_seconds()
+        
+        if otp_age_seconds > 120:
+            return Response({'error': 'OTP has expired. Please request a new one.', 'expired': True}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            temp_user = TemporaryUserOTP.objects.get(temp_user_id=temp_user_id)
-
-            if temp_user.otp != otp:
-                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-            if temp_user.is_expired():
-                temp_user.delete()
-                return Response({'error': 'OTP expired'}, status=status.HTTP_400_BAD_REQUEST)
-
             user = Users.objects.create_user(
-                email=temp_user.email,
-                password=temp_user.password,
-                full_name=temp_user.full_name,
-                mobile=temp_user.mobile,
-                profile_image=temp_user.profile_image,
+                email=user_data['email'],
+                password=user_data['password'],
+                full_name=user_data['full_name'],
+                mobile=user_data['mobile'],
+                profile_image=user_data.get('profile_image')
             )
-            temp_user.delete()
+        except Exception as e:
+            return Response({'error': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        cache.delete(redis_key)
+    
+        refresh = RefreshToken.for_user(user)
+        response = Response(
+            {
+                'detail': 'Successful',
+                'user_id': user.user_id,
+                'full_name': user.full_name,
+                'email': user.email,
+                'profile_image': user.profile_image,
+                'role': user.role
+            },
+            status=status.HTTP_200_OK
+        )
+        response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
+        response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
 
-            return Response({
-                'user_id': str(user.user_id),
-                'message': 'Account created successfully'
-            }, status=status.HTTP_200_OK)
-
-        except TemporaryUserOTP.DoesNotExist:
-            return Response({'error': 'An unexpected error occurred. Please try again later.'}, status=status.HTTP_400_BAD_REQUEST)
+        return response
 
 
 @permission_classes([AllowAny])
@@ -184,40 +172,20 @@ class ForgotPasswordEmailCheckView(APIView):
         otp = random.randint(100000, 999999)
         print(f"Generated OTP: {otp}")
         
-        try:
-            temp = TemporaryUserOTP.objects.get(email=email)
-            temp.otp = otp
-            temp.created_at = timezone.now()
-            temp.save()
-        except TemporaryUserOTP.DoesNotExist:
-            temp = TemporaryUserOTP(
-                full_name=user.full_name,
-                email=user.email,
-                mobile=user.mobile,
-                password=user.password,
-                profile_image=user.profile_image,
-                otp=otp
-            )
-            temp.save()
+        temp_user_id = str(random.randint(1000000000, 9999999999))
+        redis_key = f"temp_user:{temp_user_id}"
         
-        html_message = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                    <h2 style="color: #FF5722; text-align: center;">Password Reset Request</h2>
-                    <p>Hi {user.full_name.title()},</p>
-                    <p>We received a request to reset your password. Use the OTP below to proceed. <strong>This code will expire in 2 minutes.</strong></p>
-                    <p style="font-size: 24px; font-weight: bold; text-align: center; color: #FF5722; margin: 20px 0;">{otp}</p>
-                    <p>If you did not request this, please ignore this email. Your account is still safe.</p>
-                    <p style="margin-top: 20px;">Best regards,<br><strong>The Eventify Team</strong></p>
-                </div>
-                <footer style="text-align: center; font-size: 12px; color: #aaa; margin-top: 20px;">
-                    © {timezone.now().year} Eventify. All rights reserved.
-                </footer>
-            </body>
-        </html>
-        """
-
+        # Store data in Redis
+        reset_data = {
+            'temp_user_id': temp_user_id,
+            'full_name': user.full_name,
+            'email': user.email,
+            'otp': otp,
+            'otp_created_at': timezone.now().isoformat(),
+        }
+        cache.set(redis_key, json.dumps(reset_data), timeout=600)
+        
+        html_message = password_reset_email_template(user.full_name, otp)
         plain_message = strip_tags(html_message)
         send_mail(
             'Eventify: Password Reset OTP',
@@ -227,7 +195,7 @@ class ForgotPasswordEmailCheckView(APIView):
             fail_silently=False,
             html_message=html_message,
         )
-        return Response({'temp_user_id': str(temp.temp_user_id), 'message': 'OTP sent to your email'}, status=status.HTTP_200_OK)
+        return Response({'temp_user_id': str(temp_user_id), 'message': 'OTP sent to your email'}, status=status.HTTP_200_OK)
 
 
 @permission_classes([AllowAny])
@@ -236,24 +204,39 @@ class ForgotPasswordSetView(APIView):
         temp_user_id = request.data.get('temp_user_id')
         otp = request.data.get('otp')
         new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirmPassword')
+        redis_key = f"temp_user:{temp_user_id}"
+        reset_data_json = cache.get(redis_key)
+
+        if not new_password:
+            return Response({'error': 'Password is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(new_password) < 8:
+            return Response({'error': 'Password should be at least 8 characters long'}, status=status.HTTP_400_BAD_REQUEST)
+        if new_password != confirm_password:
+            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+        if not reset_data_json:
+            return Response({'error': 'Password reset session expired. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            temp_user = TemporaryUserOTP.objects.get(temp_user_id=temp_user_id, otp=otp)
-        except TemporaryUserOTP.DoesNotExist:
-            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+        reset_data = json.loads(reset_data_json)
         
-        if temp_user.is_expired():
+        if str(reset_data['otp']) != str(otp):
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        otp_created_at = datetime.fromisoformat(reset_data['otp_created_at'])
+        otp_age_seconds = (timezone.now() - otp_created_at).total_seconds()
+        
+        if otp_age_seconds > 120:
             return Response({'error': 'OTP expired'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            user = Users.objects.get(email=temp_user.email)
+            user = Users.objects.get(email=reset_data['email'])
+            user.password = make_password(new_password)
+            user.save()
+            cache.delete(redis_key)
+            
+            return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
         except Users.DoesNotExist:
-            return Response({{"error": "Unexpected error occurred"}}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        user.password = make_password(new_password)
-        user.save()
-        temp_user.delete()
-        
-        return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
+            return Response({"error": "Unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([AllowAny])
@@ -402,11 +385,19 @@ class CompleteRegistrationView(APIView):
         
         if serializer.is_valid():
             user = serializer.create(serializer.validated_data)
-            return Response({
-                'user_id': str(user.user_id),
-                'message': 'Account created successfully'
-            }, status=status.HTTP_201_CREATED)
-        
+            
+            refresh = RefreshToken.for_user(user)
+            response = Response({
+                    'detail': 'Successful',
+                    'user_id': user.user_id,
+                    'full_name': user.full_name,
+                    'email': user.email,
+                    'profile_image': user.profile_image,
+                    'role': user.role
+                }, status=status.HTTP_200_OK)
+            response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
+            response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
+            return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

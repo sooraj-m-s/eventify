@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { User, BookOpen, Wallet, BarChart3, MessageSquare } from "lucide-react"
+import { User, BookOpen, Wallet, MessageSquare } from "lucide-react"
 import { useSelector } from "react-redux"
 
 
@@ -11,7 +11,6 @@ const ProfileSidebar = () => {
     { name: "Profile", path: "/profile", icon: <User className="h-5 w-5" /> },
     { name: "Bookings", path: "/bookings", icon: <BookOpen className="h-5 w-5" /> },
     { name: "Wallet", path: "/wallet", icon: <Wallet className="h-5 w-5" /> },
-    { name: "Transactions", path: "/transactions", icon: <BarChart3 className="h-5 w-5" /> },
     { name: "Messages", path: "/messages", icon: <MessageSquare className="h-5 w-5" /> },
   ]
 

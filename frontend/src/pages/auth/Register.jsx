@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { setLoading, setUserId } from '../../store/slices/authSlice';
 import OtpModal from '../../components/OTPModal';
@@ -26,13 +25,11 @@ const Register = () => {
     profile_image: null
   });
   const [errors, setErrors] = useState({});
-
   const sliderImages = [image]
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -142,7 +139,6 @@ const Register = () => {
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Form - Left Side */}
       <div className="w-full max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-        <ToastContainer />
         <h2 className="text-2xl font-bold mb-6 text-center">Create Account</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">

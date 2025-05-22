@@ -52,7 +52,6 @@ const Header = () => {
       <a href="/" className="text-xl font-bold">Eventify</a>
       <nav className="flex space-x-6">
         <a href="/" className="hover:text-gray-300">Home</a>
-        <a href="/venue" className="hover:text-gray-300">Venue</a>
         <a href="/organizers" className="hover:text-gray-300">Organizers</a>
         <a href="/about" className="hover:text-gray-300">About</a>
         <a href="/contact" className="hover:text-gray-300">Contact Us</a>

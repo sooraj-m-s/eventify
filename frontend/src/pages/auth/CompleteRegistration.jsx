@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import 'react-toastify/dist/ReactToastify.css';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import axiosInstance from '../../utils/axiosInstance';
+import { useDispatch } from 'react-redux';
+import { setUser } from '@/store/slices/authSlice';
 
 
 const CompleteRegistration = () => {
   const location = useLocation();
+  const dispatch = useDispatch()
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -89,8 +91,15 @@ const CompleteRegistration = () => {
           },
         }
       );
-      toast.success('Registration completed successfully!');
-      setTimeout(() => navigate('/login'), 2000);
+      toast.success('Registration completed successfully and redirecting to home!');
+      dispatch(setUser({
+        id: response.data.user_id,
+        name: response.data.full_name,
+        email: response.data.email,
+        profile_image: response.data.profile_image,
+        role: response.data.role
+      }))
+      setTimeout(() => navigate("/"), 2000);
     } catch (error) {
       console.log('Backend error:', error.response?.data);
       if (error.response?.data) {

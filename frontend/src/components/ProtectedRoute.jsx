@@ -9,7 +9,6 @@ const UserProtectedRoute = ({ children }) => {
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
-  
   if (!userRole) {
     if (location.pathname !== '/') {
       toast.error("You're not authorized to access this page. Please log in.");
@@ -27,9 +26,10 @@ const OrganizerProtectedRoute = ({ children }) => {
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
-  
   if (userRole !== 'organizer') {
-    toast.error("You're not authorized to access this page. Organizer privileges required.")
+    if (location.pathname !== '/') {
+      toast.error("You're not authorized to access this page. Organizer privileges required.")
+    }
     return <Navigate to="/" replace />
   }
 
@@ -43,9 +43,10 @@ const AdminProtectedRoute = ({ children }) => {
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
-  
   if (userRole !== 'admin') {
-    toast.error("You're not authorized to access this page. Admin privileges required.")
+    if (location.pathname !== '/') {
+      toast.error("You're not authorized to access this page. Admin privileges required.")
+    }
     return <Navigate to="/" replace />
   }
 

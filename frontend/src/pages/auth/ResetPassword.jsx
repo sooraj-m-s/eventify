@@ -143,13 +143,13 @@ const ResetPassword = () => {
         temp_user_id: tempUserId,
         otp: otpValue,
         new_password: password,
+        confirmPassword: confirmPassword,
       })
       toast.success("Password reset successfully!")
       setTimeout(() => {navigate("/login")}, 2000)
     } catch (error) {
       console.error("Error resetting password:", error)
 
-      // Check for specific error messages
       if (error.response?.data?.error === "Invalid OTP") {
         toast.error("Invalid verification code. Please check and try again.")
       } else if (error.response?.data?.error === "OTP expired") {

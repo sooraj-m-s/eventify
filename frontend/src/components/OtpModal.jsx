@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
-import { logout, setError, setLoading } from '../store/slices/authSlice';
+import { X } from 'lucide-react'
+import { setError, setLoading, setUser, setUserId } from '../store/slices/authSlice';
 import axiosInstance from '../utils/axiosInstance';
 
 
@@ -70,6 +71,13 @@ const OtpModal = () => {
     }
   }, [tempUserId])
 
+  const handleClose = () => {
+    setOtp(["", "", "", "", "", ""])
+    dispatch(setUserId(null))
+    if (timerRef.current) clearInterval(timerRef.current)
+    if (resendTimerRef.current) clearInterval(resendTimerRef.current)
+  }
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -110,9 +118,15 @@ const OtpModal = () => {
         temp_user_id: tempUserId,
         otp: otpValue,
       });
-      toast.success('OTP verified successfully! Redirecting to login...');
-      dispatch(logout());
-      setTimeout(() => navigate('/login'), 2000);
+      toast.success('Registration completed successfully and redirecting to home!');
+      dispatch(setUser({
+        id: response.data.user_id,
+        name: response.data.full_name,
+        email: response.data.email,
+        profile_image: response.data.profile_image,
+        role: response.data.role
+      }))
+      setTimeout(() => navigate('/'), 2000);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'OTP verification failed';
       dispatch(setError(errorMsg));
@@ -153,7 +167,16 @@ const OtpModal = () => {
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-[9999]">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-2xl font-bold mb-4 text-center">Enter OTP</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-center flex-1">Enter OTP</h2>
+          <button
+            onClick={handleClose}
+            className="p-1.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            aria-label="Close"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
         <p className="text-center mb-6">Check your email for the 6-digit code.</p>
 
         {/* OTP Expiration Timer */}

@@ -1,27 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from django.utils import timezone
 import uuid
 
 
 # Create your models here.
-
-
-class TemporaryUserOTP(models.Model):
-    temp_user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    full_name = models.CharField(max_length=255, null=False)
-    email = models.EmailField(max_length=255, null=False)
-    mobile = models.BigIntegerField(null=False)
-    profile_image = models.CharField(max_length=255, null=True, blank=True)
-    password = models.TextField(null=False)
-    otp = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def is_expired(self):
-        return timezone.now() > self.created_at + timezone.timedelta(minutes=2)
-
-    def __str__(self):
-        return self.email
 
 
 class UsersManager(BaseUserManager):
