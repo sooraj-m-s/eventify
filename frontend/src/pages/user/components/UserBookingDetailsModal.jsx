@@ -1,4 +1,6 @@
 import { X, Calendar, Clock, MapPin, FileText, Loader } from "lucide-react"
+import { useState } from "react"
+import CancellationConfirmationModal from "./CancellationConfirmationModal"
 
 
 const UserBookingDetailsModal = ({
@@ -10,6 +12,18 @@ const UserBookingDetailsModal = ({
   formatDate,
   formatTime,
 }) => {
+  const [showCancellationModal, setShowCancellationModal] = useState(false)
+
+  const handleCancelClick = () => {
+    setShowCancellationModal(true)
+  }
+  const handleConfirmCancel = () => {
+    onCancel(booking.booking_id)
+    setShowCancellationModal(false)
+  }
+  const handleCancelModal = () => {
+    setShowCancellationModal(false)
+  }
 
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/30 bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -141,7 +155,7 @@ const UserBookingDetailsModal = ({
               <div className="mt-6 space-y-4">
                 {isBookingCancellable(booking) ? (
                   <button
-                    onClick={() => onCancel(booking.booking_id)}
+                    onClick={handleCancelClick}
                     disabled={cancellingId === booking.booking_id}
                     className="w-full py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-red-300 flex items-center justify-center"
                   >
@@ -161,18 +175,20 @@ const UserBookingDetailsModal = ({
                     </div>
                   )
                 )}
-
-                <button
-                  onClick={onClose}
-                  className="w-full py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-                >
-                  Close
-                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {/* Cancellation Confirmation Modal */}
+      {showCancellationModal && (
+        <CancellationConfirmationModal
+          booking={booking}
+          onConfirm={handleConfirmCancel}
+          onCancel={handleCancelModal}
+          isLoading={cancellingId === booking.booking_id}
+        />
+      )}
     </div>
   )
 }

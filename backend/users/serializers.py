@@ -54,14 +54,12 @@ class CompleteRegistrationSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(required=True)
 
     def validate(self, data):
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({'confirm_password': 'Passwords do not match'})
-
-        if ' ' in data['password']:
-            raise serializers.ValidationError({'password': 'Password cannot contain spaces'})
         if len(data['password']) < 8:
             raise serializers.ValidationError({'password': 'Password must be at least 8 characters long'})
-
+        if data['password'] != data['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match'})
+        if ' ' in data['password']:
+            raise serializers.ValidationError({'password': 'Password cannot contain spaces'})
         if Users.objects.filter(email=data['email'].lower()).exists():
             raise serializers.ValidationError({'email': 'Email already exists'})
         if Users.objects.filter(mobile=data['mobile']).exists():
@@ -81,12 +79,6 @@ class CompleteRegistrationSerializer(serializers.Serializer):
         )
 
 
-class UsersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Users
-        exclude = ['password', 'role', 'is_superuser', 'is_staff', 'is_blocked', 'updated_at']
-
-
 class UserProfileSerializer(serializers.ModelSerializer):
     created_at = serializers.SerializerMethodField()
     
@@ -100,13 +92,41 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'profile_image',
             'created_at',
         ]
-        read_only_fields = ['user_id', 'email', 'mobile', 'created_at']
+        read_only_fields = ['user_id', 'email', 'created_at']
 
     def get_created_at(self, obj):
         if hasattr(obj, 'created_at'):
             return obj.created_at.strftime('%b %d, %Y')
-        elif hasattr(obj, 'created_at'):
-            return obj.created_at.strftime('%b %d, %Y')
-            
         return None
+    
+    def validate_mobile(self, value):
+        if not value:
+            return value
+        
+        user = self.instance
+        if len(str(value)) != 10:
+            raise serializers.ValidationError({'error': 'Enter a valid mobile number!'})
+        if Users.objects.exclude(user_id=user.user_id).filter(mobile=value).exists():
+            raise serializers.ValidationError("This mobile number is already registered with another account.")
+        return value
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True, min_length=8)
+    confirm_password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, data):
+        if len(data.get('new_password')) < 8:
+            raise serializers.ValidationError({'password': 'Password must be at least 8 characters long'})
+        if data.get('new_password') != data.get('confirm_password'):
+            raise serializers.ValidationError({'confirm_password': 'New password and confirm password do not match'})
+        if ' ' in data.get('new_password'):
+            raise serializers.ValidationError({'new_password': 'Password cannot contain spaces'})
+        
+        user = self.context.get('user')
+        if user and check_password(data.get('new_password'), user.password):
+            raise serializers.ValidationError({'new_password': 'New password must be different from current password'})
+            
+        return data
 

@@ -1,17 +1,19 @@
-import { useState, useEffect, useRef } from "react"
-import { Pencil, Upload, X } from "lucide-react"
+import React, { useState, useEffect, useRef } from "react"
+import { Pencil, Upload, X, Lock } from "lucide-react"
 import ProfileSidebar from "./components/ProfileSidebar"
 import axiosInstance from "../../utils/axiosInstance"
 import uploadToCloudinary from "../../utils/cloudinaryUpload"
 import { toast } from "sonner"
 import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
+import ChangePasswordModal from "./components/ChangePasswordModal"
 
 
 const UserProfile = () => {
   const navigate = useNavigate()
   const role = useSelector((state) => state.auth.userRole)
   const [profile, setProfile] = useState(null)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -19,6 +21,7 @@ const UserProfile = () => {
   const [formData, setFormData] = useState({
     full_name: "",
     profile_image: "",
+    mobile: "",
   })
   const fileInputRef = useRef(null)
 
@@ -30,7 +33,7 @@ const UserProfile = () => {
         setProfile(response.data)
         setFormData({
           full_name: response.data.full_name || "",
-          email: response.data.email || "",
+          mobile: response.data.mobile || "",
         })
       } catch (error) {
         console.error("Error fetching profile:", error)
@@ -50,7 +53,6 @@ const UserProfile = () => {
       [name]: value,
     }))
   }
-
   const handleImageClick = () => {
     fileInputRef.current.click()
   }
@@ -91,6 +93,7 @@ const UserProfile = () => {
       toast.success("Profile updated successfully")
     } catch (error) {
       console.error("Error updating profile:", error)
+      toast.error(error?.response?.data?.mobile?.error)
       setError("Failed to update profile")
     } finally {
       setLoading(false)
@@ -215,7 +218,7 @@ const UserProfile = () => {
           />
         </div>
 
-        {/* Phone - Disabled */}
+        {/* Phone - Editable */}
         <div>
           <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">
             Phone Number
@@ -224,9 +227,9 @@ const UserProfile = () => {
             type="tel"
             id="mobile"
             name="mobile"
-            value={profile?.mobile || ""}
-            disabled
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+            value={formData.mobile || profile?.mobile}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
           />
         </div>
 
@@ -247,21 +250,31 @@ const UserProfile = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end space-x-4 pt-4 border-t">
+      <div className="flex justify-between space-x-4 pt-4 border-t">
         <button
           type="button"
-          onClick={() => setIsEditing(false)}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          onClick={() => setIsPasswordModalOpen(true)}
+          className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 flex items-center"
         >
-          Cancel
+          <Lock className="h-4 w-4 mr-2" />
+          Change Password
         </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400"
-          disabled={loading || imageUploading}
-        >
-          {loading ? "Saving..." : "Save Changes"}
-        </button>
+        <div className="flex space-x-4">
+          <button
+            type="button"
+            onClick={() => setIsEditing(false)}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400"
+            disabled={loading || imageUploading}
+          >
+            {loading ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
       </div>
     </form>
   )
@@ -330,6 +343,10 @@ const UserProfile = () => {
           </div>
         </div>
       </div>
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen} 
+        onClose={() => setIsPasswordModalOpen(false)} 
+      />
     </div>
   )
 }

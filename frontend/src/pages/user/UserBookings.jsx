@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Calendar, Clock, MapPin, AlertCircle, Eye, Loader, CheckCircle,
     XCircle, RefreshCw, IndianRupee } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import BookingDetailsModal from "./components/UserBookingDetailsModal"
 import ProfileSidebar from "./components/ProfileSidebar"
 

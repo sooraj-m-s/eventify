@@ -3,7 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
+from django.db import transaction
 from django.utils import timezone
+from wallet.models import Wallet, WalletTransaction
 from events.models import Event
 from .models import Booking
 from .serializers import UserBookingSerializer
@@ -83,22 +85,39 @@ class UserBookingsView(APIView):
 class CancelBookingView(APIView):
     def patch(self, request, booking_id):
         try:
-            booking = Booking.objects.get(pk=booking_id, user=request.user)
-            
-            if booking.event.date < timezone.now().date():
-                return Response({"success": False, "error": "Cannot cancel bookings for past events"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            booking.payment_status = 'cancelled'
-            booking.is_booking_cancelled = True
-            booking.save()
-            
-            event = booking.event
-            event.ticketsSold = max(0, event.ticketsSold - 1)
-            event.save()
-            
-            serializer = UserBookingSerializer(booking)
-            
-            return Response({"success": True, "message": "Booking cancelled successfully", "booking": serializer.data}, status=status.HTTP_200_OK)
+            with transaction.atomic():
+                booking = Booking.objects.get(pk=booking_id, user=request.user)
+                
+                if booking.event.date < timezone.now().date():
+                    return Response({"error": "Cannot cancel bookings for past events"}, status=status.HTTP_400_BAD_REQUEST)
+                if not booking.event.cancellationAvailable:
+                    return Response({"error": "Cancellation not available for this booking!"}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if booking.payment_status == 'confirmed':
+                    wallet = Wallet.objects.select_for_update().get(user=request.user)
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=booking.total_price,
+                        transaction_type='REFUND',
+                    )
+                    
+                    wallet.balance += booking.total_price
+                    wallet.save()
+                    booking.payment_status = 'refunded'
+                else:
+                    booking.payment_status = 'cancelled'
+                
+                booking.is_booking_cancelled = True
+                booking.save()
+                
+                event = booking.event
+                event.ticketsSold = max(0, event.ticketsSold - 1)
+                event.save()
+                
+                serializer = UserBookingSerializer(booking)
+                
+                return Response({"success": True, "message": "Booking cancelled successfully", "booking": serializer.data}, status=status.HTTP_200_OK)
         except Booking.DoesNotExist:
             return Response({"success": False, "error": "Booking not found or does not belong to you"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:

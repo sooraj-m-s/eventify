@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     RegisterView, VerifyOTPView, GoogleAuthView, LoginView, CompleteRegistrationView, OrganizerListView,
     RefreshTokenView, LogoutView, UserProfileView, ResendOTPView, ForgotPasswordEmailCheckView,
-    ForgotPasswordSetView
+    ForgotPasswordSetView, ChangePasswordView
 )
 
 
@@ -17,6 +17,7 @@ urlpatterns = [
     path('resend_otp/', ResendOTPView.as_view(), name='resend-otp'),
     path('logout/', LogoutView.as_view(), name='user-logout'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('forgot_password/', ForgotPasswordEmailCheckView.as_view(), name='forgot-password-email-check'),
     path('change_password/', ForgotPasswordSetView.as_view(), name='forgot-password-set'),
 ]

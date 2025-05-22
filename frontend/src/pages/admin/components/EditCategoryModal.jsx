@@ -50,8 +50,6 @@ const EditCategoryModal = ({ isOpen, onClose, category, onSuccess }) => {
 
   const removeImage = () => {
     setImage(null)
-    // If we're removing the existing image, set previewUrl to null
-    // Otherwise, keep the original image
     if (previewUrl === category.image) {
       setPreviewUrl(null)
     } else {
@@ -66,20 +64,16 @@ const EditCategoryModal = ({ isOpen, onClose, category, onSuccess }) => {
       toast.error("Category name is required")
       return
     }
-
     setLoading(true)
 
     try {
       let imageUrl = category.image
-
-      // Only upload if a new image was selected
       if (image) {
         setImageUploading(true)
         imageUrl = await uploadToCloudinary(image)
         setImageUploading(false)
       }
 
-      // If image was removed (previewUrl is null but category had an image)
       if (!previewUrl && category.image) {
         imageUrl = null
       }

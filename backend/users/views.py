@@ -16,7 +16,10 @@ from django.conf import settings
 from organizers.models import OrganizerProfile
 from organizers.serializers import OrganizerProfileSerializer
 from .email_templates import registration_email_template, resend_otp_email_template, password_reset_email_template
-from .serializers import UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer, UserProfileSerializer
+from .serializers import (
+    UserRegistrationSerializer, LoginSerializer, CompleteRegistrationSerializer, UserProfileSerializer,
+    ChangePasswordSerializer
+)
 from .models import Users
 
 
@@ -292,6 +295,23 @@ class UserProfileView(APIView):
                 {"error": f"Failed to update profile: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+@permission_classes([IsAuthenticated])
+class ChangePasswordView(APIView):
+    def post(self, request):
+        try:
+            serializer = ChangePasswordSerializer(data=request.data, context={'user': request.user})
+            
+            if serializer.is_valid():
+                user = request.user
+                user.password = make_password(serializer.validated_data['new_password'])
+                user.save()
+                
+                return Response({"detail": "Password changed successfully"}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"Failed to change password: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([IsAuthenticated])

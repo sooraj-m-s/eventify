@@ -26,9 +26,9 @@ const WalletPage = () => {
     try {
       setLoading(true)
       const response = await axiosInstance.get(`/wallet/transactions/?page=${page}`)
-
-      setWalletData(response.data.wallet)
-      setTransactions(response.data.transactions || [])
+      
+      setWalletData(response.data.results.wallet)
+      setTransactions(response.data.results.transactions || [])
 
       setPagination({
         count: response.data.count,
