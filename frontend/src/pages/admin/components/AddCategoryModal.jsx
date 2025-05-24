@@ -64,8 +64,6 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
       })
 
       toast.success("Category created successfully")
-
-      // Reset form
       setFormData({
         categoryName: "",
         is_listed: true,
@@ -76,7 +74,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
       if (onSuccess) onSuccess(response.data)
     } catch (error) {
       console.error("Error creating category:", error)
-      toast.error(error.response?.data?.message || "Failed to create category")
+      toast.error(error?.response?.data?.message || "Failed to create category")
     } finally {
       setLoading(false)
     }

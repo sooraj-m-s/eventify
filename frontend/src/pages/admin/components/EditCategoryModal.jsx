@@ -89,7 +89,7 @@ const EditCategoryModal = ({ isOpen, onClose, category, onSuccess }) => {
       if (onSuccess) onSuccess(response.data)
     } catch (error) {
       console.error("Error updating category:", error)
-      toast.error(error.response?.data?.message || "Failed to update category")
+      toast.error(error?.response?.data?.message || "Failed to update category")
     } finally {
       setLoading(false)
     }

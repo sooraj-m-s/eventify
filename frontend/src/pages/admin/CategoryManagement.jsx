@@ -39,8 +39,6 @@ const CategoryManagement = () => {
 
   const handleSearch = (e) => {
     e.preventDefault()
-    // Filter categories client-side for now
-    // Could be replaced with a backend search endpoint
   }
 
   const handleAddCategory = () => {
@@ -58,8 +56,6 @@ const CategoryManagement = () => {
       await axiosInstance.patch(`/categories/update/${categoryId}/`, {
         is_listed: !currentStatus,
       })
-
-      // Update local state
       setCategories(
         categories.map((cat) => (cat.categoryId === categoryId ? { ...cat, is_listed: !currentStatus } : cat)),
       )
