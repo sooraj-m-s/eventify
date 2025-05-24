@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react"
-import { ArrowUpRight, ArrowDownLeft, Search, ChevronLeft, ChevronRight, Calendar, Wallet } from "lucide-react"
+import { ArrowUpRight, ArrowDownLeft, Search, ChevronLeft, ChevronRight, Calendar, Wallet, Download } from "lucide-react"
 import axiosInstance from "@/utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
+import { toast } from "sonner"
+import WithdrawConfirmationModal from "./components/WithdrawConfirmationModal"
+import { Button } from "@/components/ui/button"
 
 
 const OrganizerWallet = () => {
@@ -17,6 +20,8 @@ const OrganizerWallet = () => {
   })
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false)
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
 
   useEffect(() => {
     fetchWalletData(currentPage)
@@ -39,8 +44,41 @@ const OrganizerWallet = () => {
       })
     } catch (error) {
       console.error("Error fetching organizer wallet data:", error)
+      toast.error("Failed to fetch wallet data")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleWithdrawAll = async () => {
+    try {
+      setIsWithdrawing(true)
+
+      const response = await axiosInstance.post("/wallet/withdraw_money/", {
+        confirm_withdrawal: true,
+      })
+
+      if (response.data) {
+        setWalletData(response.data.wallet)
+        await fetchWalletData(1)
+        setCurrentPage(1)
+
+        toast.success("Withdrawal Successful!", {
+          description: `₹${response.data.withdrawal_amount.toLocaleString()} has been withdrawn successfully. It will be credited to your account in 5-7 working days.`,
+          duration: 5000,
+        })
+
+        setIsWithdrawModalOpen(false)
+      }
+    } catch (error) {
+      console.error("Error withdrawing money:", error)
+      const errorMessage = error.response?.data?.error || "Failed to withdraw money. Please try again."
+      toast.error("Withdrawal Failed", {
+        description: errorMessage,
+        duration: 4000,
+      })
+    } finally {
+      setIsWithdrawing(false)
     }
   }
 
@@ -74,7 +112,7 @@ const OrganizerWallet = () => {
       case "DEBIT":
         return <ArrowDownLeft className="h-5 w-5 text-red-500" />
       case "WITHDRAWAL":
-        return <ArrowDownLeft className="h-5 w-5 text-orange-500" />
+        return <Download className="h-5 w-5 text-orange-500" />
       default:
         return <Calendar className="h-5 w-5 text-gray-500" />
     }
@@ -109,6 +147,7 @@ const OrganizerWallet = () => {
       transaction.reference_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       transaction.transaction_type.toLowerCase().includes(searchQuery.toLowerCase()),
   )
+  const canWithdraw = walletData?.balance > 0
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -125,16 +164,37 @@ const OrganizerWallet = () => {
             <>
               {/* Wallet Balance Card */}
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg shadow-md p-6 mb-6 text-white">
-                <div className="flex items-center">
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <Wallet className="h-8 w-8 text-white" />
+                <div className="flex items-center justify-between">
+                  {" "}
+                  <div className="flex items-center">
+                    <div className="bg-white/20 p-3 rounded-full">
+                      <Wallet className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="ml-4">
+                      <h2 className="text-lg font-medium opacity-90">Available Balance</h2>
+                      <div className="text-3xl font-bold mt-1">₹{walletData?.balance.toLocaleString()}</div>
+                    </div>
                   </div>
-                  <div className="ml-4">
-                    <h2 className="text-lg font-medium opacity-90">Available Balance</h2>
-                    <div className="text-3xl font-bold mt-1">₹{walletData?.balance.toLocaleString()}</div>
-                  </div>
+                  <Button
+                    onClick={() => setIsWithdrawModalOpen(true)}
+                    disabled={!canWithdraw}
+                    variant="secondary"
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Withdraw All
+                  </Button>
                 </div>
               </div>
+
+              {/* Withdrawal Confirmation Modal */}
+              <WithdrawConfirmationModal
+                isOpen={isWithdrawModalOpen}
+                onClose={() => setIsWithdrawModalOpen(false)}
+                walletBalance={walletData?.balance}
+                onConfirm={handleWithdrawAll}
+                isLoading={isWithdrawing}
+              />
 
               {/* Transactions Section */}
               <div className="bg-white rounded-lg shadow-md overflow-hidden">

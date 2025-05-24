@@ -56,7 +56,7 @@ class OrganizerWalletTransaction(models.Model):
     ]
     
     transaction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='organizer_wallet_transactions')
+    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='organizer_wallet_transactions', null=True, blank=True)
     wallet = models.ForeignKey(OrganizerWallet, on_delete=models.CASCADE, related_name='organizer_wallet_transactions')
     amount = models.IntegerField()
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)

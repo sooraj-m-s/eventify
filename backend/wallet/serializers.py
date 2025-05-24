@@ -41,3 +41,12 @@ class CompanyWalletSerializer(serializers.ModelSerializer):
     def get_formatted_created_at(self, obj):
         return obj.created_at.strftime("%d %b %Y, %I:%M %p")
 
+
+class WithdrawAllMoneySerializer(serializers.Serializer):
+    confirm_withdrawal = serializers.BooleanField(required=True)
+    
+    def validate_confirm_withdrawal(self, value):
+        if not value:
+            raise serializers.ValidationError("Something went wrong. Please try again.")
+        return value
+
