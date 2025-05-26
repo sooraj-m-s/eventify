@@ -46,7 +46,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
-    # If you need to use User model, do it inside a method like this:
     @database_sync_to_async
     def get_user(self, user_id):
         User = get_user_model()
@@ -54,3 +53,4 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             return User.objects.get(id=user_id)
         except User.DoesNotExist:
             return None
+

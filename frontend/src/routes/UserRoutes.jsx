@@ -15,8 +15,8 @@ import UserBookings from '@/pages/user/UserBookings'
 import UserProfile from '@/pages/user/UserProfile'
 import NotFound from '@/pages/NotFound'
 import PaymentPage from '@/pages/PaymentPage'
-import PaymentConfirmationPage from '@/pages/PaymentConfirmationPage'
 import WalletPage from '@/pages/user/wallet'
+import Messages from '@/pages/user/Messages'
 
 
 const UserRoutes = () => {
@@ -40,9 +40,9 @@ const UserRoutes = () => {
                     <Route path="profile" element={<UserProtectedRoute><UserProfile /></UserProtectedRoute>} />
                     <Route path="become_organizer" element={<UserProtectedRoute><BecomeOrganizer /></UserProtectedRoute>} />
                     <Route path="bookings" element={<UserProtectedRoute><UserBookings /></UserProtectedRoute>} />
-                    <Route path="payment/:bookingId" element={<PaymentPage />} />
-                    <Route path="payment_confirmation" element={<PaymentConfirmationPage />} />
-                    <Route path="wallet" element={<WalletPage />} />
+                    <Route path="payment/:bookingId" element={<UserProtectedRoute><PaymentPage /></UserProtectedRoute>} />
+                    <Route path="wallet" element={<UserProtectedRoute><WalletPage /></UserProtectedRoute>} />
+                    <Route path="messages" element={<UserProtectedRoute><Messages /></UserProtectedRoute>} />
 
                     {/* Fallback */}
                     <Route path="*" element={<NotFound />} />

@@ -1,6 +1,9 @@
-import { X, Calendar, Clock, MapPin, FileText, Loader } from "lucide-react"
+import { X, Calendar, Clock, MapPin, FileText, Loader, MessageSquare } from "lucide-react"
 import { useState } from "react"
 import CancellationConfirmationModal from "./CancellationConfirmationModal"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
+import axiosInstance from "@/utils/axiosInstance"
 
 
 const UserBookingDetailsModal = ({
@@ -13,6 +16,8 @@ const UserBookingDetailsModal = ({
   formatTime,
 }) => {
   const [showCancellationModal, setShowCancellationModal] = useState(false)
+  const [startingChat, setStartingChat] = useState(false)
+  const navigate = useNavigate()
 
   const handleCancelClick = () => {
     setShowCancellationModal(true)
@@ -23,6 +28,28 @@ const UserBookingDetailsModal = ({
   }
   const handleCancelModal = () => {
     setShowCancellationModal(false)
+  }
+
+  const handleChatWithOrganizer = async () => {
+    try {
+      setStartingChat(true)
+
+      const response = await axiosInstance.post("/chat/start/", {
+        user_id: booking.event.hostedBy,
+      })
+
+      if (response.data) {
+        onClose()
+        navigate(`/messages?room=${response.data.room.room_id}`)
+      }
+    } catch (error) {
+      console.error("Error starting chat:", error)
+      toast.error("Failed to start chat", {
+        description: "Please try again later",
+      })
+    } finally {
+      setStartingChat(false)
+    }
   }
 
   return (
@@ -73,6 +100,35 @@ const UserBookingDetailsModal = ({
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 text-gray-500 mr-2" />
                     <span>{booking.event.location || "Online"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h4 className="font-medium mb-3">Event Organizer</h4>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                    </div>
+                    
+                    {/* Chat Button */}
+                    <button
+                      onClick={handleChatWithOrganizer}
+                      disabled={startingChat}
+                      className="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {startingChat ? (
+                        <>
+                          <Loader className="animate-spin h-4 w-4 mr-2" />
+                          Starting...
+                        </>
+                      ) : (
+                        <>
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Chat
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
     'payments.apps.PaymentsConfig',
     'wallet.apps.WalletConfig',
+    'chat.apps.ChatConfig',
 ]
 
 MIDDLEWARE = [
@@ -75,28 +76,8 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv())
 CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
-
-# Allow these HTTP methods
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+CORS_ALLOW_HEADERS = config('CORS_ALLOW_HEADERS', cast=Csv())
+CORS_ALLOW_METHODS = config('CORS_ALLOW_METHODS', cast=Csv())
 
 ROOT_URLCONF = 'eventify.urls'
 
