@@ -27,12 +27,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'corsheaders',
     'channels',
     'django_celery_results',
     'django_celery_beat',
     'rest_framework_simplejwt.token_blacklist',
+    
     'users.apps.UsersConfig',
     'admin.apps.AdminConfig',
     'categories.apps.CategoriesConfig',
@@ -54,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'chat.middleware.UserActivityMiddleware',
 ]
 
 REST_FRAMEWORK = {

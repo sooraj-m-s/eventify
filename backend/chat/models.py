@@ -22,19 +22,18 @@ class ChatRoom(models.Model):
     @classmethod
     def get_or_create_room(cls, user1, user2):
         existing_room = cls.objects.filter(
-            participants=user1
-        ).filter(
-            participants=user2
+            participants__in=[user1, user2]
         ).annotate(
             participant_count=Count('participants')
         ).filter(
             participant_count=2
         ).first()
         
-        if existing_room:
+        if existing_room and set(existing_room.participants.all()) == {user1, user2}:
             return existing_room, False
+        
         room = cls.objects.create()
-        room.participants.add(user1, user2)
+        room.participants.set([user1, user2])
         return room, True
     
     def get_other_participant(self, user):
@@ -45,10 +44,18 @@ class ChatRoom(models.Model):
 
 
 class Message(models.Model):
+    MESSAGE_TYPES = [
+        ('text', 'Text'),
+        ('image', 'Image'),
+    ]
+    
     message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     content = models.TextField()
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='text')
+    media_url = models.URLField(blank=True, null=True)
+    media_filename = models.CharField(max_length=255, blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     

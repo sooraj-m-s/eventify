@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.utils import timezone
 import uuid
 
 
@@ -47,10 +48,42 @@ class Users(AbstractBaseUser, BaseUserManager):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    is_online = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(default=timezone.now)
+    last_activity = models.DateTimeField(auto_now=True)
+
     objects = UsersManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.email
+    
+    def update_last_seen(self):
+        self.last_seen = timezone.now()
+        self.save(update_fields=['last_seen'])
+    
+    def set_online_status(self, is_online):
+        self.is_online = is_online
+        if not is_online:
+            self.last_seen = timezone.now()
+        self.save(update_fields=['is_online', 'last_seen'])
+    
+    def get_online_status(self):
+        if self.is_online:
+            return "online"
+        
+        now = timezone.now()
+        time_diff = now - self.last_seen
+        
+        if time_diff.total_seconds() < 300:
+            return "recently_active"
+        elif time_diff.days == 0:
+            return "today"
+        elif time_diff.days == 1:
+            return "yesterday"
+        elif time_diff.days < 7:
+            return f"{time_diff.days} days ago"
+        else:
+            return "long_time_ago"
 

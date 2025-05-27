@@ -1,9 +1,9 @@
 import { X, Calendar, Clock, MapPin, FileText, Loader, MessageSquare } from "lucide-react"
 import { useState } from "react"
 import CancellationConfirmationModal from "./CancellationConfirmationModal"
-import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import axiosInstance from "@/utils/axiosInstance"
+import ChatModal from "@/components/ChatModal"
 
 
 const UserBookingDetailsModal = ({
@@ -17,7 +17,8 @@ const UserBookingDetailsModal = ({
 }) => {
   const [showCancellationModal, setShowCancellationModal] = useState(false)
   const [startingChat, setStartingChat] = useState(false)
-  const navigate = useNavigate()
+  const [showChatModal, setShowChatModal] = useState(false)
+  const [chatRoomId, setChatRoomId] = useState(null)
 
   const handleCancelClick = () => {
     setShowCancellationModal(true)
@@ -39,8 +40,8 @@ const UserBookingDetailsModal = ({
       })
 
       if (response.data) {
-        onClose()
-        navigate(`/messages?room=${response.data.room.room_id}`)
+        setChatRoomId(response.data.room.room_id)
+        setShowChatModal(true)
       }
     } catch (error) {
       console.error("Error starting chat:", error)
@@ -243,6 +244,16 @@ const UserBookingDetailsModal = ({
           onConfirm={handleConfirmCancel}
           onCancel={handleCancelModal}
           isLoading={cancellingId === booking.booking_id}
+        />
+      )}
+
+      {/* Chat Modal */}
+      {showChatModal && (
+        <ChatModal
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          roomId={chatRoomId}
+          otherUser={booking.event.organizer}
         />
       )}
     </div>

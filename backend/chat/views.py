@@ -7,6 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.db.models import Q
 from users.models import Users
 from .models import ChatRoom
 from .serializers import ChatRoomSerializer, MessageSerializer, CreateMessageSerializer
@@ -15,20 +16,37 @@ from .serializers import ChatRoomSerializer, MessageSerializer, CreateMessageSer
 # Create your views here.
 
 
+class ChatRoomPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class MessagePagination(PageNumberPagination):
-    page_size = 20
+    page_size = 15
     page_size_query_param = 'page_size'
     max_page_size = 50
 
 
 @permission_classes([IsAuthenticated])
 class ChatRoomListView(APIView):
+    pagination_class = ChatRoomPagination
+
     def get(self, request):
         try:
-            chat_rooms = ChatRoom.objects.filter(participants=request.user).prefetch_related('participants', 'messages')
-            serializer = ChatRoomSerializer(chat_rooms, many=True, context={'request': request})
+            search_query = request.GET.get('search', '').strip()
+            chat_rooms = ChatRoom.objects.filter(participants=request.user).prefetch_related('participants', 'messages').order_by('-updated_at')
             
-            return Response({'chat_rooms': serializer.data}, status=status.HTTP_200_OK)
+            if search_query:
+                chat_rooms = chat_rooms.filter(
+                    Q(participants__full_name__istartswith=search_query) |
+                    Q(participants__email__icontains=search_query)
+                ).distinct()
+            paginator = self.pagination_class()
+            result_page = paginator.paginate_queryset(chat_rooms, request)
+            serializer = ChatRoomSerializer(result_page, many=True, context={'request': request})
+            
+            return paginator.get_paginated_response({'chat_rooms': serializer.data})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -66,14 +84,12 @@ class ChatMessagesView(APIView):
             for message in unread_messages:
                 message.mark_as_read()
             
-            # Get paginated messages
             paginator = self.pagination_class()
             messages = room.messages.select_related('sender')
             result_page = paginator.paginate_queryset(messages, request)
             serializer = MessageSerializer(result_page, many=True)
             
             return paginator.get_paginated_response(serializer.data)
-            
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
