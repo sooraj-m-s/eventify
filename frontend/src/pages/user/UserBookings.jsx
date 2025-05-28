@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Calendar, Clock, MapPin, AlertCircle, Eye, Loader, CheckCircle,
-    XCircle, RefreshCw, IndianRupee } from "lucide-react"
+    XCircle, RefreshCw, IndianRupee, 
+    Download} from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 import { toast } from "sonner"
 import BookingDetailsModal from "./components/UserBookingDetailsModal"
@@ -15,6 +16,7 @@ const UserBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [cancellingId, setCancellingId] = useState(null)
+  const [downloadingTickets, setDownloadingTickets] = useState(new Set())
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -69,6 +71,57 @@ const UserBookings = () => {
       toast.error(err.response?.data?.error || "Failed to cancel booking. Please try again later.")
     } finally {
       setCancellingId(null)
+    }
+  }
+
+  const handleQuickDownload = async (booking, event) => {
+    event.stopPropagation()
+    try {
+      setDownloadingTickets((prev) => new Set(prev).add(booking.booking_id))
+
+      const response = await axiosInstance.get(`/booking/download_ticket/${booking.booking_id}/`, {
+        responseType: "blob",
+      })
+
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement("a")
+      link.href = url
+
+      const contentDisposition = response.headers["content-disposition"]
+      let filename = `ticket_${booking.booking_id}.pdf`
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      link.setAttribute("download", filename)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      toast.success("Ticket downloaded successfully!")
+    } catch (error) {
+      console.error("Error downloading ticket:", error)
+
+      if (error.response?.status === 400) {
+        toast.error("Cannot download ticket", {
+          description: error.response.data?.error || "Ticket download not available",
+        })
+      } else {
+        toast.error("Failed to download ticket", {
+          description: "Please try again later",
+        })
+      }
+    } finally {
+      setDownloadingTickets((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(booking.booking_id)
+        return newSet
+      })
     }
   }
 
@@ -254,13 +307,31 @@ const UserBookings = () => {
 
                       <div className="flex justify-between items-center">
                         <div className="text-sm text-gray-500">Booked on {formatDate(booking.booking_date)}</div>
-                        <button
-                          onClick={() => handleViewBooking(booking)}
-                          className="flex items-center px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </button>
+                        <div className="flex gap-2">
+                          {/* Quick Download Button */}
+                          {booking.can_download_ticket && (
+                            <button
+                              onClick={(e) => handleQuickDownload(booking, e)}
+                              disabled={downloadingTickets.has(booking.booking_id)}
+                              className="flex items-center px-3 py-2 bg-green-100 text-green-800 rounded-md hover:bg-green-200 disabled:bg-green-50 disabled:text-green-400 transition-colors"
+                            >
+                              {downloadingTickets.has(booking.booking_id) ? (
+                                <Loader className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+
+                          {/* View Details Button */}
+                          <button
+                            onClick={() => handleViewBooking(booking)}
+                            className="flex items-center px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

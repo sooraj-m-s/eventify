@@ -7,6 +7,7 @@ import OrganizerProfile from "@/pages/organizer/OrganizerProfile"
 import OrganizerBookings from "@/pages/organizer/OrganizerBookings"
 import NotFound from "@/pages/NotFound"
 import OrganizerWallet from "@/pages/organizer/OrganizerWallet"
+import OrganizerDashboard from "@/pages/organizer/OrganizerDashboard"
 
 
 const OrganizerRoutes = () => {
@@ -15,6 +16,7 @@ const OrganizerRoutes = () => {
             <Header />
             <div className='pt-16'>
                 <Routes>
+                    <Route path="dashboard" element={<OrganizerProtectedRoute><OrganizerDashboard /></OrganizerProtectedRoute>} /> 
                     <Route path="profile" element={<OrganizerProtectedRoute><OrganizerProfile /></OrganizerProtectedRoute>} />
                     <Route path="events" element={<OrganizerProtectedRoute><OrganizerEventManagement /></OrganizerProtectedRoute>} />
                     <Route path="bookings" element={<OrganizerProtectedRoute><OrganizerBookings /></OrganizerProtectedRoute>} />

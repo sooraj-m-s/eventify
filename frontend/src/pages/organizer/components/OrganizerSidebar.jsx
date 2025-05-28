@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { User, Briefcase, Calendar, Star, Wallet, MessageSquare } from "lucide-react"
+import { User, Briefcase, Calendar, Star, Wallet, MessageSquare, BarChart3 } from "lucide-react"
 import { useSelector } from "react-redux"
 
 
@@ -12,6 +12,11 @@ const OrganizerSidebar = () => {
   }
 
   const menuItems = [
+    {
+      name: "Dashboard",
+      icon: <BarChart3 size={20} />,
+      path: "/organizer/dashboard",
+    },
     {
       name: "My Profile",
       icon: <User size={20} />,
