@@ -17,6 +17,7 @@ import NotFound from '@/pages/NotFound'
 import PaymentPage from '@/pages/PaymentPage'
 import WalletPage from '@/pages/user/wallet'
 import Messages from '@/pages/user/Messages'
+import AdvancedSearchEvents from '@/pages/landing/AdvancedSearchEvents'
 
 
 const UserRoutes = () => {
@@ -27,6 +28,7 @@ const UserRoutes = () => {
                 <Routes>
                     {/* Public Routes */}
                     <Route path="" element={<Home />} />
+                    <Route path="events" element={<AdvancedSearchEvents />} />
                     <Route path="event_detial/:eventId" element={<EventDetail />} />
 
                     {/* Auth Routes */}

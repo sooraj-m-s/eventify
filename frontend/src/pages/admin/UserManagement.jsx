@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
@@ -13,11 +13,13 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [inputValue, setInputValue] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [updatingUserId, setUpdatingUserId] = useState(null)
   const [showOrganizerModal, setShowOrganizerModal] = useState(false)
   const [pendingOrganizerCount, setPendingOrganizerCount] = useState(0)
+  const searchTimeoutRef = useRef(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,6 +57,14 @@ const UserManagement = () => {
     fetchData()
   }, [activeTab, currentPage, searchTerm])
 
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [])
+
   const fetchPendingOrganizerCount = async () => {
     try {
       const response = await axiosInstance.get("/admin/pending_organizers/", {
@@ -88,8 +98,23 @@ const UserManagement = () => {
     }
   }
 
+  const handleSearchChange = (value) => {
+    setInputValue(value)
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearchTerm(value)
+      setCurrentPage(1)
+    }, 3000)
+  }
+
   const handleSearch = (e) => {
     e.preventDefault()
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    setSearchTerm(inputValue)
     setCurrentPage(1)
   }
 
@@ -145,8 +170,8 @@ const UserManagement = () => {
                 <input
                   type="text"
                   placeholder={`Search ${activeTab}`}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={inputValue}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 w-64"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />

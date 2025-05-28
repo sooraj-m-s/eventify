@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'rest_framework_simplejwt.token_blacklist',
     
+    'homepage.apps.HomepageConfig',
     'users.apps.UsersConfig',
     'admin.apps.AdminConfig',
     'categories.apps.CategoriesConfig',

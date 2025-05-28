@@ -377,7 +377,7 @@ class UserListView(APIView):
         queryset = Users.objects.exclude(role='admin')
         
         if search_query:
-            queryset = queryset.filter(full_name__icontains=search_query)
+            queryset = queryset.filter(full_name__istartswith=search_query)
         
         queryset = queryset.filter(role=role).order_by('-created_at')
         

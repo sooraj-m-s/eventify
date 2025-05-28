@@ -29,7 +29,7 @@ const AdminEventManagement = () => {
 
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery)
-    }, 500)
+    }, 3000)
 
     return () => {
       if (searchTimeoutRef.current) {
