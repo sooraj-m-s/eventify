@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.db.models import Q
+from django.utils import timezone
 from users.models import Users
 from .models import ChatRoom
 from .serializers import ChatRoomSerializer, MessageSerializer, CreateMessageSerializer
@@ -107,10 +108,42 @@ class ChatMessagesView(APIView):
                 
                 async_to_sync(channel_layer.group_send)(room_group_name, {'type': 'chat_message', 'message': message_data})
                 
+                other_participant = room.get_other_participant(request.user)
+                if other_participant:
+                    self.send_message_notification(message, other_participant, room)
+                
                 return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def send_message_notification(self, message, recipient, room):
+        try:
+            # Create notification data
+            notification_data = {
+                'type': 'new_message',
+                'message': f"You have a new message from {message.sender.full_name}",
+                'sender_id': str(message.sender.user_id),
+                'sender_name': message.sender.full_name,
+                'sender_image': message.sender.profile_image or '',
+                'room_id': str(room.room_id),
+                'message_preview': message.content[:50] + ('...' if len(message.content) > 50 else '') if message.content else 'Sent an image',
+                'message_type': message.message_type,
+                'timestamp': timezone.now().isoformat()
+            }
+            
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f'notifications_{recipient.user_id}',
+                {
+                    'type': 'send_notification',
+                    'notification': notification_data
+                }
+            )
+            print(f"Sent message notification to user {recipient.user_id}")
+            
+        except Exception as e:
+            print(f"Error sending message notification: {e}")
 
 
 @permission_classes([IsAuthenticated])

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import BookEventView, UserBookingsView, CancelBookingView, BookingDetailView
+from .views import BookEventView, UserBookingsView, CancelBookingView, BookingDetailView, DownloadTicketView
 
 
 urlpatterns = [
@@ -7,5 +7,6 @@ urlpatterns = [
     path('detail/<uuid:booking_id>/', BookingDetailView.as_view(), name='booking-detail'),
     path('my_bookings/', UserBookingsView.as_view(), name='user-bookings'),
     path('cancel/<uuid:booking_id>/', CancelBookingView.as_view(), name='cancel-booking'),
+    path('download_ticket/<uuid:booking_id>/', DownloadTicketView.as_view(), name='download-ticket'),
 ]
 

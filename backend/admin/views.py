@@ -7,10 +7,11 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
-from django.db.models import Q, Sum
-from django.db import transaction
-from datetime import timedelta
+from django.db.models import Q, Sum, Count
+from django.db import transaction, models
+from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 from users.models import Users
 from organizers.models import OrganizerProfile
 from organizers.serializers import OrganizerProfileSerializer
@@ -18,9 +19,12 @@ from events.models import Event
 from events.serializers import EventSerializer
 from wallet.models import OrganizerWallet, OrganizerWalletTransaction, CompanyWallet
 from wallet.serializers import CompanyWalletSerializer
+from categories.models import Category
+from booking.models import Booking
 from .permissions import IsAdminUser
-from .serializers import UserListSerializer, EventDetailWithHostSerializer
+from .serializers import UserListSerializer, EventDetailWithHostSerializer, OrganizerStatsSerializer, EventStatsSerializer
 from .email_utils import send_organizer_approval_email, send_organizer_rejection_email
+from .report_generators import ExcelReportGenerator, PDFReportGenerator
 
 
 @permission_classes([AllowAny])
@@ -51,6 +55,307 @@ class AdminLoginView(APIView):
         response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
         response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
         return response
+
+
+
+@permission_classes([IsAdminUser])
+class AdminDashboardView(APIView):
+    def get(self, request):
+        try:
+            filters = self._get_filter_parameters(request)
+            dashboard_data = self._get_dashboard_data(filters)
+            
+            return Response({
+                "success": True,
+                "data": dashboard_data,
+                "filters_applied": filters
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _get_filter_parameters(self, request):
+        return {
+            'start_date': request.GET.get('start_date'),
+            'end_date': request.GET.get('end_date'),
+            'organizer_id': request.GET.get('organizer_id'),
+            'category_id': request.GET.get('category_id'),
+            'event_status': request.GET.get('event_status'),
+            'search': request.GET.get('search', '').strip()
+        }
+    
+    def _get_dashboard_data(self, filters):
+        events_qs = Event.objects.select_related('hostedBy', 'category')
+        bookings_qs = Booking.objects.select_related('event', 'user', 'event__hostedBy', 'event__category')
+        
+        events_qs, bookings_qs = self._apply_filters(events_qs, bookings_qs, filters)
+        organizers_data = self._get_organizers_data(events_qs, bookings_qs)
+        events_data = self._get_events_data(events_qs, bookings_qs)
+        revenue_data = self._get_revenue_analytics(bookings_qs)
+        categories_data = self._get_categories_data(events_qs, bookings_qs)
+        summary_stats = self._get_summary_statistics(events_qs, bookings_qs)
+        
+        return {
+            'organizers': organizers_data,
+            'events': events_data,
+            'revenue': revenue_data,
+            'categories': categories_data,
+            'summary': summary_stats
+        }
+    
+    def _apply_filters(self, events_qs, bookings_qs, filters):
+        if filters['start_date']:
+            start_date = datetime.strptime(filters['start_date'], '%Y-%m-%d').date()
+            events_qs = events_qs.filter(date__gte=start_date)
+            bookings_qs = bookings_qs.filter(event__date__gte=start_date)
+        if filters['end_date']:
+            end_date = datetime.strptime(filters['end_date'], '%Y-%m-%d').date()
+            events_qs = events_qs.filter(date__lte=end_date)
+            bookings_qs = bookings_qs.filter(event__date__lte=end_date)
+        if filters['organizer_id']:
+            events_qs = events_qs.filter(hostedBy__user_id=filters['organizer_id'])
+            bookings_qs = bookings_qs.filter(event__hostedBy__user_id=filters['organizer_id'])
+        if filters['category_id']:
+            events_qs = events_qs.filter(category__categoryId=filters['category_id'])
+            bookings_qs = bookings_qs.filter(event__category__categoryId=filters['category_id'])
+        if filters['event_status']:
+            today = timezone.now().date()
+            if filters['event_status'] == 'completed':
+                events_qs = events_qs.filter(Q(is_completed=True) | Q(date__lt=today))
+                bookings_qs = bookings_qs.filter(Q(event__is_completed=True) | Q(event__date__lt=today))
+            elif filters['event_status'] == 'upcoming':
+                events_qs = events_qs.filter(date__gte=today, is_completed=False, on_hold=False)
+                bookings_qs = bookings_qs.filter(event__date__gte=today, event__is_completed=False, event__on_hold=False)
+            elif filters['event_status'] == 'on_hold':
+                events_qs = events_qs.filter(on_hold=True)
+                bookings_qs = bookings_qs.filter(event__on_hold=True)
+        if filters['search']:
+            search_q = Q(title__icontains=filters['search']) | \
+                      Q(hostedBy__full_name__icontains=filters['search']) | \
+                      Q(category__categoryName__icontains=filters['search'])
+            events_qs = events_qs.filter(search_q)
+            
+            booking_search_q = Q(event__title__icontains=filters['search']) | \
+                              Q(event__hostedBy__full_name__icontains=filters['search']) | \
+                              Q(event__category__categoryName__icontains=filters['search'])
+            bookings_qs = bookings_qs.filter(booking_search_q)
+        
+        return events_qs, bookings_qs
+    
+    def _get_organizers_data(self, events_qs, bookings_qs):
+        organizers = Users.objects.filter(role='organizer').annotate(
+            total_events=Count('events_hosted', filter=Q(events_hosted__in=events_qs)),
+            total_revenue=Sum('events_hosted__bookings__total_price', 
+                            filter=Q(events_hosted__bookings__in=bookings_qs, 
+                                    events_hosted__bookings__payment_status='confirmed')),
+            total_bookings=Count('events_hosted__bookings', 
+                               filter=Q(events_hosted__bookings__in=bookings_qs,
+                                       events_hosted__bookings__payment_status='confirmed'))
+        ).order_by('-total_revenue')
+        
+        return OrganizerStatsSerializer(organizers, many=True).data
+    
+    def _get_events_data(self, events_qs, bookings_qs):
+        events = events_qs.annotate(
+            total_revenue=Sum('bookings__total_price', 
+                            filter=Q(bookings__in=bookings_qs, bookings__payment_status='confirmed')),
+            confirmed_bookings=Count('bookings', 
+                                   filter=Q(bookings__in=bookings_qs, bookings__payment_status='confirmed'))
+        ).order_by('-total_revenue')
+        
+        return EventStatsSerializer(events, many=True).data
+    
+    def _get_revenue_analytics(self, bookings_qs):
+        confirmed_bookings = bookings_qs.filter(payment_status='confirmed')
+        
+        total_revenue = confirmed_bookings.aggregate(
+            total=Sum('total_price')
+        )['total'] or 0
+        
+        revenue_by_status = bookings_qs.values('payment_status').annotate(
+            count=Count('booking_id'),
+            revenue=Sum('total_price')
+        ).order_by('-revenue')
+        
+        daily_revenue = confirmed_bookings.extra(
+            select={'day': 'DATE(booking_date)'}
+        ).values('day').annotate(
+            revenue=Sum('total_price'),
+            bookings_count=Count('booking_id')
+        ).order_by('day')
+        
+        return {
+            'total_revenue': total_revenue,
+            'by_status': list(revenue_by_status),
+            'daily_breakdown': list(daily_revenue)
+        }
+    
+    def _get_categories_data(self, events_qs, bookings_qs):
+        categories = Category.objects.annotate(
+            total_events=Count('event', filter=Q(event__in=events_qs)),
+            total_revenue=Sum('event__bookings__total_price', 
+                            filter=Q(event__bookings__in=bookings_qs, 
+                                    event__bookings__payment_status='confirmed')),
+            total_bookings=Count('event__bookings', 
+                               filter=Q(event__bookings__in=bookings_qs,
+                                       event__bookings__payment_status='confirmed'))
+        ).filter(total_events__gt=0).order_by('-total_revenue')
+        
+        return [{
+            'category_id': str(cat.categoryId),
+            'category_name': cat.categoryName,
+            'total_events': cat.total_events,
+            'total_revenue': cat.total_revenue or 0,
+            'total_bookings': cat.total_bookings
+        } for cat in categories]
+    
+    def _get_summary_statistics(self, events_qs, bookings_qs):
+        confirmed_bookings = bookings_qs.filter(payment_status='confirmed')
+        
+        return {
+            'total_events': events_qs.count(),
+            'total_organizers': events_qs.values('hostedBy').distinct().count(),
+            'total_bookings': confirmed_bookings.count(),
+            'total_revenue': confirmed_bookings.aggregate(Sum('total_price'))['total_price__sum'] or 0,
+            'pending_bookings': bookings_qs.filter(payment_status='pending').count(),
+            'cancelled_bookings': bookings_qs.filter(payment_status='cancelled').count(),
+        }
+
+
+@permission_classes([IsAdminUser])
+class DownloadRevenueReportView(APIView):
+    def get(self, request):
+        try:
+            report_format = request.GET.get('format', 'excel')
+            filters = self._get_filter_parameters(request)
+            
+            events_qs = Event.objects.select_related('hostedBy', 'category')
+            bookings_qs = Booking.objects.select_related('event', 'user', 'event__hostedBy', 'event__category')
+            events_qs, bookings_qs = self._apply_filters(events_qs, bookings_qs, filters)
+            
+            report_data = self._prepare_report_data(events_qs, bookings_qs, filters)
+            
+            if report_format.lower() == 'pdf':
+                pdf_generator = PDFReportGenerator()
+                pdf_buffer = pdf_generator.generate_revenue_report(report_data)
+                
+                response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+                
+            else:
+                excel_generator = ExcelReportGenerator()
+                excel_buffer = excel_generator.generate_revenue_report(report_data)
+                
+                response = HttpResponse(
+                    excel_buffer.getvalue(),
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = f'attachment; filename="revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+            
+            return response
+        except Exception as e:
+            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _get_filter_parameters(self, request):
+        return {
+            'start_date': request.GET.get('start_date'),
+            'end_date': request.GET.get('end_date'),
+            'organizer_id': request.GET.get('organizer_id'),
+            'category_id': request.GET.get('category_id'),
+            'event_status': request.GET.get('event_status'),
+            'search': request.GET.get('search', '').strip()
+        }
+    
+    def _apply_filters(self, events_qs, bookings_qs, filters):
+        dashboard_view = AdminDashboardView()
+        return dashboard_view._apply_filters(events_qs, bookings_qs, filters)
+    
+    def _prepare_report_data(self, events_qs, bookings_qs, filters):
+        confirmed_bookings = bookings_qs.filter(payment_status='confirmed')
+        
+        summary = {
+            'total_events': events_qs.count(),
+            'total_revenue': confirmed_bookings.aggregate(Sum('total_price'))['total_price__sum'] or 0,
+            'total_bookings': confirmed_bookings.count(),
+            'report_period': {
+                'start_date': filters.get('start_date', 'All time'),
+                'end_date': filters.get('end_date', 'All time')
+            },
+            'generated_at': timezone.now()
+        }
+    
+        bookings_data = confirmed_bookings.values(
+            'booking_id', 'booking_name', 'total_price', 'booking_date',
+            'event__title', 'event__hostedBy__full_name', 'event__category__categoryName',
+            'event__date', 'event__location', 'payment_id', 'payment_date'
+        ).order_by('-booking_date')
+        
+        organizer_revenue = confirmed_bookings.values(
+            'event__hostedBy__full_name', 'event__hostedBy__email'
+        ).annotate(
+            total_revenue=Sum('total_price'),
+            total_bookings=Count('booking_id'),
+            total_events=Count('event', distinct=True)
+        ).order_by('-total_revenue')
+        
+        category_revenue = confirmed_bookings.values(
+            'event__category__categoryName'
+        ).annotate(
+            total_revenue=Sum('total_price'),
+            total_bookings=Count('booking_id'),
+            total_events=Count('event', distinct=True)
+        ).order_by('-total_revenue')
+        
+        daily_revenue = confirmed_bookings.extra(
+            select={'day': 'DATE(booking_date)'}
+        ).values('day').annotate(
+            revenue=Sum('total_price'),
+            bookings_count=Count('booking_id')
+        ).order_by('day')
+        
+        return {
+            'summary': summary,
+            'bookings': list(bookings_data),
+            'organizer_revenue': list(organizer_revenue),
+            'category_revenue': list(category_revenue),
+            'daily_revenue': list(daily_revenue),
+            'filters': filters
+        }
+
+
+@permission_classes([IsAdminUser])
+class AdminFiltersView(APIView):
+    def get(self, request):
+        try:
+            organizers = Users.objects.filter(role='organizer').values(
+                'user_id', 'full_name', 'email'
+            ).order_by('full_name')
+            categories = Category.objects.filter(is_listed=True).values(
+                'categoryId', 'categoryName'
+            ).order_by('categoryName')
+            date_range = Event.objects.aggregate(
+                min_date=models.Min('date'),
+                max_date=models.Max('date')
+            )
+            
+            return Response({
+                "success": True,
+                "data": {
+                    "organizers": list(organizers),
+                    "categories": list(categories),
+                    "date_range": date_range,
+                    "event_status_options": [
+                        {"value": "upcoming", "label": "Upcoming"},
+                        {"value": "completed", "label": "Completed"},
+                        {"value": "on_hold", "label": "On Hold"}
+                    ]
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PaginationData(PageNumberPagination):

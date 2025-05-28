@@ -5,8 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from django.db import transaction
 from django.utils import timezone
+from django.http import HttpResponse
 from wallet.models import Wallet, WalletTransaction
 from events.models import Event
+from .ticket_generator import TicketGenerator, TicketPermissions
 from .models import Booking
 from .serializers import UserBookingSerializer
 
@@ -122,4 +124,30 @@ class CancelBookingView(APIView):
             return Response({"success": False, "error": "Booking not found or does not belong to you"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@permission_classes([IsAuthenticated])
+class DownloadTicketView(APIView):
+    def get(self, request, booking_id):
+        try:
+            booking = Booking.objects.select_related(
+                'event', 'user', 'event__hostedBy', 'event__category'
+            ).get(booking_id=booking_id, user=request.user)
+            
+            permission_check = TicketPermissions.can_download_ticket(booking)
+            if not permission_check["allowed"]:
+                return Response({"error": permission_check["reason"]}, status=status.HTTP_400_BAD_REQUEST)
+            
+            ticket_generator = TicketGenerator()
+            pdf_buffer = ticket_generator.generate_ticket_pdf(booking)
+            
+            response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="ticket_{booking.booking_id}.pdf"'
+            
+            return response
+        except Booking.DoesNotExist:
+            return Response({"error": "Booking not found or does not belong to you"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"Error generating ticket: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
