@@ -10,56 +10,84 @@ class WebSocketService {
   }
 
   constructor() {
-    this.socketRef = null;
+    this.socketRef = null
+    this.isConnecting = false
+    this.userId = null
   }
 
-  connect() {
-    const path = 'ws://localhost:8000/ws/notifications/';
-    this.socketRef = new WebSocket(path);
-    
+  connect(userId) {
+    if (
+      this.isConnecting ||
+      (this.socketRef && this.socketRef.readyState === WebSocket.OPEN && this.userId === userId)
+    ) {
+      return
+    }
+    if (!userId) {
+      console.log("Cannot connect WebSocket: No user ID provided")
+      return
+    }
+
+    this.userId = userId
+    this.isConnecting = true
+    const path = `ws://localhost:8000/ws/notifications/?user_id=${userId}`
+
+    if (this.socketRef) {
+      this.socketRef.close()
+    }
+
+    this.socketRef = new WebSocket(path)
     this.socketRef.onopen = () => {
-      console.log('WebSocket open');
-    };
-    
-    this.socketRef.onmessage = e => {
-      this.socketNewMessage(e.data);
-    };
-    
-    this.socketRef.onerror = e => {
-      console.log(e.message);
-    };
-    
+      console.log("WebSocket open")
+      this.isConnecting = false
+    }
+    this.socketRef.onmessage = (e) => {
+      this.socketNewMessage(e.data)
+    }
+    this.socketRef.onerror = (e) => {
+      console.log(e.message)
+      this.isConnecting = false
+    }
     this.socketRef.onclose = () => {
-      console.log("WebSocket closed, trying to reconnect...");
-      setTimeout(() => {
-        this.connect();
-      }, 1000);
-    };
+      console.log("WebSocket closed")
+      this.isConnecting = false
+
+      if (this.userId) {
+        console.log("Trying to reconnect...")
+        setTimeout(() => {
+          this.connect(this.userId)
+        }, 1000)
+      }
+    }
   }
 
   socketNewMessage(data) {
-    const parsedData = JSON.parse(data);
-    const command = parsedData.message;
-    
+    const parsedData = JSON.parse(data)
+    const command = parsedData.message
+
     if (Object.keys(this.callbacks).length === 0) {
-      return;
+      return
     }
-    
-    Object.keys(this.callbacks).forEach(key => {
-      this.callbacks[key](command);
-    });
+    Object.keys(this.callbacks).forEach((key) => {
+      this.callbacks[key](command)
+    })
   }
 
   addCallbacks(newNotificationCallback) {
-    this.callbacks['new-notification'] = newNotificationCallback;
+    this.callbacks["new-notification"] = newNotificationCallback
   }
 
   removeCallbacks() {
-    this.callbacks = {};
+    this.callbacks = {}
   }
 
   disconnect() {
-    this.socketRef.close();
+    this.userId = null
+
+    if (this.socketRef) {
+      this.socketRef.close()
+      this.socketRef = null
+    }
+    console.log("WebSocket disconnected")
   }
 }
 

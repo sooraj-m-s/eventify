@@ -70,14 +70,22 @@ const Events = () => {
       </div>
     )
   }
-
   const displayEvents = Array.isArray(events) && events.length > 0 ? events : []
+
+  const handleViewAllClick = () => {
+    navigate("/events")
+  }
 
   return (
     <div className="my-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">You might like</h2>
-        <div className="text-sm">View all ({displayEvents.length})</div>
+        <button
+          onClick={handleViewAllClick}
+          className="text-sm text-black-600 hover:text-blue-800 hover:underline transition-colors cursor-pointer"
+        >
+          View all ({displayEvents.length >= 5 ? "5+" : displayEvents.length})
+        </button>
       </div>
 
       <Carousel

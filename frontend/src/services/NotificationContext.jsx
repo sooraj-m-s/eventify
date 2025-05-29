@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from "react"
 import { toast } from "sonner"
+import { useSelector } from "react-redux"
 import WebSocketInstance from "./websocketService"
 
 
@@ -11,6 +12,7 @@ export const useNotifications = () => useContext(NotificationContext)
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const { isAuthenticated, userId } = useSelector((state) => state.auth)
 
   useEffect(() => {
     const storedNotifications = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")
@@ -19,13 +21,18 @@ export const NotificationProvider = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    WebSocketInstance.connect()
-    WebSocketInstance.addCallbacks(handleNewNotification)
-    return () => {
-      WebSocketInstance.removeCallbacks()
+    if (isAuthenticated && userId) {
+      console.log("User is authenticated, connecting to WebSocket")
+      WebSocketInstance.connect(userId)
+      WebSocketInstance.addCallbacks(handleNewNotification)
+    } else {
+      console.log("User is not authenticated, not connecting to WebSocket")
       WebSocketInstance.disconnect()
     }
-  }, [])
+    return () => {
+      WebSocketInstance.removeCallbacks()
+    }
+  }, [isAuthenticated, userId])
 
   const handleNewNotification = (notification) => {
     const newNotification = {

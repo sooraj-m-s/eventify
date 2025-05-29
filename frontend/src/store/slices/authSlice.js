@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import WebSocketInstance from '@/services/websocketService';
 
 
 const getStoredAuth = () => {
@@ -52,6 +53,8 @@ const authSlice = createSlice({
       state.loading = action.payload;
     },
     logout: (state) => {
+      WebSocketInstance.disconnect()
+
       state.userId = null;
       state.userName = null;
       state.userEmail = null;

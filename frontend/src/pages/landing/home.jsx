@@ -11,13 +11,14 @@ const Home = () => {
       <HeroSection />
 
       <div className="container mx-auto px-4 py-8">
-        <Categories />
-
-        <Events />
         
+        <Events />
+
         <Categories />
         
         <Organizers />
+        
+        <Categories />
 
         <div className="my-16 text-center">
           <h2 className="text-2xl font-semibold mb-8 relative inline-block">

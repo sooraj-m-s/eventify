@@ -13,7 +13,7 @@ class EventListView(APIView):
     def get(self, request):
         today = timezone.now().date()
 
-        events = Event.objects.filter(on_hold=False, date__gt=today)
+        events = Event.objects.filter(on_hold=False, date__gt=today)[:6] 
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 

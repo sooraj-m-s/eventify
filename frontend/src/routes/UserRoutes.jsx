@@ -18,6 +18,7 @@ import PaymentPage from '@/pages/PaymentPage'
 import WalletPage from '@/pages/user/wallet'
 import Messages from '@/pages/user/Messages'
 import AdvancedSearchEvents from '@/pages/landing/AdvancedSearchEvents'
+import OrganizerListing from '@/pages/landing/OrganizerListing'
 
 
 const UserRoutes = () => {
@@ -30,6 +31,7 @@ const UserRoutes = () => {
                     <Route path="" element={<Home />} />
                     <Route path="events" element={<AdvancedSearchEvents />} />
                     <Route path="event_detial/:eventId" element={<EventDetail />} />
+                    <Route path="organizers/" element={<OrganizerListing />} />
 
                     {/* Auth Routes */}
                     <Route path="register" element={<UserPublicRoute><Register /></UserPublicRoute>} />

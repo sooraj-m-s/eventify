@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react"
 import axiosInstance from "../../utils/axiosInstance"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import { useNavigate } from "react-router-dom"
 
 
 const Categories = () => {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -54,11 +56,20 @@ const Categories = () => {
     )
   }
 
+  const handleViewAllClick = () => {
+    navigate("/events")
+  }
+
   return (
     <div className="my-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Browse By Category</h2>
-        <div className="text-sm">View all ({categories.length})</div>
+        <button
+          onClick={handleViewAllClick}
+          className="text-sm text-black-600 hover:text-blue-800 hover:underline transition-colors cursor-pointer"
+        >
+          View all ({categories.length >= 5 ? "5+" : categories.length})
+        </button>
       </div>
 
       <Carousel
