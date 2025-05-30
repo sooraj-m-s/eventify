@@ -60,7 +60,7 @@ export const NotificationProvider = ({ children }) => {
     toast(notification.message, {
       onClick: () => {
         if (notification.type === "new_event") {
-          window.location.href = `/events/event_detail/${notification.event_id}`
+          window.location.href = `/event_detail/${notification.event_id}`
         }
       },
     })

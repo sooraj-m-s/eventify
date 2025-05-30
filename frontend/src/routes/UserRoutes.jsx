@@ -30,7 +30,7 @@ const UserRoutes = () => {
                     {/* Public Routes */}
                     <Route path="" element={<Home />} />
                     <Route path="events" element={<AdvancedSearchEvents />} />
-                    <Route path="event_detial/:eventId" element={<EventDetail />} />
+                    <Route path="event_detail/:eventId" element={<EventDetail />} />
                     <Route path="organizers/" element={<OrganizerListing />} />
 
                     {/* Auth Routes */}

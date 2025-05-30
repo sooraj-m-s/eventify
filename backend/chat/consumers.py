@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 import json
+from .models import ChatRoom
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -17,12 +18,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
         
         if isinstance(self.user, AnonymousUser) or not hasattr(self.user, 'user_id'):
-            print(f"Authentication failed for room {self.room_id}")
             await self.close(code=4001)
             return
         is_participant = await self.check_room_participant()
         if not is_participant:
-            print(f"User {self.user.user_id} not participant in room {self.room_id}")
             await self.close(code=4003)
             return
         
@@ -42,13 +41,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
     
     async def disconnect(self, close_code):
-        print(f"Disconnecting from room {self.room_id}, code: {close_code}")
         if not isinstance(self.user, AnonymousUser) and hasattr(self.user, 'user_id'):
             await self.set_user_online(False)
-            
-            print(f"User {self.user.user_id} disconnected from room {self.room_id}")
-        else:
-            print(f"Anonymous user disconnected from room {self.room_id}")
         
         # Leave room group
         await self.channel_layer.group_discard(
@@ -122,8 +116,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def check_room_participant(self):
-        from .models import ChatRoom
-        
+
         try:
             room = ChatRoom.objects.get(room_id=self.room_id)
             return room.participants.filter(user_id=self.user.user_id).exists()
@@ -180,7 +173,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         
         if isinstance(self.user, AnonymousUser) or not hasattr(self.user, 'user_id'):
-            print("Notification WebSocket: Authentication failed")
             await self.close(code=4001)
             return
         
@@ -191,7 +183,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         )
         
         await self.accept()
-        print(f"User {self.user.user_id} connected to notifications")
         
         # Send welcome message
         await self.send(text_data=json.dumps({
@@ -205,13 +196,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.notification_group_name,
                 self.channel_name
             )
-        
-        print(f"Notification WebSocket disconnected: {close_code}")
     
     async def receive(self, text_data):
-        print(f"Notification received: {text_data}")
-        
-        # Echo back for now
         await self.send(text_data=json.dumps({
             'type': 'notification',
             'message': 'Notification received'
@@ -224,6 +210,4 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'type': 'notification',
             'notification': notification
         }))
-        
-        print(f"Sent notification to user: {notification.get('message', 'Unknown')}")
 

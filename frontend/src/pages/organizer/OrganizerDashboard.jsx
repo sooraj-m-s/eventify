@@ -230,7 +230,6 @@ const OrganizerDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Event
-                      {filterTimeoutRef.current && <span className="ml-2 text-xs text-blue-600">(Loading...)</span>}
                     </label>
                     <select
                       value={selectedEvent}

@@ -41,7 +41,7 @@ const Events = () => {
   }, [])
 
   const handleEventClick = (eventId) => {
-    navigate(`/event_detial/${eventId}`)
+    navigate(`/event_detail/${eventId}`)
   }
 
   if (loading) {

@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react"
-import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, RefreshCw, Search, Filter, ChevronLeft,
-        ChevronRight, User, Eye, X, Mail, Phone, MapPin, CalendarIcon, IndianRupee } from "lucide-react"
+import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, RefreshCw, Search, ChevronLeft,
+        ChevronRight, User, Eye, X, Mail, Phone, MapPin, CalendarIcon, IndianRupee, MessageSquare } from "lucide-react"
 import axiosInstance from "@/utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
+import ChatModal from "@/components/ChatModal"
+import { toast } from "sonner"
 
 
 const OrganizerBookings = () => {
@@ -19,6 +21,9 @@ const OrganizerBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const searchTimeoutRef = useRef(null)
+  const [startingChat, setStartingChat] = useState(false)
+  const [showChatModal, setShowChatModal] = useState(false)
+  const [chatRoomId, setChatRoomId] = useState(null)
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -65,6 +70,27 @@ const OrganizerBookings = () => {
       setError("Failed to load bookings. Please try again later.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleChatWithClient = async (clientUserId) => {
+    try {
+      setStartingChat(true)
+      const response = await axiosInstance.post("/chat/start/", {
+        user_id: clientUserId,
+      })
+
+      if (response.data) {
+        setChatRoomId(response.data.room.room_id)
+        setShowChatModal(true)
+      }
+    } catch (error) {
+      console.error("Error starting chat:", error)
+      toast.error("Failed to start chat", {
+        description: "Please try again later",
+      })
+    } finally {
+      setStartingChat(false)
     }
   }
 
@@ -484,6 +510,23 @@ const OrganizerBookings = () => {
                       </div>
                       <div>
                         <h4 className="text-lg font-medium">{selectedBooking.user.full_name}</h4>
+                        <button
+                          onClick={() => handleChatWithClient(selectedBooking.user.user_id)}
+                          disabled={startingChat}
+                          className="mt-2 inline-flex items-center px-3 py-1.5 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {startingChat ? (
+                            <>
+                              <Loader className="animate-spin h-4 w-4 mr-2" />
+                              Starting...
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Chat with Client
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
 
@@ -630,6 +673,14 @@ const OrganizerBookings = () => {
 
           </div>
         </div>
+      )}
+      {showChatModal && (
+        <ChatModal
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          roomId={chatRoomId}
+          otherUser={selectedBooking?.user}
+        />
       )}
     </div>
   )

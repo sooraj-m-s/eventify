@@ -22,7 +22,7 @@ const NotificationBell = () => {
     markAsRead(notification.id)
 
     if (notification.type === "new_event") {
-      window.location.href = `/events/event_detail/${notification.event_id}`
+      window.location.href = `/event_detail/${notification.event_id}`
     }
     setIsOpen(false)
   }

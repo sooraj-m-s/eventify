@@ -106,17 +106,18 @@ const UserBookingDetailsModal = ({
               </div>
 
               <div className="mt-6">
-                <h4 className="font-medium mb-3">Event Organizer</h4>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-white" />
+                      </div>
+                      <span className="font-medium text-gray-900">Chat with Organizer</span>
                     </div>
-                    
-                    {/* Chat Button */}
                     <button
                       onClick={handleChatWithOrganizer}
                       disabled={startingChat}
-                      className="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                     >
                       {startingChat ? (
                         <>

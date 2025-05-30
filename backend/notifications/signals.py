@@ -2,7 +2,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-import json
 from events.models import Event
 
 
@@ -17,7 +16,7 @@ def send_event_notification(sender, instance, created, **kwargs):
             'title': instance.title,
             'image': instance.posterImage if instance.posterImage else None,
             'type': 'new_event',
-            'message': f'New event "{instance.title}" has been created!'
+            'message': f'A new event "{instance.title}" has just been published. Check it out!'
         }
         
         # Send notification to the group
