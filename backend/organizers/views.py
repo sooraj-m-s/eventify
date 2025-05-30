@@ -5,7 +5,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.http import HttpResponse
 from decimal import Decimal
 from events.serializers import EventSerializer
@@ -202,110 +202,119 @@ class OrganizerDashboardView(APIView):
 
 
 @permission_classes([IsOrganizerUser])
-class OrganizerRevenueReportView(APIView):
+class OrganizerRevenueReportViewPDF(APIView):
     def get(self, request):
         try:
-            report_format = request.GET.get('format', 'excel')
-            filters = self._get_filter_parameters(request)
-            
             bookings_qs = Booking.objects.filter(
                 event__hostedBy=request.user
             ).select_related('event', 'user', 'event__category')
+            report_data = prepare_report_data(request.user, bookings_qs)
             
-            bookings_qs = self._apply_booking_filters(bookings_qs, filters)
-            report_data = self._prepare_report_data(request.user, bookings_qs, filters)
+            pdf_generator = OrganizerPDFGenerator()
+            pdf_buffer = pdf_generator.generate_revenue_report(report_data)
             
-            if report_format.lower() == 'pdf':
-                pdf_generator = OrganizerPDFGenerator()
-                pdf_buffer = pdf_generator.generate_revenue_report(report_data)
-                
-                response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="organizer_revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
-                
-            else:
-                excel_generator = OrganizerExcelGenerator()
-                excel_buffer = excel_generator.generate_revenue_report(report_data)
-                
-                response = HttpResponse(
-                    excel_buffer.getvalue(),
-                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                )
-                response['Content-Disposition'] = f'attachment; filename="organizer_revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+            response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="organizer_revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
             
             return response
-            
         except Exception as e:
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@permission_classes([IsOrganizerUser])
+class OrganizerRevenueReportViewExcel(APIView):
+    def get(self, request):
+        try:
+            bookings_qs = Booking.objects.filter(
+                event__hostedBy=request.user
+            ).select_related('event', 'user', 'event__category')
+            report_data = prepare_report_data(request.user, bookings_qs)
+            
+            excel_generator = OrganizerExcelGenerator()
+            excel_buffer = excel_generator.generate_revenue_report(report_data)
+            
+            response = HttpResponse(
+                excel_buffer.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename="organizer_revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+            
+            return response
+        except Exception as e:
+            print('Error generating Excel report:', e)
+            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def prepare_report_data(user, bookings_qs):
+    total_revenue = bookings_qs.aggregate(Sum('total_price'))['total_price__sum'] or 0
+    organizer_revenue = round(Decimal(str(total_revenue)) * Decimal('0.90'), 2)
+    platform_fee = round(Decimal(str(total_revenue)) * Decimal('0.10'), 2)
+    generated_at = safe_make_naive(timezone.now())
     
-    def _get_filter_parameters(self, request):
-        return {
-            'start_date': request.GET.get('start_date'),
-            'end_date': request.GET.get('end_date'),
-            'event_id': request.GET.get('event_id'),
-            'payment_status': request.GET.get('payment_status', 'confirmed')
-        }
+    summary = {
+        'organizer_name': user.full_name,
+        'organizer_email': user.email,
+        'total_bookings': bookings_qs.count(),
+        'total_revenue': float(total_revenue),
+        'organizer_revenue': float(organizer_revenue),
+        'platform_fee': float(platform_fee),
+        'revenue_split': {'organizer': 90, 'platform': 10},
+        'report_period': {
+            'start_date': 'All time',
+            'end_date': 'All time'
+        },
+        'generated_at':     generated_at
+    }
     
-    def _apply_booking_filters(self, bookings_qs, filters):
-        if filters['start_date']:
-            start_date = datetime.strptime(filters['start_date'], '%Y-%m-%d').date()
-            bookings_qs = bookings_qs.filter(booking_date__date__gte=start_date)
-        if filters['end_date']:
-            end_date = datetime.strptime(filters['end_date'], '%Y-%m-%d').date()
-            bookings_qs = bookings_qs.filter(booking_date__date__lte=end_date)
-        if filters['event_id']:
-            bookings_qs = bookings_qs.filter(event__eventId=filters['event_id'])
-        if filters['payment_status']:
-            bookings_qs = bookings_qs.filter(payment_status=filters['payment_status'])
-        
-        return bookings_qs
+    bookings_data = bookings_qs.values(
+        'booking_id', 'booking_name', 'total_price', 'booking_date',
+        'payment_date', 'payment_status', 'event__title', 'event__date',
+        'user__full_name', 'user__email', 'notes'
+    ).order_by('-booking_date')
     
-    def _prepare_report_data(self, user, bookings_qs, filters):
-        total_revenue = bookings_qs.aggregate(Sum('total_price'))['total_price__sum'] or 0
-        organizer_revenue = round(Decimal(str(total_revenue)) * Decimal('0.90'), 2)
-        platform_fee = round(Decimal(str(total_revenue)) * Decimal('0.10'), 2)
+    enhanced_bookings = []
+    for booking in bookings_data:
+        for field in ['booking_date', 'payment_date', 'event__date']:
+            if field in booking:
+                booking[field] = safe_make_naive(booking[field])
         
-        summary = {
-            'organizer_name': user.full_name,
-            'organizer_email': user.email,
-            'total_bookings': bookings_qs.count(),
-            'total_revenue': float(total_revenue),
-            'organizer_revenue': float(organizer_revenue),
-            'platform_fee': float(platform_fee),
-            'revenue_split': {'organizer': 90, 'platform': 10},
-            'report_period': {
-                'start_date': filters.get('start_date', 'All time'),
-                'end_date': filters.get('end_date', 'All time')
-            },
-            'generated_at': timezone.now()
-        }
-        
-        bookings_data = bookings_qs.values(
-            'booking_id', 'booking_name', 'total_price', 'booking_date',
-            'payment_date', 'payment_status', 'event__title', 'event__date',
-            'user__full_name', 'user__email', 'notes'
-        ).order_by('-booking_date')
-        
-        enhanced_bookings = []
-        for booking in bookings_data:
-            booking['organizer_amount'] = float(round(Decimal(str(booking['total_price'])) * Decimal('0.90'), 2))
-            booking['platform_fee'] = float(round(Decimal(str(booking['total_price'])) * Decimal('0.10'), 2))
-            enhanced_bookings.append(booking)
-        
-        event_revenue = bookings_qs.values(
-            'event__title', 'event__date', 'event__pricePerTicket'
-        ).annotate(
-            total_bookings=Count('booking_id'),
-            total_revenue=Sum('total_price'),
-            organizer_revenue=Sum('total_price') * Decimal('0.90'),
-            platform_fee=Sum('total_price') * Decimal('0.10')
-        ).order_by('-total_revenue')
-        
-        return {
-            'summary': summary,
-            'bookings': enhanced_bookings,
-            'event_revenue': list(event_revenue),
-            'filters': filters
-        }
+        booking['organizer_amount'] = float(round(Decimal(str(booking['total_price'])) * Decimal('0.90'), 2))
+        booking['platform_fee'] = float(round(Decimal(str(booking['total_price'])) * Decimal('0.10'), 2))
+        enhanced_bookings.append(booking)
+    
+    event_revenue = bookings_qs.values(
+        'event__title', 'event__date', 'event__pricePerTicket'
+    ).annotate(
+        total_bookings=Count('booking_id'),
+        total_revenue=Sum('total_price'),
+        organizer_revenue=Sum('total_price') * Decimal('0.90'),
+        platform_fee=Sum('total_price') * Decimal('0.10')
+    ).order_by('-total_revenue')
+
+    event_revenue_list = list(event_revenue)
+    for event in event_revenue_list:
+        if 'event__date' in event:
+            event['event__date'] = safe_make_naive(event['event__date'])
+    
+    return {
+        'summary': summary,
+        'bookings': enhanced_bookings,
+        'event_revenue': event_revenue_list,
+    }
+
+
+def safe_make_naive(dt_obj):
+    if dt_obj is None:
+        return None
+    if isinstance(dt_obj, datetime):
+        if timezone.is_aware(dt_obj):
+            return timezone.make_naive(dt_obj)
+        else:
+            return dt_obj
+    elif isinstance(dt_obj, date):
+        return dt_obj
+    else:
+        return dt_obj
 
 
 @permission_classes([IsOrganizerUser])

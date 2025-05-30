@@ -36,17 +36,7 @@ const OrganizerSidebar = () => {
       name: "Wallet",
       icon: <Wallet size={20} />,
       path: "/organizer/wallet",
-    },
-    {
-      name: "Reviews",
-      icon: <Star size={20} />,
-      path: "/organizer/reviews",
-    },
-    {
-      name: "Messages",
-      icon: <MessageSquare size={20} />,
-      path: "/organizer/messages",
-    },
+    }
   ]
 
   return (

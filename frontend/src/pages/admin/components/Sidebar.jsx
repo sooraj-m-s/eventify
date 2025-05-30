@@ -9,7 +9,6 @@ const Sidebar = () => {
     { name: "User Management", path: "/admin/users", icon: "👥" },
     { name: "Category Management", path: "/admin/categories", icon: "🗂️" },
     { name: "Event Management", path: "/admin/events", icon: "🛠️" },
-    { name: "Booking Management", path: "/admin/bookings", icon: "📅" },
     { name: "Event Settlement", path: "/admin/settlement", icon: "💸" },
     { name: "Wallet", path: "/admin/wallet", icon: "💰" },
   ]

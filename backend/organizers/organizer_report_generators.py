@@ -30,8 +30,6 @@ class OrganizerExcelGenerator:
             ['Organizer Name', summary['organizer_name']],
             ['Organizer Email', summary['organizer_email']],
             ['Report Generated', summary['generated_at'].strftime('%Y-%m-%d %H:%M:%S')],
-            ['Report Period Start', summary['report_period']['start_date']],
-            ['Report Period End', summary['report_period']['end_date']],
             ['', ''],
             ['REVENUE SUMMARY', ''],
             ['Total Bookings', summary['total_bookings']],
@@ -172,7 +170,6 @@ class OrganizerPDFGenerator:
         info_data = [
             ['Organizer Name', summary['organizer_name']],
             ['Email', summary['organizer_email']],
-            ['Report Period', f"{summary['report_period']['start_date']} to {summary['report_period']['end_date']}"],
             ['Generated At', summary['generated_at'].strftime('%Y-%m-%d %H:%M:%S')],
         ]
         

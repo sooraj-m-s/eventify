@@ -130,9 +130,17 @@ const AdminDashboard = () => {
         params.append("end_date", formatDate(endDate))
       }
 
-      const response = await axiosInstance.get(`/admin/dashboard/download_report/?${params.toString()}`, {
-        responseType: "blob",
-      })
+      let response = null
+      if (format === "pdf") {
+        response = await axiosInstance.get(`/admin/dashboard/download_report_pdf/`, {
+          responseType: "blob",
+        })
+      }
+      else if (format === "excel") {
+        response = await axiosInstance.get(`/admin/dashboard/download_report_excel/`, {
+          responseType: "blob",
+        })
+      }
 
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement("a")

@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 from django.db.models import Q, Sum, Count
 from django.db import transaction, models
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from users.models import Users
@@ -226,104 +226,120 @@ class AdminDashboardView(APIView):
 
 
 @permission_classes([IsAdminUser])
-class DownloadRevenueReportView(APIView):
+class DownloadRevenueReportViewPDF(APIView):
     def get(self, request):
         try:
-            report_format = request.GET.get('format', 'excel')
-            filters = self._get_filter_parameters(request)
-            
             events_qs = Event.objects.select_related('hostedBy', 'category')
             bookings_qs = Booking.objects.select_related('event', 'user', 'event__hostedBy', 'event__category')
-            events_qs, bookings_qs = self._apply_filters(events_qs, bookings_qs, filters)
+            report_data = prepare_report_data(events_qs, bookings_qs)
             
-            report_data = self._prepare_report_data(events_qs, bookings_qs, filters)
+            pdf_generator = PDFReportGenerator()
+            pdf_buffer = pdf_generator.generate_revenue_report(report_data)
             
-            if report_format.lower() == 'pdf':
-                pdf_generator = PDFReportGenerator()
-                pdf_buffer = pdf_generator.generate_revenue_report(report_data)
-                
-                response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
-                
-            else:
-                excel_generator = ExcelReportGenerator()
-                excel_buffer = excel_generator.generate_revenue_report(report_data)
-                
-                response = HttpResponse(
-                    excel_buffer.getvalue(),
-                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                )
-                response['Content-Disposition'] = f'attachment; filename="revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+            response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
             
             return response
         except Exception as e:
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@permission_classes([IsAdminUser])
+class DownloadRevenueReportViewExcel(APIView):
+    def get(self, request):
+        try:
+            events_qs = Event.objects.select_related('hostedBy', 'category')
+            bookings_qs = Booking.objects.select_related('event', 'user', 'event__hostedBy', 'event__category')
+            
+            report_data = prepare_report_data(events_qs, bookings_qs)
+            excel_generator = ExcelReportGenerator()
+            excel_buffer = excel_generator.generate_revenue_report(report_data)
+            
+            response = HttpResponse(
+                excel_buffer.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename="revenue_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+        
+            return response
+        except Exception as e:
+            print(f"Error generating Excel report: {str(e)}")
+            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     
-    def _get_filter_parameters(self, request):
-        return {
-            'start_date': request.GET.get('start_date'),
-            'end_date': request.GET.get('end_date'),
-            'organizer_id': request.GET.get('organizer_id'),
-            'category_id': request.GET.get('category_id'),
-            'event_status': request.GET.get('event_status'),
-            'search': request.GET.get('search', '').strip()
-        }
+def prepare_report_data(events_qs, bookings_qs):
+    confirmed_bookings = bookings_qs.filter(payment_status='confirmed')
+    generated_at = safe_make_naive(timezone.now())
     
-    def _apply_filters(self, events_qs, bookings_qs, filters):
-        dashboard_view = AdminDashboardView()
-        return dashboard_view._apply_filters(events_qs, bookings_qs, filters)
+    summary = {
+        'total_events': events_qs.count(),
+        'total_revenue': confirmed_bookings.aggregate(Sum('total_price'))['total_price__sum'] or 0,
+        'total_bookings': confirmed_bookings.count(),
+        'report_period': {
+            'start_date': 'All time',
+            'end_date': 'All time'
+        },
+        'generated_at': generated_at
+    }
+
+    bookings_data = confirmed_bookings.values(
+        'booking_id', 'booking_name', 'total_price', 'booking_date',
+        'event__title', 'event__hostedBy__full_name', 'event__category__categoryName',
+        'event__date', 'event__location', 'payment_id', 'payment_date'
+    ).order_by('-booking_date')
+
+    enhanced_bookings = []
+    for booking in bookings_data:
+        # Convert all datetime fields to naive
+        for field in ['booking_date', 'payment_date', 'event__date']:
+            if field in booking:
+                booking[field] = safe_make_naive(booking[field])
+        enhanced_bookings.append(booking)
     
-    def _prepare_report_data(self, events_qs, bookings_qs, filters):
-        confirmed_bookings = bookings_qs.filter(payment_status='confirmed')
-        
-        summary = {
-            'total_events': events_qs.count(),
-            'total_revenue': confirmed_bookings.aggregate(Sum('total_price'))['total_price__sum'] or 0,
-            'total_bookings': confirmed_bookings.count(),
-            'report_period': {
-                'start_date': filters.get('start_date', 'All time'),
-                'end_date': filters.get('end_date', 'All time')
-            },
-            'generated_at': timezone.now()
-        }
+    organizer_revenue = confirmed_bookings.values(
+        'event__hostedBy__full_name', 'event__hostedBy__email'
+    ).annotate(
+        total_revenue=Sum('total_price'),
+        total_bookings=Count('booking_id'),
+        total_events=Count('event', distinct=True)
+    ).order_by('-total_revenue')
     
-        bookings_data = confirmed_bookings.values(
-            'booking_id', 'booking_name', 'total_price', 'booking_date',
-            'event__title', 'event__hostedBy__full_name', 'event__category__categoryName',
-            'event__date', 'event__location', 'payment_id', 'payment_date'
-        ).order_by('-booking_date')
-        
-        organizer_revenue = confirmed_bookings.values(
-            'event__hostedBy__full_name', 'event__hostedBy__email'
-        ).annotate(
-            total_revenue=Sum('total_price'),
-            total_bookings=Count('booking_id'),
-            total_events=Count('event', distinct=True)
-        ).order_by('-total_revenue')
-        
-        category_revenue = confirmed_bookings.values(
-            'event__category__categoryName'
-        ).annotate(
-            total_revenue=Sum('total_price'),
-            total_bookings=Count('booking_id'),
-            total_events=Count('event', distinct=True)
-        ).order_by('-total_revenue')
-        
-        daily_revenue = confirmed_bookings.extra(
-            select={'day': 'DATE(booking_date)'}
-        ).values('day').annotate(
-            revenue=Sum('total_price'),
-            bookings_count=Count('booking_id')
-        ).order_by('day')
-        
-        return {
-            'summary': summary,
-            'bookings': list(bookings_data),
-            'organizer_revenue': list(organizer_revenue),
-            'category_revenue': list(category_revenue),
-            'daily_revenue': list(daily_revenue),
-            'filters': filters
-        }
+    category_revenue = confirmed_bookings.values(
+        'event__category__categoryName'
+    ).annotate(
+        total_revenue=Sum('total_price'),
+        total_bookings=Count('booking_id'),
+        total_events=Count('event', distinct=True)
+    ).order_by('-total_revenue')
+    
+    daily_revenue = confirmed_bookings.extra(
+        select={'day': 'DATE(booking_date)'}
+    ).values('day').annotate(
+        revenue=Sum('total_price'),
+        bookings_count=Count('booking_id')
+    ).order_by('day')
+    
+    return {
+        'summary': summary,
+        'bookings': enhanced_bookings,
+        'organizer_revenue': list(organizer_revenue),
+        'category_revenue': list(category_revenue),
+        'daily_revenue': list(daily_revenue)
+    }
+
+
+def safe_make_naive(dt_obj):
+    if dt_obj is None:
+        return None
+    if isinstance(dt_obj, datetime):
+        if timezone.is_aware(dt_obj):
+            return timezone.make_naive(dt_obj)
+        else:
+            return dt_obj
+    elif isinstance(dt_obj, date):
+        return dt_obj
+    else:
+        return dt_obj
 
 
 @permission_classes([IsAdminUser])

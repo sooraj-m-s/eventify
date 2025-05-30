@@ -50,14 +50,6 @@ const OrganizerProfile = () => {
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold">My Profile</h1>
-            <div className="flex items-center gap-4">
-              <button className="text-gray-600 hover:text-gray-900 transition-colors">
-                <Bell size={20} />
-              </button>
-              <button className="text-gray-600 hover:text-gray-900 transition-colors">
-                <MessageSquare size={20} />
-              </button>
-            </div>
           </div>
 
           {loading ? (

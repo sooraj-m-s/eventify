@@ -6,6 +6,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.enums import TA_CENTER
+from datetime import datetime, date
 
 
 class ExcelReportGenerator:
@@ -24,11 +25,14 @@ class ExcelReportGenerator:
     
     def _create_summary_sheet(self, writer, report_data):
         summary = report_data['summary']
+        generated_at = summary['generated_at']
+        if hasattr(generated_at, 'strftime'):
+            generated_at_str = generated_at.strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            generated_at_str = str(generated_at)
         
         summary_data = [
-            ['Report Generated', summary['generated_at'].strftime('%Y-%m-%d %H:%M:%S')],
-            ['Report Period Start', summary['report_period']['start_date']],
-            ['Report Period End', summary['report_period']['end_date']],
+            ['Report Generated', generated_at_str],
             ['', ''],
             ['Total Events', summary['total_events']],
             ['Total Revenue', f"₹{summary['total_revenue']:,.2f}"],
@@ -41,6 +45,15 @@ class ExcelReportGenerator:
     def _create_bookings_sheet(self, writer, report_data):
         if report_data['bookings']:
             df = pd.DataFrame(report_data['bookings'])
+            datetime_columns = ['booking_date', 'payment_date', 'event__date']
+            for col in datetime_columns:
+                if col in df.columns:
+                    df[col] = df[col].apply(
+                        lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if hasattr(x, 'strftime') and isinstance(x, datetime) 
+                        else x.strftime('%Y-%m-%d') if hasattr(x, 'strftime') and isinstance(x, date)
+                        else x
+                    )
+            
             df.columns = [
                 'Booking ID', 'Booking Name', 'Amount', 'Booking Date',
                 'Event Title', 'Organizer', 'Category', 'Event Date',
@@ -63,6 +76,11 @@ class ExcelReportGenerator:
     def _create_daily_revenue_sheet(self, writer, report_data):
         if report_data['daily_revenue']:
             df = pd.DataFrame(report_data['daily_revenue'])
+            if 'day' in df.columns:
+                df['day'] = df['day'].apply(
+                    lambda x: x.strftime('%Y-%m-%d') if hasattr(x, 'strftime') else x
+                )
+            
             df.columns = ['Date', 'Revenue', 'Bookings Count']
             df.to_excel(writer, sheet_name='Daily Revenue', index=False)
 

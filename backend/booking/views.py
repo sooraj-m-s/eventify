@@ -126,7 +126,6 @@ class CancelBookingView(APIView):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 @permission_classes([IsAuthenticated])
 class DownloadTicketView(APIView):
     def get(self, request, booking_id):

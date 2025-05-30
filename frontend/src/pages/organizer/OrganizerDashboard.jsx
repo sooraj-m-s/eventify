@@ -114,9 +114,16 @@ const OrganizerDashboard = () => {
         params.append("payment_status", paymentStatus)
       }
 
-      const response = await axiosInstance.get(`/organizer/dashboard/download_report/?${params.toString()}`, {
-        responseType: "blob",
-      })
+      let response = null
+      if (format === "pdf") {
+        response = await axiosInstance.get(`/organizer/download_report_pdf/`, {
+          responseType: "blob",
+        })
+      } else if (format === "excel") {
+        response = await axiosInstance.get(`/organizer/download_report_excel/`, {
+          responseType: "blob",
+        })
+      }
 
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement("a")
