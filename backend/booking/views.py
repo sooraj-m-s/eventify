@@ -90,8 +90,8 @@ class CancelBookingView(APIView):
             with transaction.atomic():
                 booking = Booking.objects.get(pk=booking_id, user=request.user)
                 
-                if booking.event.date < timezone.now().date():
-                    return Response({"error": "Cannot cancel bookings for past events"}, status=status.HTTP_400_BAD_REQUEST)
+                if booking.event.date < timezone.now().date() or booking.event.is_completed:
+                    return Response({"error": "Cannot cancel bookings for completed events"}, status=status.HTTP_400_BAD_REQUEST)
                 if not booking.event.cancellationAvailable:
                     return Response({"error": "Cancellation not available for this booking!"}, status=status.HTTP_400_BAD_REQUEST)
                 

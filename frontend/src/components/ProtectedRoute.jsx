@@ -11,9 +11,9 @@ const UserProtectedRoute = ({ children }) => {
   }
   if (!userRole) {
     if (location.pathname !== '/') {
-      toast.error("You're not authorized to access this page. Please log in.");
+      toast.error("You're not authorized to access this page. Please login.");
+      return <Navigate to="/unauthorized" replace />
     }
-    return <Navigate to="/" replace />
   }
 
   return children
@@ -29,8 +29,8 @@ const OrganizerProtectedRoute = ({ children }) => {
   if (userRole !== 'organizer') {
     if (location.pathname !== '/') {
       toast.error("You're not authorized to access this page. Organizer privileges required.")
+      return <Navigate to="/unauthorized" replace />
     }
-    return <Navigate to="/" replace />
   }
 
   return children
@@ -46,8 +46,8 @@ const AdminProtectedRoute = ({ children }) => {
   if (userRole !== 'admin') {
     if (location.pathname !== '/') {
       toast.error("You're not authorized to access this page. Admin privileges required.")
+      return <Navigate to="/unauthorized" replace />
     }
-    return <Navigate to="/" replace />
   }
 
   return children

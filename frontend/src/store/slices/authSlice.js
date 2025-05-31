@@ -43,6 +43,19 @@ const authSlice = createSlice({
         isAuthenticated: true,
       }));
     },
+    updateUser: (state, action) => {
+      if (action.payload.name !== undefined) state.userName = action.payload.name;
+      if (action.payload.profile_image !== undefined) state.profile_image = action.payload.profile_image;
+
+      localStorage.setItem("auth", JSON.stringify({
+        userId: state.userId,
+        userName: state.userName,
+        userEmail: state.userEmail,
+        profile_image: state.profile_image,
+        userRole: state.userRole,
+        isAuthenticated: true,
+      }));
+    },
     setUserId: (state, action) => {
       state.userId = action.payload;
     },
@@ -68,5 +81,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, setUserId, setError, setLoading, logout } = authSlice.actions;
+export const { setUser, updateUser, setUserId, setError, setLoading, logout } = authSlice.actions;
 export default authSlice.reducer;

@@ -282,7 +282,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onRoomCreated }) => {
     if (!roomId) return
 
     try {
-      const response = await axiosInstance.get(`/chat/rooms/${roomId}/`)
+      const response = await axiosInstance.get(`/chat/rooms/${roomId}/messages/`)
 
       if (response.data.room?.other_participant_online_status) {
         const status = response.data.room.other_participant_online_status

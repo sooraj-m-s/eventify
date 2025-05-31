@@ -4,13 +4,15 @@ import ProfileSidebar from "./components/ProfileSidebar"
 import axiosInstance from "../../utils/axiosInstance"
 import uploadToCloudinary from "../../utils/cloudinaryUpload"
 import { toast } from "sonner"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import ChangePasswordModal from "./components/ChangePasswordModal"
+import { updateUser } from "@/store/slices/authSlice"
 
 
 const UserProfile = () => {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const role = useSelector((state) => state.auth.userRole)
   const [profile, setProfile] = useState(null)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
@@ -89,6 +91,10 @@ const UserProfile = () => {
       setLoading(true)
       const response = await axiosInstance.patch("/users/profile/", formData)
       setProfile(response.data)
+      dispatch(updateUser({
+        name: response.data.full_name,
+        profile_image: response.data.profile_image,
+      }))
       setIsEditing(false)
       toast.success("Profile updated successfully")
     } catch (error) {

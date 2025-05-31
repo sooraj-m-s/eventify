@@ -8,6 +8,8 @@ from django.utils import timezone
 from datetime import datetime, timedelta, date
 from django.http import HttpResponse
 from decimal import Decimal
+from rest_framework.permissions import IsAuthenticated
+from dateutil.parser import parse as parse_date
 from events.serializers import EventSerializer
 from booking.models import Booking
 from events.models import Event
@@ -317,7 +319,7 @@ def safe_make_naive(dt_obj):
         return dt_obj
 
 
-@permission_classes([IsOrganizerUser])
+@permission_classes([IsAuthenticated])
 class OrganizerProfileView(APIView):
     def get(self, request):
         try:
@@ -348,9 +350,9 @@ class OrganizerProfileView(APIView):
             id_proof = request.data.get('id_proof')
             
             if not place or not about or not id_proof:
-                return Response({
-                    "error": "place, about, and id_proof are required"
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "place, about, and id_proof are required"}, status=status.HTTP_400_BAD_REQUEST)
+            if OrganizerProfile.objects.filter(user=user).exists():
+                return Response({"message": "Organizer profile already exists."}, status=status.HTTP_400_BAD_REQUEST)
             
             organizer_profile = OrganizerProfile(
                 user=user,
@@ -432,13 +434,23 @@ class OrganizerEventUpdateView(APIView):
     def patch(self, request, pk, format=None):
         try:
             event = Event.objects.get(eventId=pk, hostedBy=request.user)
+            data = request.data
+
+            if data['is_completed']:
+                event_date = parse_date(data['date']).date()
+                today = date.today()
+                if today < event_date:
+                    return Response({
+                        "success": False,
+                        "errors": "You can only mark the event as completed on or after the event date."
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
             # Validate event data
-            validation_error = validate_event(request.data)
+            validation_error = validate_event(data)
             if validation_error:
                 return validation_error
             
-            serializer = EventSerializer(event, data=request.data, partial=True)
+            serializer = EventSerializer(event, data=data, partial=True)
             if serializer.is_valid():
                 serializer.save()
 

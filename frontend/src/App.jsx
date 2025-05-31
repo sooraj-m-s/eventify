@@ -3,6 +3,7 @@ import UserRoutes from "./routes/UserRoutes"
 import OrganizerRoutes from "./routes/OrganizerRoutes"
 import AdminRoutes from "./routes/AdminRoutes"
 import { NotificationProvider } from "./services/NotificationContext"
+import Unauthorized from "./pages/Unauthorized"
 
 
 function App() {
@@ -18,6 +19,9 @@ function App() {
 
         {/* Admin Routes */}
         <Route path="admin/*" element={<AdminRoutes />} />
+
+        {/* Unauthorized Route */}
+        <Route path="unauthorized/" element={<Unauthorized />} />
       </Routes>
     </NotificationProvider>
   )

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { Upload, Loader2, AlertCircle, CheckCircle, XCircle } from "lucide-react"
+import { Upload, Loader2, AlertCircle, CheckCircle, XCircle, X } from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 import uploadToCloudinary from "../../utils/cloudinaryUpload"
 import ProfileSidebar from "./components/ProfileSidebar"
@@ -12,7 +12,7 @@ const BecomeOrganizer = () => {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
-  const [status, setStatus] = useState("loading") // loading, not_applied, pending, rejected, approved
+  const [status, setStatus] = useState("loading")
   const [profileData, setProfileData] = useState(null)
   const [showFullAbout, setShowFullAbout] = useState(false)
   const [formData, setFormData] = useState({
@@ -99,8 +99,29 @@ const BecomeOrganizer = () => {
     } catch (error) {
       console.error("Error uploading image:", error)
       toast.error("Failed to upload ID proof")
+      setPreviewImage(null)
     } finally {
       setUploadingImage(false)
+    }
+  }
+
+  const handleClearImage = () => {
+    setPreviewImage(null)
+    setFormData({
+      ...formData,
+      id_proof: "",
+    })
+
+    const fileInput = document.getElementById("id-proof")
+    if (fileInput) {
+      fileInput.value = ""
+    }
+
+    if (errors.id_proof) {
+      setErrors({
+        ...errors,
+        id_proof: "",
+      })
     }
   }
 
@@ -226,9 +247,9 @@ const BecomeOrganizer = () => {
                     <div>
                       <span className="font-medium block mb-2">ID Proof:</span>
                       <div className="mt-2 border border-gray-200 rounded-md p-2 flex justify-center items-center">
-                        <img 
-                          src={profileData.id_proof || "/placeholder.svg"} 
-                          alt="ID Proof" 
+                        <img
+                          src={profileData.id_proof || "/placeholder.svg"}
+                          alt="ID Proof"
                           className="w-full h-auto object-contain rounded"
                         />
                       </div>
@@ -274,15 +295,26 @@ const BecomeOrganizer = () => {
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <svg
+                className="h-5 w-5 text-yellow-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">Important notice</h3>
               <div className="mt-1 text-sm text-yellow-700">
                 <p>
-                  Once submitted, these details <strong>cannot be changed</strong>. Please carefully review all information before submitting your application.
+                  Once submitted, these details <strong>cannot be changed</strong>. Please carefully review all
+                  information before submitting your application.
                 </p>
               </div>
             </div>
@@ -338,7 +370,15 @@ const BecomeOrganizer = () => {
                     alt="ID Proof Preview"
                     className="mx-auto h-32 object-cover rounded-md"
                   />
-                  <p className="mt-2 text-sm text-gray-500">{uploadingImage ? "Uploading..." : "ID proof uploaded"}</p>
+                  <button
+                    type="button"
+                    onClick={handleClearImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <p className="mt-2 text-sm text-gray-500">{uploadingImage ? "Loading..." : "ID proof uploaded"}</p>
                 </div>
               ) : (
                 <>
@@ -356,6 +396,7 @@ const BecomeOrganizer = () => {
                         className="sr-only"
                         onChange={handleImageChange}
                         disabled={uploadingImage}
+                        accept="image/*"
                       />
                     </label>
                     <p className="pl-1">or drag and drop</p>

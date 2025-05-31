@@ -84,6 +84,8 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 
 class CreateMessageSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(required=False, allow_blank=True)
+    
     class Meta:
         model = Message
         fields = ['content', 'message_type', 'media_url', 'media_filename']
