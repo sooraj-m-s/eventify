@@ -229,7 +229,7 @@ const OrganizerEventManagement = () => {
                             {event.location || "Online"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${event.pricePerTicket || "0.00"}
+                            Rs.{event.pricePerTicket || "0.00"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {event.ticketsSold || 0}/{event.ticketLimit || 0}

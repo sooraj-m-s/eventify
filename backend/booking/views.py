@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.http import HttpResponse
 from wallet.models import Wallet, WalletTransaction
 from events.models import Event
+from coupon.models import Coupon, CouponUsage
 from .ticket_generator import TicketGenerator, TicketPermissions
 from .models import Booking
 from .serializers import UserBookingSerializer
@@ -21,6 +22,7 @@ class BookEventView(APIView):
     def post(self, request):
         event_id = request.data.get('event_id')
         booking_name = request.data.get('booking_name')
+        coupon_code = request.data.get('coupon_code')
         notes = request.data.get('notes')
         
         if not booking_name:
@@ -36,11 +38,20 @@ class BookEventView(APIView):
             if event.ticketsSold >= event.ticketLimit:
                 return Response({"error": "Sorry, this event is sold out"}, status=status.HTTP_400_BAD_REQUEST)
             
+            if coupon_code:
+                coupon = Coupon.objects.filter(code=coupon_code, is_active=True).first()
+                total_price = event.pricePerTicket - coupon.discount_amount
+
+                try:
+                    CouponUsage.objects.create(user=request.user, coupon=coupon, eventId=event)
+                except Exception as e:
+                    return Response({"error": "Error applying coupon!"}, status=status.HTTP_400_BAD_REQUEST)
+            
             booking = Booking.objects.create(
                 event=event,
                 user=request.user,
                 booking_name=booking_name,
-                total_price=event.pricePerTicket,
+                total_price=total_price,
                 payment_status='pending',
                 notes=notes
             )

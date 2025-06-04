@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { X, Calendar, DollarSign, Users, MapPin, Upload, Loader } from "lucide-react"
+import { X, Calendar, IndianRupee, Users, MapPin, Upload, Loader } from "lucide-react"
 import { toast } from "sonner"
 import axiosInstance from "../../../utils/axiosInstance"
 import uploadToCloudinary from "../../../utils/cloudinaryUpload"
@@ -278,7 +278,7 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
                   className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
                   placeholder="0.00"
                 />
-                <DollarSign className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                <IndianRupee className="absolute left-3 top-2.5 text-gray-400" size={18} />
               </div>
             </div>
 

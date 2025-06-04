@@ -6,6 +6,7 @@ import axiosInstance from "@/utils/axiosInstance"
 const EditCouponModal = ({ isOpen, onClose, coupon, onSuccess }) => {
   const [formData, setFormData] = useState({
     discount_amount: "",
+    minimum_purchase_amt: "",
     valid_from: "",
     valid_to: "",
     is_active: true,
@@ -16,7 +17,8 @@ const EditCouponModal = ({ isOpen, onClose, coupon, onSuccess }) => {
   useEffect(() => {
     if (isOpen && coupon) {
       setFormData({
-        discount_amount: coupon.discount_amount.toString(),
+        discount_amount: coupon.discount_amount,
+        minimum_purchase_amt: coupon.minimum_purchase_amt,
         valid_from: coupon.valid_from,
         valid_to: coupon.valid_to,
         is_active: coupon.is_active,
@@ -67,6 +69,7 @@ const EditCouponModal = ({ isOpen, onClose, coupon, onSuccess }) => {
     try {
       await axiosInstance.patch(`/coupon/coupons/${coupon.couponId}/`, {
         discount_amount: Number.parseInt(formData.discount_amount),
+        minimum_purchase_amt: formData.minimum_purchase_amt,
         valid_from: formData.valid_from,
         valid_to: formData.valid_to,
         is_active: formData.is_active,
@@ -139,22 +142,42 @@ const EditCouponModal = ({ isOpen, onClose, coupon, onSuccess }) => {
             <p className="text-sm text-gray-500 mt-1">Organizer cannot be changed</p>
           </div>
 
-          <div>
-            <label htmlFor="discount_amount" className="block text-sm font-medium text-gray-700 mb-1">
-              Discount Amount *
-            </label>
-            <input
-              id="discount_amount"
-              type="number"
-              value={formData.discount_amount}
-              onChange={(e) => handleInputChange("discount_amount", e.target.value)}
-              placeholder="Enter discount amount"
-              min="1"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                errors.discount_amount ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            {errors.discount_amount && <p className="text-sm text-red-500 mt-1">{errors.discount_amount}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="discount_amount" className="block text-sm font-medium text-gray-700 mb-1">
+                Discount Amount *
+              </label>
+              <input
+                id="discount_amount"
+                type="number"
+                value={formData.discount_amount}
+                onChange={(e) => handleInputChange("discount_amount", e.target.value)}
+                placeholder="Enter discount amount"
+                min="1"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                  errors.discount_amount ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.discount_amount && <p className="text-sm text-red-500 mt-1">{errors.discount_amount}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="minimum_purchase_amt" className="block text-sm font-medium text-gray-700 mb-1">
+                Minimum Purchase Amount *
+              </label>
+              <input
+                id="minimum_purchase_amt"
+                type="number"
+                value={formData.minimum_purchase_amt}
+                onChange={(e) => handleInputChange("minimum_purchase_amt", e.target.value)}
+                placeholder="Enter discount amount"
+                min="1"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                  errors.minimum_purchase_amt ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.minimum_purchase_amt && <p className="text-sm text-red-500 mt-1">{errors.minimum_purchase_amt}</p>}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

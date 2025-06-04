@@ -268,7 +268,6 @@ const BookingModal = ({ event, onClose, user }) => {
                               Remove
                             </button>
                           </div>
-                          <p className="text-xs text-green-600 mt-1">You saved ₹{appliedCoupon.discount_amount}</p>
                         </div>
                       ) : (
                         <div className="space-y-3">
