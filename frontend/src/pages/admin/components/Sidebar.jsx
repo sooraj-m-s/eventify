@@ -8,6 +8,7 @@ const Sidebar = () => {
     { name: "Dashboard", path: "/admin/dashboard", icon: "📊" },
     { name: "User Management", path: "/admin/users", icon: "👥" },
     { name: "Category Management", path: "/admin/categories", icon: "🗂️" },
+    { name: "Coupon Management", path: "/admin/coupons", icon: "🎟️" },
     { name: "Event Management", path: "/admin/events", icon: "🛠️" },
     { name: "Event Settlement", path: "/admin/settlement", icon: "💸" },
     { name: "Wallet", path: "/admin/wallet", icon: "💰" },

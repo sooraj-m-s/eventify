@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { X, Calendar, Clock, MapPin, Loader } from "lucide-react"
+import { useState, useEffect } from "react"
+import { X, Calendar, Clock, MapPin, Loader, ChevronDown, Tag, Check } from "lucide-react"
 import { toast } from "sonner"
 import axiosInstance from "@/utils/axiosInstance"
 import { useNavigate } from "react-router-dom"
@@ -10,6 +10,91 @@ const BookingModal = ({ event, onClose, user }) => {
   const [loading, setLoading] = useState(false)
   const [bookingName, setBookingName] = useState("")
   const [notes, setNotes] = useState("")
+  const [availableCoupons, setAvailableCoupons] = useState([])
+  const [showCouponDropdown, setShowCouponDropdown] = useState(false)
+  const [couponCode, setCouponCode] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [fetchingCoupons, setFetchingCoupons] = useState(false)
+  const originalAmount = event.pricePerTicket
+  const discountAmount = appliedCoupon ? appliedCoupon.discount_amount : 0
+  const finalAmount = Math.max(0, originalAmount - discountAmount)
+
+  useEffect(() => {
+    if (event?.hostedBy) {
+      fetchAvailableCoupons()
+    }
+  }, [event])
+
+  const fetchAvailableCoupons = async () => {
+    try {
+      setFetchingCoupons(true)
+      const organizerId = event.hostedBy
+      const response = await axiosInstance.get(`/coupon/organizer_coupon/?organizerId=${organizerId}`)
+
+      const couponsData = response.data.results || response.data || []
+      setAvailableCoupons(couponsData)
+    } catch (error) {
+      console.error("Error fetching coupons:", error)
+
+      if (error.response?.status === 401) {
+        toast.error("Please login to view available coupons")
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to view coupons")
+      } else {
+        console.log("Failed to fetch coupons, but continuing without error toast")
+      }
+
+      setAvailableCoupons([])
+    } finally {
+      setFetchingCoupons(false)
+    }
+  }
+
+  const validateAndApplyCoupon = async (code) => {
+    if (!code.trim()) {
+      toast.error("Please enter a coupon code")
+      return
+    }
+
+    setCouponLoading(true)
+    try {
+      const response = await axiosInstance.post("/coupon/coupons/apply/", {
+        eventId: event.eventId,
+        code: code.trim().toUpperCase(),
+      })
+
+      if (response.data.success && response.data.coupon) {
+        setAppliedCoupon(response.data.coupon)
+        toast.success("Coupon applied successfully!")
+        setShowCouponDropdown(false)
+        setCouponCode("")
+      } else {
+        toast.error("Failed to apply coupon")
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Failed to apply coupon"
+      toast.error(errorMessage)
+      console.error("Coupon apply error:", error)
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  const handleCouponSelect = (coupon) => {
+    setCouponCode(coupon.code)
+    validateAndApplyCoupon(coupon.code)
+  }
+
+  const handleManualCouponApply = () => {
+    validateAndApplyCoupon(couponCode)
+  }
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponCode("")
+    toast.info("Coupon removed")
+  }
 
   const formatDate = (dateString) => {
     if (!dateString) return ""
@@ -34,18 +119,23 @@ const BookingModal = ({ event, onClose, user }) => {
   function handleBooking() {
     try {
       setLoading(true)
-      axiosInstance
-        .post("/booking/book/", {
-          event_id: event.eventId,
-          booking_name: bookingName.trim() || null,
-          notes: notes,
-        })
+
+      const bookingData = {
+        event_id: event.eventId,
+        booking_name: bookingName.trim() || null,
+        notes: notes,
+      }
+
+      if (appliedCoupon) {
+        bookingData.coupon_code = appliedCoupon.code
+      }
+
+      axiosInstance.post("/booking/book/", bookingData)
         .then((response) => {
           const bookingId = response.data.booking.booking_id
           toast.success("Booking created! Redirecting to payment...")
           navigate(`/payment/${bookingId}`)
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.error("Booking error:", error)
           toast.error(error.response?.data?.error || "Failed to book tickets. Please try again.")
           setLoading(false)
@@ -119,6 +209,7 @@ const BookingModal = ({ event, onClose, user }) => {
                     <input
                       id="bookingName"
                       type="text"
+                      value={bookingName}
                       onChange={(e) => setBookingName(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
                       placeholder={user?.full_name || "Enter booking name"}
@@ -151,16 +242,133 @@ const BookingModal = ({ event, onClose, user }) => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
                     <span>1 ticket × ₹{event.pricePerTicket}</span>
-                    <span>₹{1 * event.pricePerTicket}</span>
+                    <span>₹{originalAmount}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Service Fee</span>
                     <span>₹0</span>
                   </div>
-                  <div className="border-t pt-4 flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>₹{event.pricePerTicket}</span>
+
+                  {/* Coupon Section */}
+                  <div className="border-t pt-4">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-gray-700">Have a coupon?</span>
+                        {fetchingCoupons && <Loader className="h-4 w-4 animate-spin text-gray-500" />}
+                      </div>
+
+                      {appliedCoupon ? (
+                        <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-600 mr-2" />
+                              <span className="text-sm font-medium text-green-800">{appliedCoupon.code} Applied</span>
+                            </div>
+                            <button onClick={removeCoupon} className="text-red-600 hover:text-red-800 text-sm">
+                              Remove
+                            </button>
+                          </div>
+                          <p className="text-xs text-green-600 mt-1">You saved ₹{appliedCoupon.discount_amount}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {/* Manual Coupon Input */}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={couponCode}
+                              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                              placeholder="Enter coupon code"
+                              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                            <button
+                              onClick={handleManualCouponApply}
+                              disabled={couponLoading || !couponCode.trim()}
+                              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                              {couponLoading ? <Loader className="h-4 w-4 animate-spin" /> : "Apply"}
+                            </button>
+                          </div>
+
+                          {/* Available Coupons Section */}
+                          <div>
+                            {fetchingCoupons ? (
+                              <div className="text-center py-3 text-sm text-gray-500 border border-gray-200 rounded-md">
+                                <Loader className="h-4 w-4 animate-spin inline mr-2" />
+                                Loading available coupons...
+                              </div>
+                            ) : availableCoupons.length > 0 ? (
+                              <div className="relative">
+                                <button
+                                  onClick={() => setShowCouponDropdown(!showCouponDropdown)}
+                                  className="w-full flex items-center justify-between px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                >
+                                  <div className="flex items-center">
+                                    <Tag className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>Select from {availableCoupons.length} available coupons</span>
+                                  </div>
+                                  <ChevronDown
+                                    className={`h-4 w-4 text-gray-500 transition-transform ${showCouponDropdown ? "rotate-180" : ""}`}
+                                  />
+                                </button>
+
+                                {showCouponDropdown && (
+                                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-20 max-h-48 overflow-y-auto">
+                                    {availableCoupons.map((coupon) => (
+                                      <button
+                                        key={coupon.couponId}
+                                        onClick={() => handleCouponSelect(coupon)}
+                                        disabled={couponLoading}
+                                        className="w-full text-left px-3 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        <div className="flex justify-between items-center">
+                                          <span className="font-medium text-sm">{coupon.code}</span>
+                                          <span className="text-green-600 text-sm font-medium">
+                                            ₹{coupon.discount_amount} off
+                                          </span>
+                                        </div>
+                                        {coupon.minimum_purchase_amt > 0 && (
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            Min. purchase: ₹{coupon.minimum_purchase_amt}
+                                          </p>
+                                        )}
+                                        <p className="text-xs text-gray-400 mt-1">
+                                          Valid till: {new Date(coupon.valid_to).toLocaleDateString()}
+                                        </p>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-center py-3 text-sm text-gray-500 border border-gray-200 rounded-md">
+                                No coupons available for this event
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Discount Display */}
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                      <span>Coupon Discount ({appliedCoupon.code})</span>
+                      <span className="font-medium">-₹{discountAmount}</span>
+                    </div>
+                  )}
+
+                  <div className="border-t pt-4 flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span className={appliedCoupon ? "text-green-600" : ""}>₹{finalAmount}</span>
+                  </div>
+
+                  {appliedCoupon && originalAmount !== finalAmount && (
+                    <div className="text-right">
+                      <span className="text-sm text-gray-500 line-through">₹{originalAmount}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-xs text-gray-500 space-y-1 mb-6">
@@ -174,7 +382,7 @@ const BookingModal = ({ event, onClose, user }) => {
                 <button
                   onClick={handleBooking}
                   disabled={loading}
-                  className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300 flex items-center justify-center"
+                  className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300 flex items-center justify-center font-medium"
                 >
                   {loading ? (
                     <>
@@ -182,7 +390,7 @@ const BookingModal = ({ event, onClose, user }) => {
                       Processing...
                     </>
                   ) : (
-                    <>Proceed to Payment</>
+                    <>Proceed to Payment (₹{finalAmount})</>
                   )}
                 </button>
               </div>

@@ -463,9 +463,9 @@ class PendingOrganizerProfilesView(APIView):
                     organizer_profile.approved_at = timezone.now()
 
                     # Create organizer wallet
-                    OrganizerWallet.objects.create(
+                    OrganizerWallet.objects.get_or_create(
                         user=user,
-                        balance=0
+                        defaults={'balance': 0}
                     )
 
                     # Send approval email

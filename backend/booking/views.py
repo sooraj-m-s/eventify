@@ -65,10 +65,7 @@ class BookingDetailView(APIView):
             serializer = UserBookingSerializer(booking)
             return Response(serializer.data)
         except Booking.DoesNotExist:
-            return Response(
-                {'error': 'Booking not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @permission_classes([IsAuthenticated])

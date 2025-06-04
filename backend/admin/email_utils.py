@@ -21,7 +21,7 @@ def send_organizer_approval_email(email, first_name):
                 </ul>
                 <p>Log in to your account to start creating amazing events!</p>
                 <div style="text-align: center; margin: 25px 0;">
-                    <a href="{settings.FRONTEND_URL}/login" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                    <a href="http://localhost:5173/login" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
                         Log In Now
                     </a>
                 </div>
