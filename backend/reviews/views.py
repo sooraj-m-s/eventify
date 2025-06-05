@@ -2,6 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
+from events.models import Event
 from .models import OrganizerReview
 from .serializers import OrganizerReviewSerializer
 
@@ -46,4 +49,26 @@ class OrganizerReviewView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@permission_classes([IsAuthenticated])
+class SingleReviewView(APIView):
+    def get(self, request):
+        user_id = request.query_params.get('userId')
+        event_id = request.query_params.get('eventId')
+
+        try:
+            event = Event.objects.get(eventId=event_id)
+        except Event.DoesNotExist:
+            return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not event.is_completed:
+            return Response({"detail": "Event is not completed yet."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            review = OrganizerReview.objects.get(user__user_id=user_id, event__eventId=event_id)
+            serializer = OrganizerReviewSerializer(review)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except OrganizerReview.DoesNotExist:
+            return Response({"detail": "Review not found."}, status=status.HTTP_404_NOT_FOUND)
 

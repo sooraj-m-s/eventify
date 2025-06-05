@@ -63,3 +63,25 @@ export const downloadTicket = async (bookingId) => {
   return response;
 };
 
+export const getSingleReview = async (userId, eventId) => {
+  const response = await axiosInstance.get(`/reviews/single/?userId=${userId}&eventId=${eventId}`);
+  return response.data;
+};
+
+export const createReview = async (reviewData) => {
+  const response = await axiosInstance.post("/reviews/", reviewData);
+  return response.data;
+};
+
+export const updateReview = async (reviewId, reviewData) => {
+  const response = await axiosInstance.patch(`/reviews/reviews/${reviewId}/`, reviewData);
+  return response.data;
+};
+
+export const startChatWithOrganizer = async (userId) => {
+  const response = await axiosInstance.post("/chat/start/", {
+    user_id: userId,
+  });
+  return response.data;
+};
+

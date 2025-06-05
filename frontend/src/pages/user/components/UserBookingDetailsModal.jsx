@@ -1,9 +1,9 @@
-import { X, Calendar, Clock, MapPin, FileText, Loader, MessageSquare } from "lucide-react"
-import { useState } from "react"
+import { X, Calendar, Clock, MapPin, FileText, Loader, MessageSquare, Star, Edit2 } from "lucide-react"
+import { useState, useEffect } from "react"
 import CancellationConfirmationModal from "./CancellationConfirmationModal"
 import { toast } from "sonner"
-import axiosInstance from "@/utils/axiosInstance"
 import ChatModal from "@/components/ChatModal"
+import { createReview, getSingleReview, startChatWithOrganizer, updateReview } from "@/api/user"
 
 
 const UserBookingDetailsModal = ({
@@ -19,6 +19,79 @@ const UserBookingDetailsModal = ({
   const [startingChat, setStartingChat] = useState(false)
   const [showChatModal, setShowChatModal] = useState(false)
   const [chatRoomId, setChatRoomId] = useState(null)
+  const [existingReview, setExistingReview] = useState(null)
+  const [isEditingReview, setIsEditingReview] = useState(false)
+  const [reviewTitle, setReviewTitle] = useState("")
+  const [reviewComment, setReviewComment] = useState("")
+  const [reviewRating, setReviewRating] = useState(5)
+  const [isLoadingReview, setIsLoadingReview] = useState(false)
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+
+  // Check if event is completed and fetch review if it exists
+  useEffect(() => {
+    if (booking?.event?.is_completed) {
+      fetchUserReview()
+    }
+  }, [booking])
+
+  const fetchUserReview = async () => {
+    try {
+      setIsLoadingReview(true)
+      const data = await getSingleReview(booking.user, booking.event.eventId);
+      if (data) {
+        setExistingReview(data)
+        setReviewTitle(data.title || "")
+        setReviewComment(data.comment || "")
+        setReviewRating(data.rating || 5)
+      }
+    } catch (error) {
+      if (error.response?.status !== 404) {
+        console.error("Error fetching review:", error)
+      }
+    } finally {
+      setIsLoadingReview(false)
+    }
+  }
+
+  const handleSubmitReview = async () => {
+    if (!reviewComment.trim()) {
+      toast.error("Please provide a comment for your review")
+      return
+    }
+
+    try {
+      setIsSubmittingReview(true)
+
+      const reviewData = {
+        user: booking.user,
+        organizer: booking.event.hostedBy,
+        event: booking.event.eventId,
+        title: reviewTitle.trim(),
+        comment: reviewComment.trim(),
+        rating: reviewRating,
+      }
+
+      let data
+
+      if (existingReview) {
+        // Update existing review
+        data = await updateReview(existingReview.id, reviewData);
+        toast.success("Review updated successfully")
+      } else {
+        // Create new review
+        data = await createReview(reviewData);
+        toast.success("Review submitted successfully")
+      }
+
+      setExistingReview(data)
+      setIsEditingReview(false)
+    } catch (error) {
+      console.error("Error submitting review:", error)
+      toast.error(error.response?.data?.detail || "Failed to submit review")
+    } finally {
+      setIsSubmittingReview(false)
+    }
+  }
 
   const handleCancelClick = () => {
     setShowCancellationModal(true)
@@ -34,13 +107,9 @@ const UserBookingDetailsModal = ({
   const handleChatWithOrganizer = async () => {
     try {
       setStartingChat(true)
-
-      const response = await axiosInstance.post("/chat/start/", {
-        user_id: booking.event.hostedBy,
-      })
-
-      if (response.data) {
-        setChatRoomId(response.data.room.room_id)
+      const data = await startChatWithOrganizer(booking.event.hostedBy);
+      if (data) {
+        setChatRoomId(data.room.room_id)
         setShowChatModal(true)
       }
     } catch (error) {
@@ -51,6 +120,33 @@ const UserBookingDetailsModal = ({
     } finally {
       setStartingChat(false)
     }
+  }
+
+  // Render stars for rating input
+  const renderStarRating = () => {
+    return (
+      <div className="flex items-center space-x-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button key={star} type="button" onClick={() => setReviewRating(star)} className="focus:outline-none">
+            <Star className={`h-6 w-6 ${star <= reviewRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  // Render static stars for display
+  const renderStaticStars = (rating) => {
+    return (
+      <div className="flex items-center space-x-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-5 w-5 ${star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+          />
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -208,6 +304,111 @@ const UserBookingDetailsModal = ({
                   </div>
                 )}
               </div>
+
+              {/* Review Section - Only show for completed events */}
+              {booking.event.is_completed && (
+                <div className="mt-6">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-medium text-lg mb-3">Event Review</h4>
+
+                    {isLoadingReview ? (
+                      <div className="flex justify-center py-4">
+                        <Loader className="h-6 w-6 animate-spin text-blue-500" />
+                      </div>
+                    ) : existingReview && !isEditingReview ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>{renderStaticStars(existingReview.rating)}</div>
+                          <button
+                            onClick={() => setIsEditingReview(true)}
+                            className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            Edit Review
+                          </button>
+                        </div>
+
+                        {existingReview.title && <h5 className="font-medium">{existingReview.title}</h5>}
+
+                        <p className="text-gray-700">{existingReview.comment}</p>
+
+                        <div className="text-xs text-gray-500">
+                          Reviewed on {new Date(existingReview.created_at).toLocaleDateString()}
+                          {existingReview.updated_at !== existingReview.created_at &&
+                            ` (Updated on ${new Date(existingReview.updated_at).toLocaleDateString()})`}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                          {renderStarRating()}
+                        </div>
+
+                        <div>
+                          <label htmlFor="reviewTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                            Title
+                          </label>
+                          <input
+                            id="reviewTitle"
+                            type="text"
+                            value={reviewTitle}
+                            onChange={(e) => setReviewTitle(e.target.value)}
+                            placeholder="Add a title for your review"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-1">
+                            Comment
+                          </label>
+                          <textarea
+                            id="reviewComment"
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            rows={3}
+                            placeholder="Share your experience about this event and organizer"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+
+                        <div className="flex justify-end space-x-3">
+                          {isEditingReview && (
+                            <button
+                              onClick={() => {
+                                setIsEditingReview(false)
+                                setReviewTitle(existingReview.title || "")
+                                setReviewComment(existingReview.comment || "")
+                                setReviewRating(existingReview.rating || 5)
+                              }}
+                              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          )}
+
+                          <button
+                            onClick={handleSubmitReview}
+                            disabled={isSubmittingReview}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                          >
+                            {isSubmittingReview ? (
+                              <>
+                                <Loader className="animate-spin h-4 w-4 mr-2" />
+                                {existingReview ? "Updating..." : "Submitting..."}
+                              </>
+                            ) : (
+                              <>{existingReview ? "Update Review" : "Submit Review"}</>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="mt-6 space-y-4">

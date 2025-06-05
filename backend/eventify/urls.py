@@ -13,6 +13,6 @@ urlpatterns = [
     path('wallet/', include('wallet.urls')),
     path('chat/', include('chat.urls')),
     path('coupon/', include('coupon.urls')),
-    path('reviews', include('reviews.urls')),
+    path('reviews/', include('reviews.urls')),
 ]
 
