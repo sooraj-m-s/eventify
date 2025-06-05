@@ -16,7 +16,9 @@ const OrganizerListing = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selectedOrganizer, setSelectedOrganizer] = useState(null)
+  const [selectedOrganizerRating, setSelectedOrganizerRating] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [loadingDetails, setLoadingDetails] = useState(null)
   const searchTimeoutRef = useRef(null)
 
   const fetchOrganizers = async (page = 1, search = searchTerm) => {
@@ -72,16 +74,20 @@ const OrganizerListing = () => {
 
   const handleViewDetails = async (organizer) => {
     try {
+      setLoadingDetails(organizer.user_id)
       const response = await getOrganizerDetails(organizer.user_id)
 
       if (response.data.success) {
         setSelectedOrganizer(response.data.organizer)
+        setSelectedOrganizerRating(response.data.average_rating ? response.data.average_rating : 0)
         setShowModal(true)
       } else {
         console.error("Failed to fetch organizer details")
       }
     } catch (err) {
       console.error("Error fetching organizer details:", err)
+    } finally {
+      setLoadingDetails(null)
     }
   }
 
@@ -217,10 +223,20 @@ const OrganizerListing = () => {
 
                   <button
                     onClick={() => handleViewDetails(organizer)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={loadingDetails === organizer.user_id}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
                   >
-                    <Eye size={16} />
-                    View Details
+                    {loadingDetails === organizer.user_id ? (
+                      <>
+                        <Loader className="h-4 w-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <Eye size={16} />
+                        View Details
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -297,6 +313,7 @@ const OrganizerListing = () => {
       {showModal && selectedOrganizer && (
         <OrganizerDetailModal
           organizer={selectedOrganizer}
+          averageRating={selectedOrganizerRating}
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           onViewEvents={handleViewEvents}

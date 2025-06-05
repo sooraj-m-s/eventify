@@ -1,8 +1,33 @@
-import { X, MapPin, Phone, Mail, Calendar, Users, Eye } from "lucide-react"
+import { X, MapPin, Phone, Mail, Calendar, Users, Eye, Star } from "lucide-react"
 
 
-const OrganizerDetailModal = ({ organizer, isOpen, onClose, onViewEvents }) => {
+const OrganizerDetailModal = ({ organizer, isOpen, onClose, onViewEvents, averageRating }) => {
   if (!isOpen || !organizer) return null
+
+  const renderStars = (rating) => {
+    const stars = []
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 !== 0
+
+    for (let i = 1; i <= 5; i++) {
+      if (i <= fullStars) {
+        stars.push(<Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)
+      } else if (i === fullStars + 1 && hasHalfStar) {
+        stars.push(
+          <div key={i} className="relative">
+            <Star className="h-5 w-5 text-gray-300" />
+            <div className="absolute inset-0 overflow-hidden w-1/2">
+              <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+            </div>
+          </div>,
+        )
+      } else {
+        stars.push(<Star key={i} className="h-5 w-5 text-gray-300" />)
+      }
+    }
+
+    return stars
+  }
 
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-4">
@@ -43,6 +68,19 @@ const OrganizerDetailModal = ({ organizer, isOpen, onClose, onViewEvents }) => {
                 <span>Event Organizer</span>
               </div>
 
+              {/* Rating Section */}
+              {averageRating !== null && averageRating !== undefined && (
+                <div className="flex items-center justify-center md:justify-start mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">{renderStars(averageRating)}</div>
+                    <span className="text-lg font-semibold text-gray-700">{averageRating.toFixed(1)}</span>
+                    <span className="text-sm text-gray-500">
+                      ({averageRating === 0 ? "No reviews yet" : "Average rating"})
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {organizer.place && (
                 <div className="flex items-center justify-center md:justify-start text-gray-600 mb-2">
                   <MapPin size={16} className="mr-2" />
@@ -52,7 +90,7 @@ const OrganizerDetailModal = ({ organizer, isOpen, onClose, onViewEvents }) => {
 
               <div className="flex items-center justify-center md:justify-start text-gray-600">
                 <Calendar size={16} className="mr-2" />
-                <span>Member since {organizer.user.created_at}</span>
+                <span>Member since {new Date(organizer.user.created_at).toLocaleDateString()}</span>
               </div>
             </div>
           </div>

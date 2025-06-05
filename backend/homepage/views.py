@@ -5,13 +5,14 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import date, timedelta, datetime
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
-from django.db.models import Q, Min, Max
+from django.db.models import Q, Min, Max, Avg
 from categories.models import Category
 from users.models import Users
 from events.models import Event
 from events.serializers import EventSerializer
 from organizers.models import OrganizerProfile
 from organizers.serializers import OrganizerProfileSerializer
+from reviews.models import OrganizerReview
 from .serializers import OrganizerListSerializer
 
 
@@ -208,9 +209,11 @@ class OrganizerDetailView(RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            organizer_id = kwargs.get('user_id')
             serializer = self.get_serializer(instance)
-            
-            return Response({'success': True, 'organizer': serializer.data}, status=status.HTTP_200_OK)
+
+            avg_rating = (OrganizerReview.objects.filter(organizer=organizer_id).aggregate(avg=Avg('rating'))['avg'])
+            return Response({'success': True, 'organizer': serializer.data, 'average_rating': avg_rating}, status=status.HTTP_200_OK)
         except OrganizerProfile.DoesNotExist:
             return Response({'success': False, 'error': 'Organizer not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
 
