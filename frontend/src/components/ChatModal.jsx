@@ -6,7 +6,7 @@ import uploadToCloudinary from "@/utils/cloudinaryUpload"
 import axiosInstance from "@/utils/axiosInstance"
 
 
-const ChatModal = ({ isOpen, onClose, roomId, otherUser, onRoomCreated }) => {
+const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(true)
@@ -34,8 +34,8 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onRoomCreated }) => {
 
   const initializeWebSocket = useCallback(() => {
     if (!roomId) return
-
-    const wsUrl = `ws://localhost:8000/ws/chat/${roomId}/`
+    const CHAT_WS_BASE_URL = import.meta.env.VITE_CHAT_WS_BASE_URL;
+    const wsUrl = `${CHAT_WS_BASE_URL}${roomId}/`;
     wsRef.current = new WebSocket(wsUrl)
 
     wsRef.current.onopen = () => {
@@ -117,7 +117,6 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onRoomCreated }) => {
 
   const loadOlderMessages = useCallback(async () => {
     if (loadingOlder || !hasNextPage) return
-
     const container = messagesContainerRef.current
     if (container) {
       lastScrollHeight.current = container.scrollHeight

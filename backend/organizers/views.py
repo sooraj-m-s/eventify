@@ -243,7 +243,6 @@ class OrganizerRevenueReportViewExcel(APIView):
             
             return response
         except Exception as e:
-            print('Error generating Excel report:', e)
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -506,6 +505,5 @@ class OrganizerBookingsView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            print('Error fetching organizer bookings:', e)
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

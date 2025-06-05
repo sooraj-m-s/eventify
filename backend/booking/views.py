@@ -46,6 +46,8 @@ class BookEventView(APIView):
                     CouponUsage.objects.create(user=request.user, coupon=coupon, eventId=event)
                 except Exception as e:
                     return Response({"error": "Error applying coupon!"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                total_price = event.pricePerTicket
             
             booking = Booking.objects.create(
                 event=event,

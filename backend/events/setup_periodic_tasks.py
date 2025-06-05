@@ -22,6 +22,4 @@ def setup_periodic_tasks():
                 'enabled': True,
             }
         )
-        
-        print("Periodic tasks have been set up successfully!")
 

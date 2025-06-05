@@ -12,12 +12,7 @@ from .models import Event
 @shared_task
 def send_event_reminder_emails():
     tomorrow = timezone.now().date() + timedelta(days=1)
-    
-    tomorrow_events = Event.objects.filter(
-        date=tomorrow,
-        is_completed=False,
-        on_hold=False
-    )
+    tomorrow_events = Event.objects.filter(date=tomorrow, is_completed=False, on_hold=False)
     
     for event in tomorrow_events:
         bookings = Booking.objects.filter(event_id=event.eventId)
@@ -45,8 +40,6 @@ def send_event_reminder_emails():
                     fail_silently=False,
                     html_message=html_message,
                 )
-                
-                print(f"Reminder email sent to {user_email} for event {event.title}")
     
     return f"Processed {tomorrow_events.count()} events for tomorrow"
 

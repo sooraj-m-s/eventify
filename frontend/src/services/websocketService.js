@@ -16,6 +16,7 @@ class WebSocketService {
   }
 
   connect(userId) {
+    const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL;
     if (
       this.isConnecting ||
       (this.socketRef && this.socketRef.readyState === WebSocket.OPEN && this.userId === userId)
@@ -29,7 +30,7 @@ class WebSocketService {
 
     this.userId = userId
     this.isConnecting = true
-    const path = `ws://localhost:8000/ws/notifications/?user_id=${userId}`
+    const path = `${WS_BASE_URL}?user_id=${userId}`;
 
     if (this.socketRef) {
       this.socketRef.close()

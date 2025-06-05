@@ -263,7 +263,6 @@ class DownloadRevenueReportViewExcel(APIView):
         
             return response
         except Exception as e:
-            print(f"Error generating Excel report: {str(e)}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
@@ -539,7 +538,6 @@ class AdminEventListView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Error in AdminEventListView: {str(e)}")
             return Response({
                 'success': False,
                 'message': 'An error occurred while fetching events',

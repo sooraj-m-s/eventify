@@ -20,11 +20,6 @@ def send_organizer_approval_email(email, first_name):
                     <li>Receiving payments through your organizer wallet</li>
                 </ul>
                 <p>Log in to your account to start creating amazing events!</p>
-                <div style="text-align: center; margin: 25px 0;">
-                    <a href="http://localhost:5173/login" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-                        Log In Now
-                    </a>
-                </div>
                 <p>Thank you for choosing Eventify!</p>
                 <p style="margin-top: 20px;">Best regards,<br><strong>The Eventify Team</strong></p>
             </div>
