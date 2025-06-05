@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'wallet.apps.WalletConfig',
     'chat.apps.ChatConfig',
     'coupon.apps.CouponConfig',
+    'reviews.apps.ReviewsConfig',
 ]
 
 MIDDLEWARE = [
