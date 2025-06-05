@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react"
 import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, RefreshCw, Search, ChevronLeft,
         ChevronRight, User, Eye, X, Mail, Phone, MapPin, CalendarIcon, IndianRupee, MessageSquare } from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
 import ChatModal from "@/components/ChatModal"
 import { toast } from "sonner"
+import { fetchOrganizerBookings, startChatWithUser } from "@/api/organizer"
 
 
 const OrganizerBookings = () => {
@@ -17,7 +17,6 @@ const OrganizerBookings = () => {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [totalBookings, setTotalBookings] = useState(0)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const searchTimeoutRef = useRef(null)
@@ -32,7 +31,7 @@ const OrganizerBookings = () => {
 
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery)
-    }, 500)
+    }, 3000)
 
     return () => {
       if (searchTimeoutRef.current) {
@@ -54,12 +53,10 @@ const OrganizerBookings = () => {
       if (selectedStatus) url += `&status=${selectedStatus}`
       if (debouncedSearchQuery) url += `&search=${debouncedSearchQuery}`
 
-      const response = await axiosInstance.get(url)
+      const response = await fetchOrganizerBookings(url);
 
       if (response.data.success) {
         setBookings(response.data.bookings)
-        
-        setTotalBookings(response.data.count)
         setTotalPages(Math.ceil(response.data.count / 10))
         setError(null)
       } else {
@@ -76,9 +73,7 @@ const OrganizerBookings = () => {
   const handleChatWithClient = async (clientUserId) => {
     try {
       setStartingChat(true)
-      const response = await axiosInstance.post("/chat/start/", {
-        user_id: clientUserId,
-      })
+      const response = await startChatWithUser(clientUserId);
 
       if (response.data) {
         setChatRoomId(response.data.room.room_id)
@@ -278,32 +273,6 @@ const OrganizerBookings = () => {
             </div>
 
             {/* Results Summary */}
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-sm text-gray-600">
-                Showing {bookings.length} of {totalBookings} clients
-              </p>
-
-              {/* Pagination */}
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1 || loading}
-                  className="p-2 rounded-md bg-white border border-gray-300 disabled:opacity-50"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <span className="text-sm">
-                  Page {page} of {totalPages || 1}
-                </span>
-                <button
-                  onClick={() => setPage(Math.min(totalPages, page + 1))}
-                  disabled={page === totalPages || loading}
-                  className="p-2 rounded-md bg-white border border-gray-300 disabled:opacity-50"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
 
             {loading && (
               <div className="flex justify-center my-4">

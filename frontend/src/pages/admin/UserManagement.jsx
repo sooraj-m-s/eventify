@@ -3,8 +3,8 @@ import { toast } from "sonner"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
 import { Loader2, Search, UserPlus } from "lucide-react"
-import axiosInstance from "../../utils/axiosInstance"
 import OrganizerRequestModal from "./components/OrganizerRequestModal"
+import { fetchUserList, getPendingOrganizerProfiles, updateUserBlockStatus } from "@/api/admin"
 
 
 const UserManagement = () => {
@@ -28,14 +28,7 @@ const UserManagement = () => {
 
       try {
         const role = activeTab === "clients" ? "user" : "organizer"
-
-        const response = await axiosInstance.get("/admin/user_list/", {
-          params: {
-            role: role,
-            page: currentPage,
-            search: searchTerm,
-          },
-        })
+        const response = await fetchUserList(role, currentPage, searchTerm);
 
         if (activeTab === "clients") {
           setUsers(response.data.results || [])
@@ -67,9 +60,7 @@ const UserManagement = () => {
 
   const fetchPendingOrganizerCount = async () => {
     try {
-      const response = await axiosInstance.get("/admin/pending_organizers/", {
-        params: { status: "pending", count_only: true },
-      })
+      const response = await getPendingOrganizerProfiles();
       const pendingCount = response.data.profiles.filter(profile => !profile.is_approved && !profile.is_rejected).length;
       setPendingOrganizerCount(pendingCount);
     } catch (err) {
@@ -81,14 +72,9 @@ const UserManagement = () => {
     setUpdatingUserId(userId)
     try {
       const newStatus = !isBlocked
+      await updateUserBlockStatus(userId, newStatus);
 
-      await axiosInstance.patch(`/admin/users_status/${userId}/`, {
-        is_blocked: newStatus,
-      })
-
-      // Update local state
       setUsers(users.map((user) => (user.user_id === userId ? { ...user, is_blocked: newStatus } : user)))
-
       toast.success(`User ${newStatus ? "blocked" : "unblocked"} successfully`)
     } catch (err) {
       console.error("Error updating user status:", err)

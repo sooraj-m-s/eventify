@@ -2,9 +2,9 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { Calendar, Clock, MapPin, User, Loader, IndianRupee } from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import { useSelector } from "react-redux"
 import BookingModal from "@/components/home/BookingModal"
+import { getEventDetails } from "@/api/user"
 
 
 const EventDetail = () => {
@@ -22,7 +22,7 @@ const EventDetail = () => {
     const fetchEventDetails = async () => {
       try {
         setLoading(true)
-        const response = await axiosInstance.get(`/events/event_detail/${eventId}/`)
+        const response = await getEventDetails(eventId)
         
         setHost(response.data.host)
         setEvent(response.data.data)

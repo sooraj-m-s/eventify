@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
 import { Search, Calendar, ChevronLeft, ChevronRight, ArrowUpRight,
         ArrowDownLeft, RefreshCw, Wallet} from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import Sidebar from "./components/Sidebar"
+import { fetchAdminWalletData } from "@/api/admin"
 
 
 const AdminWallet = () => {
@@ -32,11 +32,10 @@ const AdminWallet = () => {
     try {
       setLoading(true)
       const { search } = filters
-
       let url = `/admin/wallet/?page=${page}`
       if (search) url += `&search=${search}`
 
-      const response = await axiosInstance.get(url)
+      const response = await fetchAdminWalletData(url);
       
       if (response.data.success) {
         setWalletData({

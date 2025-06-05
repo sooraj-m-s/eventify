@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import { Search, Eye, Calendar, IndianRupee, ChevronLeft, ChevronRight } from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import Sidebar from "./components/Sidebar"
 import EventDetailsModal from "./components/EventDetailsModal"
 import SettlementModal from "./components/SettlementModal"
+import { fetchAdminEvent } from "@/api/admin"
 
 
 const EventSettlementPage = () => {
@@ -48,10 +48,7 @@ const EventSettlementPage = () => {
           break
       }
 
-      const response = await axiosInstance.get(
-        `/admin/events/?settlement_status=${settlementStatus}&page=${page}&search=${searchQuery}`,
-      )
-
+      const response = await fetchAdminEvent(settlementStatus, page, searchQuery);
       if (response.data.success) {
         setEvents(response.data.events)
         setPagination({

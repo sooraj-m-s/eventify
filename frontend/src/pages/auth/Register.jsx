@@ -6,10 +6,10 @@ import OtpModal from '../../components/OTPModal';
 import image from "../../assets/login/img-2.jpg"
 import ImageSlider from '../../components/ImageSlider';
 import CustomGoogleButton from '../../components/CustomGoogleButton';
-import axiosInstance from '../../utils/axiosInstance';
 import uploadToCloudinary from '../../utils/cloudinaryUpload';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { registerUser } from '@/api/user';
 
 
 const Register = () => {
@@ -92,7 +92,7 @@ const Register = () => {
       if (formData.profile_image) {
         profileImageUrl = await uploadToCloudinary(formData.profile_image)
       }
-      
+
       const userData = {
         full_name: formData.full_name,
         email: formData.email,
@@ -101,12 +101,8 @@ const Register = () => {
         mobile: formData.mobile,
         profile_image: profileImageUrl,
       }
-      
-      const response = await axiosInstance.post('/users/register/', userData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+
+      const response = await registerUser(userData)
 
       const tempUserId = response.data.temp_user_id;
       dispatch(setUserId(tempUserId));
@@ -132,7 +128,7 @@ const Register = () => {
       }
     } finally {
       dispatch(setLoading(false));
-  }
+    }
   };
 
   return (
@@ -248,9 +244,8 @@ const Register = () => {
 
           <button
             type="submit"
-            className={`w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className={`w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             disabled={loading}
           >
             {loading ? (

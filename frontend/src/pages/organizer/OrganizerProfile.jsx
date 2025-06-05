@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
-import { Bell, MessageSquare, MapPin, Mail } from "lucide-react"
+import { MapPin, Mail } from "lucide-react"
 import { useSelector } from "react-redux"
-import axiosInstance from "../../utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
 import { toast } from "sonner"
+import { fetchOrganizerProfile } from "@/api/organizer"
 
 
 const OrganizerProfile = () => {
@@ -16,7 +16,7 @@ const OrganizerProfile = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true)
-        const response = await axiosInstance.get("/organizer/profile/")
+        const response = await fetchOrganizerProfile();
         setProfile(response.data)
         setError(null)
       } catch (err) {

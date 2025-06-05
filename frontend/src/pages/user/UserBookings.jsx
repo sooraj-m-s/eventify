@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom"
 import { Calendar, Clock, MapPin, AlertCircle, Eye, Loader, CheckCircle,
     XCircle, RefreshCw, IndianRupee, 
     Download} from "lucide-react"
-import axiosInstance from "../../utils/axiosInstance"
 import { toast } from "sonner"
 import BookingDetailsModal from "./components/UserBookingDetailsModal"
 import ProfileSidebar from "./components/ProfileSidebar"
+import { cancelBooking, downloadTicket, getUserBookings } from "@/api/user"
 
 
 const UserBookings = () => {
@@ -26,7 +26,7 @@ const UserBookings = () => {
   const fetchUserBookings = async () => {
     try {
       setLoading(true)
-      const response = await axiosInstance.get("/booking/my_bookings/")
+      const response = await getUserBookings();
 
       if (response.data.success) {
         setBookings(response.data.bookings)
@@ -55,13 +55,11 @@ const UserBookings = () => {
   const handleCancelBooking = async (bookingId) => {
     try {
       setCancellingId(bookingId)
-      const response = await axiosInstance.patch(`/booking/cancel/${bookingId}/`)
+      const response = await cancelBooking(bookingId);
 
       if (response.data.success) {
         toast.success("Booking cancelled successfully")
-        // Update the bookings list
         fetchUserBookings()
-        // Close the modal
         setShowModal(false)
       } else {
         toast.error(response.data.error || "Failed to cancel booking")
@@ -78,15 +76,11 @@ const UserBookings = () => {
     event.stopPropagation()
     try {
       setDownloadingTickets((prev) => new Set(prev).add(booking.booking_id))
-
-      const response = await axiosInstance.get(`/booking/download_ticket/${booking.booking_id}/`, {
-        responseType: "blob",
-      })
+      const response = await downloadTicket(booking.booking_id);
 
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement("a")
       link.href = url
-
       const contentDisposition = response.headers["content-disposition"]
       let filename = `ticket_${booking.booking_id}.pdf`
 

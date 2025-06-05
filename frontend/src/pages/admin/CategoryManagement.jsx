@@ -5,7 +5,7 @@ import AddCategoryModal from "./components/AddCategoryModal"
 import EditCategoryModal from "./components/EditCategoryModal"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
-import axiosInstance from "@/utils/axiosInstance"
+import { fetchCategoryList, updateCategoryStatus } from "@/api/admin"
 
 
 const CategoryManagement = () => {
@@ -25,7 +25,7 @@ const CategoryManagement = () => {
   const fetchCategories = async () => {
     setLoading(true)
     try {
-      const response = await axiosInstance.get("/categories/")
+      const response = await fetchCategoryList();
       setCategories(response.data.categories || [])
       setError(null)
     } catch (err) {
@@ -53,9 +53,7 @@ const CategoryManagement = () => {
   const handleToggleStatus = async (categoryId, currentStatus) => {
     setUpdatingStatus(categoryId)
     try {
-      await axiosInstance.patch(`/categories/update/${categoryId}/`, {
-        is_listed: !currentStatus,
-      })
+      await updateCategoryStatus(categoryId, !currentStatus);
       setCategories(
         categories.map((cat) => (cat.categoryId === categoryId ? { ...cat, is_listed: !currentStatus } : cat)),
       )

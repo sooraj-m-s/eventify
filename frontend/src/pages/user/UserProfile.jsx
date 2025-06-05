@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Pencil } from "lucide-react";
 import ProfileSidebar from "./components/ProfileSidebar";
-import axiosInstance from "../../utils/axiosInstance";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import { updateUser } from "@/store/slices/authSlice";
 import ProfileEdit from "./components/ProfileEdit";
+import { getUserProfile, updateUserProfile } from "@/api/user";
 
 
 const UserProfile = () => {
@@ -23,7 +23,7 @@ const UserProfile = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get("/users/profile/");
+        const response = await getUserProfile();
         setProfile(response.data);
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -49,7 +49,7 @@ const UserProfile = () => {
     async (formData) => {
       try {
         setLoading(true);
-        const response = await axiosInstance.patch("/users/profile/", formData);
+        const response = await updateUserProfile(formData);
         setProfile(response.data);
         dispatch(
           updateUser({

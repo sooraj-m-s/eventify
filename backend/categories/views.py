@@ -41,7 +41,7 @@ class CategoryUpdateView(APIView):
         except Category.DoesNotExist:
             return Response({"success": False, "message": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        if Category.objects.filter(categoryName__iexact=request.data['categoryName']).exclude(categoryId=category_id).exists():
+        if Category.objects.exclude(categoryId=category_id).filter(categoryName__iexact=request.data.get('categoryName', '')).exists():
             return Response({"success": False, "message": "A category with this name already exists."}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = CategorySerializer(category, data=request.data, partial=True)

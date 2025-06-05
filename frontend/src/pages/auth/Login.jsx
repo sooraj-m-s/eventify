@@ -3,11 +3,11 @@ import { useNavigate, Link } from "react-router-dom"
 import { toast } from "sonner"
 import { Eye, EyeOff } from "lucide-react"
 import { useDispatch } from "react-redux"
-import axiosInstance from "../../utils/axiosInstance"
 import { setUser } from "../../store/slices/authSlice"
 import ImageSlider from "../../components/ImageSlider"
 import image from "../../assets/login/img-1.jpeg"
 import CustomGoogleButton from "../../components/CustomGoogleButton"
+import { loginUser } from "@/api/user"
 
 
 const Login = () => {
@@ -77,7 +77,7 @@ const Login = () => {
     setLoading(true)
 
     try {
-      const response = await axiosInstance.post("/users/login/", formData)
+      const response = await loginUser(formData)
       dispatch(setUser({
         id: response.data.user_id,
         name: response.data.full_name,

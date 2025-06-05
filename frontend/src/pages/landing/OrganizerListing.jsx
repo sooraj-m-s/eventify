@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, Loader, Users, ChevronLeft, ChevronRight, Eye, X } from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import OrganizerDetailModal from "./OrganizerDetailModal"
+import { getOrganizerDetails, getOrganizers } from "@/api/user"
 
 
 const OrganizerListing = () => {
@@ -15,7 +15,6 @@ const OrganizerListing = () => {
   const [isSearching, setIsSearching] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
   const [selectedOrganizer, setSelectedOrganizer] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const searchTimeoutRef = useRef(null)
@@ -25,23 +24,15 @@ const OrganizerListing = () => {
       setLoading(true)
       setError(null)
 
-      const params = new URLSearchParams()
-      params.append("page", page)
-      if (search) {
-        params.append("search", search)
-      }
-
-      const response = await axiosInstance.get(`/organizers/?${params.toString()}`)
+      const response = await getOrganizers(page, search)
       if (response.data) {
         const organizersData = response.data.results || response.data.organizers || []
         setOrganizers(organizersData)
 
         if (response.data.count !== undefined) {
-          setTotalCount(response.data.count)
           const pageSize = 12
           setTotalPages(Math.ceil(response.data.count / pageSize))
         } else {
-          setTotalCount(organizersData.length)
           setTotalPages(1)
         }
       } else {
@@ -81,7 +72,7 @@ const OrganizerListing = () => {
 
   const handleViewDetails = async (organizer) => {
     try {
-      const response = await axiosInstance.get(`/organizers/${organizer.user_id}/`)
+      const response = await getOrganizerDetails(organizer.user_id)
 
       if (response.data.success) {
         setSelectedOrganizer(response.data.organizer)
@@ -154,13 +145,6 @@ const OrganizerListing = () => {
             </button>
           )}
         </div>
-
-        {totalCount > 0 && (
-          <div className="mt-4 text-sm text-gray-600">
-            Found {totalCount} organizer{totalCount !== 1 ? "s" : ""}
-            {searchTerm && ` for "${searchTerm}"`}
-          </div>
-        )}
       </div>
 
       {/* Loading State */}

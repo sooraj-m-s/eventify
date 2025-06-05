@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import { ArrowUpRight, ArrowDownLeft, Search, ChevronLeft, ChevronRight, Calendar, Wallet, Download } from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
 import { toast } from "sonner"
 import WithdrawConfirmationModal from "./components/WithdrawConfirmationModal"
 import { Button } from "@/components/ui/button"
+import { fetchOrganizerWalletData, withdrawAllMoney } from "@/api/organizer"
 
 
 const OrganizerWallet = () => {
@@ -30,8 +30,7 @@ const OrganizerWallet = () => {
   const fetchWalletData = async (page) => {
     try {
       setLoading(true)
-      const response = await axiosInstance.get(`/wallet/organizer/transactions/?page=${page}`)
-      
+      const response = await fetchOrganizerWalletData(page);
       setWalletData(response.data.results.wallet)
       setTransactions(response.data.results.transactions || [])
 
@@ -53,10 +52,7 @@ const OrganizerWallet = () => {
   const handleWithdrawAll = async () => {
     try {
       setIsWithdrawing(true)
-
-      const response = await axiosInstance.post("/wallet/withdraw_money/", {
-        confirm_withdrawal: true,
-      })
+      const response = await withdrawAllMoney();
 
       if (response.data) {
         setWalletData(response.data.wallet)

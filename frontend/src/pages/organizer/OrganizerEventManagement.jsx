@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Calendar, Plus, Edit, Eye, ChevronLeft, ChevronRight, Filter, Loader } from "lucide-react"
-import axiosInstance from "../../utils/axiosInstance"
 import OrganizerSidebar from "./components/OrganizerSidebar"
 import AddEventModal from "./components/AddEventModal"
 import EditEventModal from "./components/EditEventModal"
 import ViewEventModal from "./components/ViewEventModal"
 import { format } from "date-fns"
+import { fetchOrganizerEvents } from "@/api/organizer"
 
 
 const OrganizerEventManagement = () => {
@@ -29,12 +29,7 @@ const OrganizerEventManagement = () => {
   const fetchEvents = async () => {
     setLoading(true)
     try {
-      let url = `/organizer/organizer_events/?page=${currentPage}`
-
-      if (filterCompleted !== null) {
-        url += `&is_completed=${filterCompleted}`
-      }
-      const response = await axiosInstance.get(url)
+      const response = await fetchOrganizerEvents(currentPage, filterCompleted);
       let eventsData = []
 
       if (response.data.results && response.data.results.events) {

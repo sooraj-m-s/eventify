@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { ArrowUpRight, ArrowDownLeft, Search, ChevronLeft, ChevronRight, Calendar, Wallet } from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import ProfileSidebar from "./components/ProfileSidebar"
+import { getWalletTransactions } from "@/api/user"
 
 
 const WalletPage = () => {
@@ -25,11 +25,10 @@ const WalletPage = () => {
   const fetchWalletData = async (page) => {
     try {
       setLoading(true)
-      const response = await axiosInstance.get(`/wallet/transactions/?page=${page}`)
+      const response = await getWalletTransactions(page);
       
       setWalletData(response.data.results.wallet)
       setTransactions(response.data.results.transactions || [])
-
       setPagination({
         count: response.data.count,
         next: response.data.next,

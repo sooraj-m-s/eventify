@@ -2,9 +2,10 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { Upload, Loader2, AlertCircle, CheckCircle, XCircle, X } from "lucide-react"
-import axiosInstance from "../../utils/axiosInstance"
 import uploadToCloudinary from "../../utils/cloudinaryUpload"
 import ProfileSidebar from "./components/ProfileSidebar"
+import { fetchOrganizerProfile } from "@/api/organizer"
+import { submitOrganizerProfile } from "@/api/user"
 
 
 const BecomeOrganizer = () => {
@@ -30,10 +31,9 @@ const BecomeOrganizer = () => {
   const checkOrganizerStatus = async () => {
     try {
       setLoading(true)
-      const response = await axiosInstance.get("/organizer/profile/")
+      const response = await fetchOrganizerProfile();
 
       setProfileData(response.data)
-
       if (response.data.is_approved) {
         setStatus("approved")
       } else if (response.data.is_rejected) {
@@ -87,7 +87,6 @@ const BecomeOrganizer = () => {
         ...formData,
         id_proof: imageUrl,
       })
-
       if (errors.id_proof) {
         setErrors({
           ...errors,
@@ -95,7 +94,6 @@ const BecomeOrganizer = () => {
         })
       }
 
-      toast.success("ID proof uploaded successfully")
     } catch (error) {
       console.error("Error uploading image:", error)
       toast.error("Failed to upload ID proof")
@@ -148,7 +146,6 @@ const BecomeOrganizer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     if (!validateForm()) {
       return
     }
@@ -156,7 +153,7 @@ const BecomeOrganizer = () => {
     try {
       setSubmitting(true)
 
-      const response = await axiosInstance.post("/organizer/profile/", formData)
+      const response = await submitOrganizerProfile(formData);
       setProfileData(response.data?.profile || { ...formData })
       toast.success("Organizer request submitted successfully")
       setStatus("pending")

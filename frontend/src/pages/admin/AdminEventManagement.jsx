@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react"
 import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, Search,
         ChevronLeft, ChevronRight, Eye, User } from "lucide-react"
-import axiosInstance from "@/utils/axiosInstance"
 import AdminEventDetailsModal from "./components/AdminEventDetailsModal"
 import Sidebar from "./components/Sidebar"
+import { fetchAdminEvents } from "@/api/admin"
 
 
 const AdminEventManagement = () => {
@@ -16,7 +16,6 @@ const AdminEventManagement = () => {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [totalEvents, setTotalEvents] = useState(0)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const searchInputRef = useRef(null)
@@ -51,11 +50,10 @@ const AdminEventManagement = () => {
       if (selectedStatus) url += `&status=${selectedStatus}`
       if (debouncedSearchQuery) url += `&search=${debouncedSearchQuery}`
 
-      const response = await axiosInstance.get(url)
+      const response = await fetchAdminEvents(url);
       
       if (response.data.success) {
         setEvents(response.data.events || [])
-        setTotalEvents(response.data.count || 0)
         setTotalPages(Math.ceil((response.data.count || 0) / 10))
         setError(null)
       } else {
@@ -245,34 +243,6 @@ const AdminEventManagement = () => {
               </form>
             </div>
 
-            {/* Results Summary */}
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-sm text-gray-600">
-                Showing {events.length} of {totalEvents} events
-              </p>
-
-              {/* Pagination */}
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1 || loading}
-                  className="p-2 rounded-md bg-white border border-gray-300 disabled:opacity-50"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <span className="text-sm">
-                  Page {page} of {totalPages || 1}
-                </span>
-                <button
-                  onClick={() => setPage(Math.min(totalPages, page + 1))}
-                  disabled={page === totalPages || loading}
-                  className="p-2 rounded-md bg-white border border-gray-300 disabled:opacity-50"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
             {loading && (
               <div className="flex justify-center my-4">
                 <Loader className="h-6 w-6 animate-spin text-gray-500" />
@@ -419,7 +389,6 @@ const AdminEventManagement = () => {
 
                   {/* Page numbers */}
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    // Show pages around current page
                     let pageNum
                     if (totalPages <= 5) {
                       pageNum = i + 1

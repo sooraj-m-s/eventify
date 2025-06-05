@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { toast } from "sonner"
-import axiosInstance from "../../utils/axiosInstance"
+import { forgotPassword } from '@/api/user';
 
 
 const ForgotPassword = () => {
@@ -29,9 +29,7 @@ const ForgotPassword = () => {
 
     setIsLoading(true)
     try {
-      const response = await axiosInstance.post("/users/forgot_password/", {
-        email: email,
-      })
+      const response = await forgotPassword(email)
 
       toast.success(response.data.message || "Verification code sent! Check your email.")
       setTimeout(() => {
