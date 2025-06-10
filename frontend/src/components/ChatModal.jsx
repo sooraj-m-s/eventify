@@ -7,6 +7,8 @@ import axiosInstance from "@/utils/axiosInstance"
 
 
 const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
+  const userData = useSelector((state) => state.auth)
+  const userId = userData.user_id || userData.userId
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(true)
@@ -15,10 +17,11 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [otherUserTyping, setOtherUserTyping] = useState(false)
-  const [onlineStatus, setOnlineStatus] = useState({is_online: false, status_text: "offline"})
+  const [onlineStatus, setOnlineStatus] = useState({ is_online: false, status_text: "offline" })
   const [imagePreview, setImagePreview] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasNextPage, setHasNextPage] = useState(false)
+  const [wsConnected, setWsConnected] = useState(false)
 
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
@@ -26,7 +29,8 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
   const wsRef = useRef(null)
   const typingTimeoutRef = useRef(null)
   const lastScrollHeight = useRef(0)
-  const userData = useSelector((state) => state.auth)
+  const reconnectTimeoutRef = useRef(null)
+  const pingIntervalRef = useRef(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -34,47 +38,87 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
 
   const initializeWebSocket = useCallback(() => {
     if (!roomId) return
-    const CHAT_WS_BASE_URL = import.meta.env.VITE_CHAT_WS_BASE_URL;
-    const wsUrl = `${CHAT_WS_BASE_URL}${roomId}/`;
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.close()
+    }
+
+    const CHAT_WS_BASE_URL = import.meta.env.VITE_CHAT_WS_BASE_URL || "ws://localhost:8000/ws/chat/"
+    const wsUrl = `${CHAT_WS_BASE_URL}${roomId}/`
+
+    console.log("Connecting to WebSocket:", wsUrl)
     wsRef.current = new WebSocket(wsUrl)
 
     wsRef.current.onopen = () => {
       console.log("WebSocket connected")
+      setWsConnected(true)
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
+      }
+
+      pingIntervalRef.current = setInterval(() => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: "ping" }))
+        }
+      }, 30000)
     }
 
     wsRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data)
+      try {
+        const data = JSON.parse(event.data)
+        console.log("WebSocket message received:", data)
 
-      switch (data.type) {
-        case "message":
-          setMessages((prev) => [data.message, ...prev])
-          scrollToBottom()
-          break
+        switch (data.type) {
+          case "message":
+            setMessages((prev) => [data.message, ...prev])
+            scrollToBottom()
+            break
 
-        case "participant_status":
-          if (data.user_id !== userData.user_id) {
-            setOnlineStatus({
-              is_online: data.is_online,
-              status_text: data.status_text || (data.is_online ? "online" : "offline"),
-            })
-          }
-          break
+          case "typing":
+            if (data.user_id && data.user_id !== userId) {
+              console.log("Typing indicator received:", data)
+              setOtherUserTyping(data.is_typing)
+            }
+            break
 
-        case "typing":
-          if (data.user_id !== userData.user_id) {
-            setOtherUserTyping(data.is_typing)
-          }
-          break
+          case "participant_status":
+            if (data.user_id && data.user_id !== userId) {
+              console.log("Status update received:", data)
+              setOnlineStatus({
+                is_online: data.is_online,
+                status_text: data.status_text || (data.is_online ? "online" : "offline"),
+              })
+            }
+            break
 
-        case "pong":
-          break
+          case "pong":
+            console.log("Pong received")
+            break
+
+          default:
+            console.log("Unknown message type:", data.type)
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error)
       }
     }
 
-    wsRef.current.onclose = () => {
-      console.log("WebSocket disconnected")
-      setTimeout(() => {
+    wsRef.current.onclose = (event) => {
+      console.log("WebSocket disconnected:", event.code, event.reason)
+      setWsConnected(false)
+
+      // Clear ping interval
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
+      }
+
+      // Attempt to reconnect after a delay
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+
+      reconnectTimeoutRef.current = setTimeout(() => {
         if (isOpen && roomId) {
+          console.log("Attempting to reconnect WebSocket...")
           initializeWebSocket()
         }
       }, 3000)
@@ -83,7 +127,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
     wsRef.current.onerror = (error) => {
       console.error("WebSocket error:", error)
     }
-  }, [roomId, isOpen, userData.user_id])
+  }, [roomId, isOpen, userId])
 
   const fetchMessages = async (page = 1, append = false) => {
     if (!roomId) return
@@ -221,24 +265,35 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
   }
 
   const handleTyping = () => {
-    if (!wsRef.current) return
-    wsRef.current.send(
-      JSON.stringify({
-        type: "typing",
-        is_typing: true,
-      }),
-    )
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
-    }
-    typingTimeoutRef.current = setTimeout(() => {
-      wsRef.current?.send(
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+
+    try {
+      wsRef.current.send(
         JSON.stringify({
           type: "typing",
-          is_typing: false,
+          user_id: userId,
+          is_typing: true,
         }),
       )
-    }, 5000)
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "typing",
+              user_id: userId,
+              is_typing: false,
+            }),
+          )
+        }
+      }, 5000)
+    } catch (error) {
+      console.error("Error sending typing indicator:", error)
+    }
   }
 
   const handleFileDownload = async (url, filename) => {
@@ -311,6 +366,12 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
       }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
       }
     }
   }, [isOpen, roomId, initializeWebSocket])
@@ -449,13 +510,26 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-gray-900 text-lg truncate">{otherUser?.full_name || "Unknown User"}</h3>
-              <p className="text-sm text-gray-500 truncate">
+              <div className="flex items-center">
                 {otherUserTyping ? (
-                  <span className="text-blue-600 font-medium">Typing...</span>
+                  <span className="text-sm text-blue-600 font-medium flex items-center">
+                    <span className="flex space-x-1 mr-1">
+                      <span className="animate-bounce delay-0 h-1.5 w-1.5 bg-blue-600 rounded-full"></span>
+                      <span className="animate-bounce delay-150 h-1.5 w-1.5 bg-blue-600 rounded-full"></span>
+                      <span className="animate-bounce delay-300 h-1.5 w-1.5 bg-blue-600 rounded-full"></span>
+                    </span>
+                    Typing...
+                  </span>
                 ) : (
-                  onlineStatus.status_text
+                  <span className="text-sm text-gray-500 truncate">{onlineStatus.status_text}</span>
                 )}
-              </p>
+
+                {!wsConnected && (
+                  <span className="ml-2 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                    Reconnecting...
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -590,7 +664,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
             <button
               type="button"
               onClick={() => imageInputRef.current?.click()}
-              disabled={uploading}
+              disabled={uploading || !wsConnected}
               className="p-3 text-gray-500 hover:text-blue-600 rounded-full hover:bg-blue-50 disabled:opacity-50 transition-colors flex-shrink-0"
               title="Send Image"
             >
@@ -606,9 +680,9 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
                   setNewMessage(e.target.value)
                   handleTyping()
                 }}
-                placeholder="Type a message..."
+                placeholder={wsConnected ? "Type a message..." : "Reconnecting..."}
                 className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-colors"
-                disabled={sending || uploading}
+                disabled={sending || uploading || !wsConnected}
               />
 
               {(sending || uploading) && (
@@ -621,7 +695,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
             {/* Send button */}
             <button
               type="submit"
-              disabled={!newMessage.trim() || sending || uploading}
+              disabled={!newMessage.trim() || sending || uploading || !wsConnected}
               className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex-shrink-0 shadow-sm"
             >
               <Send className="h-5 w-5" />

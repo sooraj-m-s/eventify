@@ -33,6 +33,17 @@ axiosInstance.interceptors.response.use(
     const status = error?.response?.status;
     const detail = error?.response?.data?.detail;
 
+    // Handle 429 Throttle Error
+    if (status === 429) {
+      const waitTime = detail?.match(/available in (\d+) seconds/)?.[1];
+      const waitMessage = waitTime
+        ? `Please wait ${Math.ceil(waitTime / 60)} minute${waitTime >= 120 ? 's' : ''} and try again.`
+        : 'Please wait a bit and try again.';
+      toast.error(`You're making too many requests! ${waitMessage}`);
+      return Promise.reject(error);
+    }
+
+    // Existing 401/403 Handling
     if (status === 401 || status === 403) {
       if (detail === "User is blocked.") {
         toast.error("Your account has been blocked.");
