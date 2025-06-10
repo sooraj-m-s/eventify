@@ -1,74 +1,44 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 import json
-from .models import ChatRoom
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f'chat_{self.room_id}'
-        self.user = self.scope['user']
-        
-        if isinstance(self.user, AnonymousUser):
-            await self.close()
-            return
-        
-        if isinstance(self.user, AnonymousUser) or not hasattr(self.user, 'user_id'):
-            await self.close(code=4001)
-            return
-        # is_participant = await self.check_room_participant()
-        # if not is_participant:
-        #     await self.close(code=4003)
-        #     return
-        
-        await self.set_user_online(True)
         
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'user_status_update',
-                'user_id': str(self.user.user_id),
-                'is_online': True,
-                'last_seen': None
-            }
-        )
-        
         await self.accept()
+        
+        await self.send(text_data=json.dumps({
+            'type': 'connection_established',
+            'message': 'Connected to chat room'
+        }))
     
     async def disconnect(self, close_code):
-        if not isinstance(self.user, AnonymousUser) and hasattr(self.user, 'user_id'):
-            await self.set_user_online(False)
-        
-        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
     
     async def receive(self, text_data):
-        if isinstance(self.user, AnonymousUser) or not hasattr(self.user, 'user_id'):
-            await self.close(code=4001)
-            return
-        
         try:
             text_data_json = json.loads(text_data)
             message_type = text_data_json.get('type')
-            await self.update_last_seen()
             
             if message_type == 'typing':
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'typing_indicator',
-                        'user_id': str(self.user.user_id),
-                        'is_typing': text_data_json.get('is_typing', False)
-                    }
-                )
+                user_id = text_data_json.get('user_id')
+                if user_id:
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'typing_indicator',
+                            'user_id': user_id,
+                            'is_typing': text_data_json.get('is_typing', False)
+                        }
+                    )
             elif message_type == 'ping':
                 await self.send(text_data=json.dumps({
                     'type': 'pong',
@@ -76,10 +46,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }))
             elif message_type == 'message':
                 content = text_data_json.get('content', '').strip()
-                if content:
-                    message = await self.create_message(content)
+                sender_id = text_data_json.get('user_id')
+                if content and sender_id:
+                    message = await self.create_message(content, sender_id)
                     if message:
-                        # Send to room group
                         await self.channel_layer.group_send(
                             self.room_group_name,
                             {
@@ -87,8 +57,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                 'message': message
                             }
                         )
-                        
-                        await self.send_message_notification(message)
         except json.JSONDecodeError:
             print("Invalid JSON received")
         except Exception as e:
@@ -98,116 +66,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({'type': 'message', 'message': event['message']}))
     
     async def typing_indicator(self, event):
-        if str(self.user.user_id) != event['user_id']:
-            await self.send(text_data=json.dumps({
-                'type': 'typing',
-                'user_id': event['user_id'],
-                'is_typing': event['is_typing']
-            }))
-    
-    async def user_status_update(self, event):
-        if str(self.user.user_id) != event['user_id']:
-            await self.send(text_data=json.dumps({
-                'type': 'user_status',
-                'user_id': event['user_id'],
-                'is_online': event['is_online'],
-                'last_seen': event['last_seen']
-            }))
-    
-    @database_sync_to_async
-    def check_room_participant(self):
-
-        try:
-            room = ChatRoom.objects.get(room_id=self.room_id)
-            return room.participants.filter(user_id=self.user.user_id).exists()
-        except ChatRoom.DoesNotExist:
-            return False
-    
-    @database_sync_to_async
-    def set_user_online(self, is_online):
-        User = get_user_model()
-        
-        try:
-            user = User.objects.get(user_id=self.user.user_id)
-            user.set_online_status(is_online)
-        except User.DoesNotExist:
-            pass
-    
-    @database_sync_to_async
-    def update_last_seen(self):
-        User = get_user_model()
-        
-        try:
-            user = User.objects.get(user_id=self.user.user_id)
-            user.update_last_seen()
-        except User.DoesNotExist:
-            pass
-    
-    @database_sync_to_async
-    def get_user_last_seen(self):
-        User = get_user_model()
-        
-        try:
-            user = User.objects.get(user_id=self.user.user_id)
-            return user.last_seen
-        except User.DoesNotExist:
-            return None
-    
-    @database_sync_to_async
-    def get_user_status_text(self):
-        User = get_user_model()
-        
-        try:
-            if hasattr(self.user, 'user_id'):
-                user = User.objects.get(user_id=self.user.user_id)
-                return user.get_online_status() if hasattr(user, 'get_online_status') else 'offline'
-        except User.DoesNotExist:
-            pass
-        except Exception as e:
-            print(f"Error getting status text: {e}")
-        return 'offline'
-
-
-class NotificationConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.user = self.scope['user']
-        
-        if isinstance(self.user, AnonymousUser) or not hasattr(self.user, 'user_id'):
-            await self.close(code=4001)
-            return
-        
-        self.notification_group_name = f'notifications_{self.user.user_id}'
-        await self.channel_layer.group_add(
-            self.notification_group_name,
-            self.channel_name
-        )
-        
-        await self.accept()
-        
-        # Send welcome message
         await self.send(text_data=json.dumps({
-            'type': 'notification',
-            'message': 'Notifications connected successfully'
+            'type': 'typing',
+            'user_id': event['user_id'],
+            'is_typing': event['is_typing']
         }))
     
-    async def disconnect(self, close_code):
-        if hasattr(self, 'notification_group_name'):
-            await self.channel_layer.group_discard(
-                self.notification_group_name,
-                self.channel_name
-            )
-    
-    async def receive(self, text_data):
-        await self.send(text_data=json.dumps({
-            'type': 'notification',
-            'message': 'Notification received'
-        }))
-    
-    async def send_notification(self, event):
-        notification = event['notification']
-        
-        await self.send(text_data=json.dumps({
-            'type': 'notification',
-            'notification': notification
-        }))
+    @database_sync_to_async
+    def create_message(self, content, sender_id):
+        return {
+            'message_id': str(timezone.now().timestamp()),
+            'content': content,
+            'sender': {'user_id': sender_id},
+            'created_at': timezone.now().isoformat()
+        }
 
