@@ -20,10 +20,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if isinstance(self.user, AnonymousUser) or not hasattr(self.user, 'user_id'):
             await self.close(code=4001)
             return
-        is_participant = await self.check_room_participant()
-        if not is_participant:
-            await self.close(code=4003)
-            return
+        # is_participant = await self.check_room_participant()
+        # if not is_participant:
+        #     await self.close(code=4003)
+        #     return
         
         await self.set_user_online(True)
         
