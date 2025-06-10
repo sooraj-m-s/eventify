@@ -12,10 +12,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventify.settings')
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AllowedHostsOriginValidator(
-        JWTAuthMiddlewareStack(
-            URLRouter(websocket_urlpatterns)
-        )
-    ),
+    "websocket":  URLRouter(websocket_urlpatterns)
 })
 
