@@ -6,7 +6,7 @@ import uploadToCloudinary from "@/utils/cloudinaryUpload"
 import axiosInstance from "@/utils/axiosInstance"
 
 
-const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
+const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) => {
   const userData = useSelector((state) => state.auth)
   const userId = userData.user_id || userData.userId
   const [messages, setMessages] = useState([])
@@ -31,6 +31,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
   const lastScrollHeight = useRef(0)
   const reconnectTimeoutRef = useRef(null)
   const pingIntervalRef = useRef(null)
+  const statusUpdateIntervalRef = useRef(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -44,20 +45,30 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
 
     const CHAT_WS_BASE_URL = import.meta.env.VITE_CHAT_WS_BASE_URL || "ws://localhost:8000/ws/chat/"
     const wsUrl = `${CHAT_WS_BASE_URL}${roomId}/`
-
     console.log("Connecting to WebSocket:", wsUrl)
     wsRef.current = new WebSocket(wsUrl)
 
     wsRef.current.onopen = () => {
       console.log("WebSocket connected")
       setWsConnected(true)
+      wsRef.current.send(
+        JSON.stringify({
+          type: "user_connected",
+          user_id: userId,
+        }),
+      )
       if (pingIntervalRef.current) {
         clearInterval(pingIntervalRef.current)
       }
 
       pingIntervalRef.current = setInterval(() => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify({ type: "ping" }))
+          wsRef.current.send(
+            JSON.stringify({
+              type: "ping",
+              user_id: userId,
+            }),
+          )
         }
       }, 30000)
     }
@@ -80,9 +91,24 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
             }
             break
 
+          case "user_status":
+            if (data.user_id && data.user_id !== userId) {
+              console.log("User status update received:", data)
+              const newStatus = {
+                is_online: data.is_online,
+                status_text: data.status_text || (data.is_online ? "online" : "offline"),
+                last_seen: data.last_seen,
+              }
+              setOnlineStatus(newStatus)
+              if (onUserStatusUpdate) {
+                onUserStatusUpdate(data.user_id, newStatus)
+              }
+            }
+            break
+
           case "participant_status":
             if (data.user_id && data.user_id !== userId) {
-              console.log("Status update received:", data)
+              console.log("Participant status update received:", data)
               setOnlineStatus({
                 is_online: data.is_online,
                 status_text: data.status_text || (data.is_online ? "online" : "offline"),
@@ -94,6 +120,9 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
             console.log("Pong received")
             break
 
+          case "connection_established":
+            console.log("Connection established")
+            break
           default:
             console.log("Unknown message type:", data.type)
         }
@@ -127,7 +156,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
     wsRef.current.onerror = (error) => {
       console.error("WebSocket error:", error)
     }
-  }, [roomId, isOpen, userId])
+  }, [roomId, isOpen, userId, onUserStatusUpdate])
 
   const fetchMessages = async (page = 1, append = false) => {
     if (!roomId) return
@@ -323,6 +352,29 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
     return String(currentUserId) === String(senderUserId)
   }
 
+  const refreshUserStatus = useCallback(async () => {
+    if (!roomId) return
+
+    try {
+      const response = await axiosInstance.get(`/chat/rooms/${roomId}/messages/`)
+      if (response.data.room?.other_participant_online_status) {
+        const status = response.data.room.other_participant_online_status
+        const newStatus = {
+          is_online: status.is_online,
+          status_text: status.status_text || (status.is_online ? "online" : "offline"),
+        }
+        setOnlineStatus(newStatus)
+
+        // Notify parent component
+        if (onUserStatusUpdate && otherUser) {
+          onUserStatusUpdate(otherUser.user_id, newStatus)
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing user status:", error)
+    }
+  }, [roomId, onUserStatusUpdate, otherUser])
+
   useEffect(() => {
     if (otherUser) {
       setOnlineStatus({
@@ -358,6 +410,10 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
       fetchMessages(1, false)
       fetchRoomDetails()
       initializeWebSocket()
+      if (statusUpdateIntervalRef.current) {
+        clearInterval(statusUpdateIntervalRef.current)
+      }
+      statusUpdateIntervalRef.current = setInterval(refreshUserStatus, 60000)
     }
 
     return () => {
@@ -373,8 +429,11 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
       if (pingIntervalRef.current) {
         clearInterval(pingIntervalRef.current)
       }
+      if (statusUpdateIntervalRef.current) {
+        clearInterval(statusUpdateIntervalRef.current)
+      }
     }
-  }, [isOpen, roomId, initializeWebSocket])
+  }, [isOpen, roomId, initializeWebSocket, refreshUserStatus])
 
   useEffect(() => {
     const container = messagesContainerRef.current
@@ -503,7 +562,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
                 className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
               />
               <div
-                className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm ${
+                className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm transition-colors duration-300 ${
                   onlineStatus.is_online ? "bg-green-500" : "bg-gray-400"
                 }`}
               />
@@ -521,7 +580,13 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser }) => {
                     Typing...
                   </span>
                 ) : (
-                  <span className="text-sm text-gray-500 truncate">{onlineStatus.status_text}</span>
+                  <span
+                    className={`text-sm truncate transition-colors duration-300 ${
+                      onlineStatus.is_online ? "text-green-600" : "text-gray-500"
+                    }`}
+                  >
+                    {onlineStatus.status_text}
+                  </span>
                 )}
 
                 {!wsConnected && (

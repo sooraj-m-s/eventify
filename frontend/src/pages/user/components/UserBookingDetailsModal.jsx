@@ -26,6 +26,7 @@ const UserBookingDetailsModal = ({
   const [reviewRating, setReviewRating] = useState(5)
   const [isLoadingReview, setIsLoadingReview] = useState(false)
   const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+  const otheruser = { full_name: booking.event.organizer_name }
 
   // Check if event is completed and fetch review if it exists
   useEffect(() => {
@@ -72,7 +73,6 @@ const UserBookingDetailsModal = ({
       }
 
       let data
-
       if (existingReview) {
         // Update existing review
         data = await updateReview(existingReview.id, reviewData);
@@ -455,7 +455,7 @@ const UserBookingDetailsModal = ({
           isOpen={showChatModal}
           onClose={() => setShowChatModal(false)}
           roomId={chatRoomId}
-          otherUser={booking.event.organizer}
+          otherUser={otheruser}
         />
       )}
     </div>

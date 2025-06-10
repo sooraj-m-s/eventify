@@ -24,9 +24,25 @@ const Messages = () => {
   const [selectedRoomId, setSelectedRoomId] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
   const searchTimeoutRef = useRef(null)
+  const statusRefreshIntervalRef = useRef(null)
 
   useEffect(() => {
     fetchChatRooms(1, true)
+
+    if (statusRefreshIntervalRef.current) {
+      clearInterval(statusRefreshIntervalRef.current)
+    }
+    statusRefreshIntervalRef.current = setInterval(() => {
+      if (!isSearching) {
+        fetchChatRooms(1, true, "", true)
+      }
+    }, 7000)
+
+    return () => {
+      if (statusRefreshIntervalRef.current) {
+        clearInterval(statusRefreshIntervalRef.current)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -42,16 +58,18 @@ const Messages = () => {
     }
   }, [searchParams, chatRooms, navigate])
 
-  const fetchChatRooms = async (page = 1, reset = false, searchTerm = "") => {
+  const fetchChatRooms = async (page = 1, reset = false, searchTerm = "", silent = false) => {
     try {
-      if (page === 1) {
-        if (searchTerm) {
-          setSearchLoading(true)
+      if (!silent) {
+        if (page === 1) {
+          if (searchTerm) {
+            setSearchLoading(true)
+          } else {
+            setLoading(true)
+          }
         } else {
-          setLoading(true)
+          setLoadingMore(true)
         }
-      } else {
-        setLoadingMore(true)
       }
 
       let url = `/chat/rooms/?page=${page}`
@@ -76,9 +94,11 @@ const Messages = () => {
         setChatRooms([])
       }
     } finally {
-      setLoading(false)
-      setSearchLoading(false)
-      setLoadingMore(false)
+      if (!silent) {
+        setLoading(false)
+        setSearchLoading(false)
+        setLoadingMore(false)
+      }
     }
   }
 
@@ -144,6 +164,20 @@ const Messages = () => {
     }
   }
 
+  const handleUserStatusUpdate = useCallback((userId, newStatus) => {
+    setChatRooms((prevRooms) =>
+      prevRooms.map((room) => {
+        if (room.other_participant?.user_id === userId) {
+          return {
+            ...room,
+            other_participant_online_status: newStatus,
+          }
+        }
+        return room
+      }),
+    )
+  }, [])
+
   const formatTime = (dateString) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -193,9 +227,7 @@ const Messages = () => {
           <div className="bg-white shadow-sm border-b px-6 py-4 flex-shrink-0">
             <div className="max-w-4xl mx-auto">
               <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-              <p className="text-gray-600 mt-1">
-                Stay connected with event organizers and attendees
-              </p>
+              <p className="text-gray-600 mt-1">Stay connected with event organizers and attendees</p>
             </div>
           </div>
 
@@ -222,15 +254,6 @@ const Messages = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Search status */}
-                {isSearching && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    {searchLoading
-                      ? "Searching..."
-                      : `Found ${chatRooms.length} result${chatRooms.length !== 1 ? "s" : ""} for "${searchQuery}"`}
-                  </div>
-                )}
               </div>
 
               {/* Chat Rooms List */}
@@ -278,7 +301,7 @@ const Messages = () => {
                                   className="w-12 h-12 rounded-full object-cover"
                                 />
                                 <div
-                                  className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                                  className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white transition-colors duration-300 ${
                                     onlineStatus?.is_online ? "bg-green-500" : "bg-gray-400"
                                   }`}
                                 />
@@ -343,7 +366,7 @@ const Messages = () => {
                                   </span>
                                   {onlineStatus && (
                                     <span
-                                      className={`text-xs ${
+                                      className={`text-xs transition-colors duration-300 ${
                                         onlineStatus.is_online ? "text-green-600" : "text-gray-500"
                                       }`}
                                     >
@@ -385,6 +408,7 @@ const Messages = () => {
           onClose={handleChatModalClose}
           roomId={selectedRoomId}
           otherUser={selectedUser}
+          onUserStatusUpdate={handleUserStatusUpdate}
         />
       )}
     </>
