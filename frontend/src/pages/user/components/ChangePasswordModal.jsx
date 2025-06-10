@@ -70,13 +70,8 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       })
       onClose()
     } catch (error) {
-      console.error("Error changing password:", error)
-
-      if (error.response?.data) {
-        setErrors(error.response.data)
-      } else {
-        toast.error("Failed to change password")
-      }
+      console.error("Error changing password:", error.response)
+      toast.error(error.response?.data?.error || "Failed to change password")
     } finally {
       setLoading(false)
     }

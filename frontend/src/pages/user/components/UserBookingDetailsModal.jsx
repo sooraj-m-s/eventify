@@ -26,9 +26,11 @@ const UserBookingDetailsModal = ({
   const [reviewRating, setReviewRating] = useState(5)
   const [isLoadingReview, setIsLoadingReview] = useState(false)
   const [isSubmittingReview, setIsSubmittingReview] = useState(false)
-  const otheruser = { full_name: booking.event.organizer_name }
+  const otheruser = {
+    full_name: booking.event.organizer_name,
+    profile_image: booking.event.organizer_image
+  }
 
-  // Check if event is completed and fetch review if it exists
   useEffect(() => {
     if (booking?.event?.is_completed) {
       fetchUserReview()

@@ -117,16 +117,18 @@ class ChangePasswordSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, data):
-        if len(data.get('new_password')) < 8:
-            raise serializers.ValidationError({'password': 'Password must be at least 8 characters long'})
-        if data.get('new_password') != data.get('confirm_password'):
-            raise serializers.ValidationError({'confirm_password': 'New password and confirm password do not match'})
-        if ' ' in data.get('new_password'):
-            raise serializers.ValidationError({'new_password': 'Password cannot contain spaces'})
-        
         user = self.context.get('user')
+        
+        if not check_password(data.get('current_password'), user.password):
+            raise serializers.ValidationError({'error': 'Current password is incorrect'})
+        if len(data.get('new_password')) < 8:
+            raise serializers.ValidationError({'error': 'Password must be at least 8 characters long'})
+        if data.get('new_password') != data.get('confirm_password'):
+            raise serializers.ValidationError({'error': 'New password and confirm password do not match'})
+        if ' ' in data.get('new_password'):
+            raise serializers.ValidationError({'error': 'Password cannot contain spaces'})
         if user and check_password(data.get('new_password'), user.password):
-            raise serializers.ValidationError({'new_password': 'New password must be different from current password'})
+            raise serializers.ValidationError({'error': 'New password must be different from current password'})
             
         return data
 
