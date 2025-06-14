@@ -316,9 +316,7 @@ const OrganizerEventManagement = () => {
       )}
 
       {/* View Event Modal */}
-      {showViewModal && selectedEvent && (
-        <ViewEventModal event={selectedEvent} onClose={() => setShowViewModal(false)} />
-      )}
+      {showViewModal && selectedEvent && (<ViewEventModal event={selectedEvent} onClose={() => setShowViewModal(false)} />)}
     </div>
   )
 }

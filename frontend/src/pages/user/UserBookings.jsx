@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Calendar, Clock, MapPin, AlertCircle, Eye, Loader, CheckCircle,
-    XCircle, RefreshCw, IndianRupee, 
-    Download} from "lucide-react"
+    XCircle, RefreshCw, IndianRupee, Download } from "lucide-react"
 import { toast } from "sonner"
 import BookingDetailsModal from "./components/UserBookingDetailsModal"
 import ProfileSidebar from "./components/ProfileSidebar"
@@ -46,7 +45,6 @@ const UserBookings = () => {
     setSelectedBooking(booking)
     setShowModal(true)
   }
-
   const handleCloseModal = () => {
     setShowModal(false)
     setSelectedBooking(null)
@@ -128,14 +126,13 @@ const UserBookings = () => {
       day: "numeric",
     })
   }
-
-  const formatTime = (dateString) => {
-    if (!dateString) return ""
-    const date = new Date(dateString)
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+  const formatTime = (timeStr) => {
+    if (!timeStr) return ""
+    const [hourStr, minute] = timeStr.split(":")
+    let hour = parseInt(hourStr)
+    const period = hour >= 12 ? "PM" : "AM"
+    hour = hour % 12 || 12
+    return `${hour}:${minute} ${period}`
   }
 
   const getStatusBadge = (status) => {
@@ -284,7 +281,7 @@ const UserBookings = () => {
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <Clock className="h-4 w-4 mr-2" />
-                            <span>{formatTime(booking.booking_date)}</span>
+                            <span>{formatTime(booking.event.time)}</span>
                           </div>
                         </div>
                         <div className="space-y-2">

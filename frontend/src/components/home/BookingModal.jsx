@@ -107,14 +107,15 @@ const BookingModal = ({ event, onClose, user }) => {
     })
   }
 
-  const formatTime = (dateString) => {
-    if (!dateString) return ""
-    const date = new Date(dateString)
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
+  const formatTime = (timeStr) => {
+  if (!timeStr) return ""
+  const [hourStr, minute] = timeStr.split(":")
+  let hour = parseInt(hourStr)
+  const period = hour >= 12 ? "PM" : "AM"
+  hour = hour % 12 || 12
+  return `${hour}:${minute} ${period}`
+}
+
 
   function handleBooking() {
     try {
@@ -190,13 +191,13 @@ const BookingModal = ({ event, onClose, user }) => {
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 text-gray-500 mr-3" />
                   <span>
-                    {formatTime(event.date)} - {event.endTime || "1:00 PM"}
+                    {formatTime(event.time)}
                   </span>
                 </div>
 
                 <div className="flex items-center">
                   <MapPin className="h-5 w-5 text-gray-500 mr-3" />
-                  <span>{event.location || "Online"}</span>
+                  <span>{event.location || "N/A"}</span>
                 </div>
               </div>
 

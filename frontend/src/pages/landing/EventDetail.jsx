@@ -50,15 +50,13 @@ const EventDetail = () => {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return ""
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+    try {
+      const date = new Date(dateString)
+      return format(date, "MMMM d, yyyy h:mm a")
+    } catch (error) {
+      return dateString
+    }
   }
-
   const formatTime = (dateString) => {
     if (!dateString) return ""
     const date = new Date(dateString)
@@ -72,7 +70,6 @@ const EventDetail = () => {
     if (!location || location.includes("Online") || location.includes("Zoom")) {
       return null
     }
-
     const encodedLocation = encodeURIComponent(location)
     return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodedLocation}`
   }
@@ -165,7 +162,7 @@ const EventDetail = () => {
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 text-gray-500 mr-3" />
                   <span>
-                    {formatTime(event.date) || "12:00 PM"} - {event.endTime || "01:00 PM"}
+                    {formatTime(`${event.date}T${event.time}`)}
                   </span>
                 </div>
 
@@ -213,7 +210,7 @@ const EventDetail = () => {
                 <div>
                   <p className="text-gray-600 text-sm">Date</p>
                   <p className="font-medium">
-                    {formatDate(event.date) || "September 10, 2025"}, {formatTime(event.date) || "12:00 PM"}
+                    {formatDate(event.date) || "September 10, 2025"}
                   </p>
                 </div>
 

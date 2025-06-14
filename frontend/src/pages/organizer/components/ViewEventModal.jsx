@@ -1,4 +1,4 @@
-import { X, Calendar, DollarSign, Users, MapPin, Tag } from "lucide-react"
+import { X, Calendar, IndianRupee, Users, MapPin, Tag } from "lucide-react"
 import { format } from "date-fns"
 
 
@@ -51,17 +51,17 @@ const ViewEventModal = ({ event, onClose }) => {
 
               <div className="flex items-center text-gray-600 mb-2">
                 <Calendar className="h-4 w-4 mr-2" />
-                <span>{formatDate(event.date)}</span>
+                <span>{formatDate(`${event.date}T${event.time}`)}</span>
               </div>
 
               <div className="flex items-center text-gray-600 mb-2">
                 <MapPin className="h-4 w-4 mr-2" />
-                <span>{event.location || "Online"}</span>
+                <span>{event.location || "N/A"}</span>
               </div>
 
               <div className="flex items-center text-gray-600 mb-2">
-                <DollarSign className="h-4 w-4 mr-2" />
-                <span>Price: ${event.pricePerTicket || "0.00"}</span>
+                <IndianRupee className="h-4 w-4 mr-2" />
+                <span>Price: Rs.{event.pricePerTicket || "0.00"}</span>
               </div>
 
               <div className="flex items-center text-gray-600 mb-4">
@@ -127,7 +127,7 @@ const ViewEventModal = ({ event, onClose }) => {
               <div className="bg-gray-50 p-4 rounded-md text-center">
                 <p className="text-sm text-gray-500">Revenue</p>
                 <p className="text-2xl font-bold">
-                  ${((event.ticketsSold || 0) * (event.pricePerTicket || 0)).toFixed(2)}
+                  Rs.{((event.ticketsSold || 0) * (event.pricePerTicket || 0)).toFixed(2)}
                 </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-md text-center">

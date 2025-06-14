@@ -193,7 +193,7 @@ const UserBookingDetailsModal = ({
 
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 text-gray-500 mr-2" />
-                    <span>Event Time: {formatTime(booking.event.date)}</span>
+                    <span>Event Time: {formatTime(booking.event.time)}</span>
                   </div>
 
                   <div className="flex items-center">

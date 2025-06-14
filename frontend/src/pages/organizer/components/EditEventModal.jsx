@@ -207,24 +207,45 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
           </div>
 
           {/* Category */}
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-              Category *
-            </label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-            >
-              <option value="">Select category</option>
-              {categories.map((category) => (
-                <option key={category.categoryId} value={category.categoryId}>
-                  {category.categoryName}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                Category *
+              </label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="">Select category</option>
+                {categories.map((category) => (
+                  <option key={category.categoryId} value={category.categoryId}>
+                    {category.categoryName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Location */}
+            <div>
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+                Location
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  disabled
+                  className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md bg-gray-50"
+                  placeholder="Enter location"
+                />
+                <MapPin className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              </div>
+            </div>
           </div>
 
           {/* Date and Status */}
@@ -239,8 +260,8 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
                   id="date"
                   name="date"
                   value={formData.date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
                 />
                 <Calendar className="absolute right-3 top-2.5 text-gray-400" size={18} />
               </div>
@@ -273,9 +294,9 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
                   id="pricePerTicket"
                   name="pricePerTicket"
                   value={formData.pricePerTicket}
-                  onChange={handleChange}
+                  disabled
                   step="0.01"
-                  className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md bg-gray-50"
                   placeholder="0.00"
                 />
                 <IndianRupee className="absolute left-3 top-2.5 text-gray-400" size={18} />
@@ -298,25 +319,6 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
                 />
                 <Users className="absolute right-3 top-2.5 text-gray-400" size={18} />
               </div>
-            </div>
-          </div>
-
-          {/* Location */}
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-              Event location
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-                placeholder="Enter location"
-              />
-              <MapPin className="absolute left-3 top-2.5 text-gray-400" size={18} />
             </div>
           </div>
 
@@ -373,7 +375,7 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
                   id="cancellationAvailable"
                   name="cancellationAvailable"
                   checked={formData.cancellationAvailable}
-                  onChange={handleChange}
+                  disabled
                   className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
                 />
                 <label htmlFor="cancellationAvailable" className="ml-2 block text-sm font-medium text-gray-700">

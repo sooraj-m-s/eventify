@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { X, Calendar, Clock, Users, MapPin, Upload, Loader, IndianRupee } from "lucide-react"
+import { X, Clock, Users, MapPin, Upload, Loader, IndianRupee } from "lucide-react"
 import { toast } from "sonner"
 import axiosInstance from "../../../utils/axiosInstance"
 import uploadToCloudinary from "../../../utils/cloudinaryUpload"
@@ -13,8 +13,7 @@ const AddEventModal = ({ onClose, onEventAdded }) => {
     title: "",
     description: "",
     date: "",
-    startTime: "",
-    endTime: "",
+    time: "",
     pricePerTicket: "",
     ticketLimit: "",
     location: "",
@@ -93,13 +92,14 @@ const AddEventModal = ({ onClose, onEventAdded }) => {
 
     try {
       const eventDate = formData.date
-      if (formData.startTime) {
+      if (formData.time) {
       }
 
       const eventData = {
         title: formData.title,
         description: formData.description,
         date: eventDate,
+        time: formData.time,
         pricePerTicket: formData.pricePerTicket || 0,
         ticketLimit: formData.ticketLimit || 100,
         location: formData.location,
@@ -115,8 +115,14 @@ const AddEventModal = ({ onClose, onEventAdded }) => {
         onEventAdded()
       }
     } catch (error) {
-      console.error("Error creating event:", error.response.data)
-      toast.error(error.response.data.errors || "Failed to create event")
+      console.error("Error creating event:", error)
+      const errorData = error?.response?.data?.errors;
+      if (typeof errorData === 'object') {
+        const firstError = Object.values(errorData)[0][0];
+        toast.error(firstError);
+      } else {
+        toast.error(errorData || "Failed to create event");
+      }
     } finally {
       setLoading(false)
     }
@@ -187,7 +193,7 @@ const AddEventModal = ({ onClose, onEventAdded }) => {
           </div>
 
           {/* Date and Time */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
                 Date *
@@ -201,66 +207,36 @@ const AddEventModal = ({ onClose, onEventAdded }) => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
                 />
-                <Calendar className="absolute right-3 top-2.5 text-gray-400" size={18} />
               </div>
             </div>
 
             <div>
-              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-1">
-                Start Time
+              <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
+                Event Time
               </label>
               <div className="relative">
                 <select
-                  id="startTime"
-                  name="startTime"
-                  value={formData.startTime}
+                  id="time"
+                  name="time"
+                  value={formData.time}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black appearance-none"
                 >
                   <option value="">Select start time</option>
                   {Array.from({ length: 24 }).flatMap((_, hour) =>
                     [0, 30].map((minute) => {
-                      const formattedHour = hour % 12 || 12
+                      const paddedHour = hour.toString().padStart(2, '0')
+                      const paddedMinute = minute.toString().padStart(2, '0')
+                      const timeValue = `${paddedHour}:${paddedMinute}:00`  // Python format
+                      const displayHour = hour % 12 || 12
                       const period = hour < 12 ? "AM" : "PM"
-                      const formattedMinute = minute === 0 ? "00" : minute
-                      const timeValue = `${formattedHour}:${formattedMinute} ${period}`
+                      const displayTime = `${displayHour}:${paddedMinute} ${period}`
                       return (
                         <option key={`${hour}:${minute}`} value={timeValue}>
-                          {timeValue}
+                          {displayTime}
                         </option>
                       )
-                    }),
-                  )}
-                </select>
-                <Clock className="absolute right-3 top-2.5 text-gray-400" size={18} />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-1">
-                End Time
-              </label>
-              <div className="relative">
-                <select
-                  id="endTime"
-                  name="endTime"
-                  value={formData.endTime}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black appearance-none"
-                >
-                  <option value="">Select end time</option>
-                  {Array.from({ length: 24 }).flatMap((_, hour) =>
-                    [0, 30].map((minute) => {
-                      const formattedHour = hour % 12 || 12
-                      const period = hour < 12 ? "AM" : "PM"
-                      const formattedMinute = minute === 0 ? "00" : minute
-                      const timeValue = `${formattedHour}:${formattedMinute} ${period}`
-                      return (
-                        <option key={`${hour}:${minute}`} value={timeValue}>
-                          {timeValue}
-                        </option>
-                      )
-                    }),
+                    })
                   )}
                 </select>
                 <Clock className="absolute right-3 top-2.5 text-gray-400" size={18} />

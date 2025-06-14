@@ -116,6 +116,7 @@ class TicketGenerator:
             Paragraph(f"<b>Event:</b> {booking.event.title}", self.normal_style),
             Paragraph(f"<b>Category:</b> {booking.event.category.categoryName if booking.event.category else 'N/A'}", self.normal_style),
             Paragraph(f"<b>Date:</b> {booking.event.date.strftime('%B %d, %Y')}", self.normal_style),
+            Paragraph(f"<b>Time:</b> {booking.event.time.strftime('%I:%M %p')}", self.normal_style),
             Paragraph(f"<b>Location:</b> {booking.event.location or 'TBA'}", self.normal_style),
             Paragraph(f"<b>Hosted By:</b> {booking.event.hostedBy.full_name}", self.normal_style),
         ]

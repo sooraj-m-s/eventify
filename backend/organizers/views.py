@@ -435,6 +435,18 @@ class OrganizerEventUpdateView(APIView):
             event = Event.objects.get(eventId=pk, hostedBy=request.user)
             data = request.data
 
+            immutable_fields = ['location', 'date', 'pricePerTicket', 'cancellationAvailable']
+            for field in immutable_fields:
+                if field in data and str(getattr(event, field)) != str(data[field]):
+                    return Response({"success": False, "errors": f"{field} cannot be modified after event creation."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if 'ticketLimit' in data:
+                if int(data['ticketLimit']) < event.ticketsSold:
+                    return Response({
+                        "success": False,
+                        "errors": "Ticket limit cannot be less than tickets already sold."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
             if data['is_completed']:
                 event_date = parse_date(data['date']).date()
                 today = date.today()

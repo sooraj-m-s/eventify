@@ -19,6 +19,7 @@ class Event(models.Model):
     cancellationAvailable = models.BooleanField(default=False)
     termsAndConditions = models.TextField(blank=True, null=True)
     date = models.DateField()
+    time = models.TimeField()
     is_completed = models.BooleanField(default=False)
     on_hold = models.BooleanField(default=False)
     is_settled_to_organizer = models.BooleanField(default=False)
