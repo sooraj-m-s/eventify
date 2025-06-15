@@ -124,3 +124,16 @@ class WithdrawAllMoneyView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@permission_classes([IsAuthenticated])
+class WalletBalanceView(APIView):
+    def get(self, request):
+        try:
+            wallet = get_object_or_404(Wallet, user=request.user)
+
+            return Response({"success": True, "balance": wallet.balance}, status=status.HTTP_200_OK)
+        except OrganizerWallet.DoesNotExist:
+                return Response({'error': 'Organizer wallet not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

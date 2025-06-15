@@ -24,6 +24,7 @@ class BookEventView(APIView):
         booking_name = request.data.get('booking_name')
         coupon_code = request.data.get('coupon_code')
         notes = request.data.get('notes')
+        payment_method = request.data.get('payment_method')
         
         if not booking_name:
             booking_name = request.user.full_name
@@ -49,14 +50,35 @@ class BookEventView(APIView):
             else:
                 total_price = event.pricePerTicket
             
-            booking = Booking.objects.create(
-                event=event,
-                user=request.user,
-                booking_name=booking_name,
-                total_price=total_price,
-                payment_status='pending',
-                notes=notes
-            )
+            if payment_method == 'wallet':
+                wallet = Wallet.objects.get(user=request.user)
+                if wallet.balance < total_price:
+                    return Response({"error": "Insufficient wallet balance"}, status=status.HTTP_400_BAD_REQUEST)
+                
+                wallet.balance -= total_price
+                wallet.save()
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    amount=total_price,
+                    transaction_type='DEBIT',
+                )
+                booking = Booking.objects.create(
+                    event=event,
+                    user=request.user,
+                    booking_name=booking_name,
+                    total_price=total_price,
+                    payment_status='confirmed',
+                    notes=notes
+                )
+            else:
+                booking = Booking.objects.create(
+                    event=event,
+                    user=request.user,
+                    booking_name=booking_name,
+                    total_price=total_price,
+                    payment_status='pending',
+                    notes=notes
+                )
             
             event.ticketsSold += 1
             event.save()

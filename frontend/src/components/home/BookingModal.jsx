@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { X, Calendar, Clock, MapPin, Loader, ChevronDown, Tag, Check } from "lucide-react"
+import { X, Calendar, Clock, MapPin, Loader, ChevronDown, Tag, Check, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import axiosInstance from "@/utils/axiosInstance"
 import { useNavigate } from "react-router-dom"
@@ -16,6 +16,9 @@ const BookingModal = ({ event, onClose, user }) => {
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [couponLoading, setCouponLoading] = useState(false)
   const [fetchingCoupons, setFetchingCoupons] = useState(false)
+  const [walletBalance, setWalletBalance] = useState(null)
+  const [walletLoading, setWalletLoading] = useState(false)
+  const [walletChecked, setWalletChecked] = useState(false)
   const originalAmount = event.pricePerTicket
   const discountAmount = appliedCoupon ? appliedCoupon.discount_amount : 0
   const finalAmount = Math.max(0, originalAmount - discountAmount)
@@ -51,6 +54,53 @@ const BookingModal = ({ event, onClose, user }) => {
     }
   }
 
+  const fetchWalletBalance = async () => {
+    try {
+      setWalletLoading(true)
+      const response = await axiosInstance.get("/wallet/balance/")
+
+      if (response.data.success) {
+        setWalletBalance(response.data.balance)
+        setWalletChecked(true)
+        toast.success("Wallet balance retrieved successfully")
+      } else {
+        toast.error("Failed to get wallet balance")
+      }
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error)
+      toast.error("Failed to get wallet balance")
+
+      setWalletBalance(0)
+      setWalletChecked(true)
+    } finally {
+      setWalletLoading(false)
+    }
+  }
+
+  const getWalletButtonText = () => {
+    if (walletLoading) {
+      return "Checking Balance..."
+    }
+    if (!walletChecked) {
+      return "Get Wallet Balance"
+    }
+    if (walletBalance >= finalAmount) {
+      return `Pay with Wallet (₹${finalAmount})`
+    } else {
+      return "Not Enough Money"
+    }
+  }
+
+  const getWalletButtonAction = () => {
+    if (!walletChecked) {
+      return fetchWalletBalance
+    }
+    if (walletBalance >= finalAmount) {
+      return () => handleBooking("wallet")
+    }
+    return null
+  }
+
   const validateAndApplyCoupon = async (code) => {
     if (!code.trim()) {
       toast.error("Please enter a coupon code")
@@ -69,6 +119,11 @@ const BookingModal = ({ event, onClose, user }) => {
         toast.success("Coupon applied successfully!")
         setShowCouponDropdown(false)
         setCouponCode("")
+
+        if (walletChecked) {
+          setWalletChecked(false)
+          setWalletBalance(null)
+        }
       } else {
         toast.error("Failed to apply coupon")
       }
@@ -94,6 +149,11 @@ const BookingModal = ({ event, onClose, user }) => {
     setAppliedCoupon(null)
     setCouponCode("")
     toast.info("Coupon removed")
+
+    if (walletChecked) {
+      setWalletChecked(false)
+      setWalletBalance(null)
+    }
   }
 
   const formatDate = (dateString) => {
@@ -108,16 +168,15 @@ const BookingModal = ({ event, onClose, user }) => {
   }
 
   const formatTime = (timeStr) => {
-  if (!timeStr) return ""
-  const [hourStr, minute] = timeStr.split(":")
-  let hour = parseInt(hourStr)
-  const period = hour >= 12 ? "PM" : "AM"
-  hour = hour % 12 || 12
-  return `${hour}:${minute} ${period}`
-}
+    if (!timeStr) return ""
+    const [hourStr, minute] = timeStr.split(":")
+    let hour = Number.parseInt(hourStr)
+    const period = hour >= 12 ? "PM" : "AM"
+    hour = hour % 12 || 12
+    return `${hour}:${minute} ${period}`
+  }
 
-
-  function handleBooking() {
+  function handleBooking(paymentMethod = "stripe") {
     try {
       setLoading(true)
 
@@ -125,6 +184,7 @@ const BookingModal = ({ event, onClose, user }) => {
         event_id: event.eventId,
         booking_name: bookingName.trim() || null,
         notes: notes,
+        payment_method: paymentMethod,
       }
 
       if (appliedCoupon) {
@@ -133,9 +193,14 @@ const BookingModal = ({ event, onClose, user }) => {
 
       axiosInstance.post("/booking/book/", bookingData)
         .then((response) => {
-          const bookingId = response.data.booking.booking_id
-          toast.success("Booking created! Redirecting to payment...")
-          navigate(`/payment/${bookingId}`)
+          if (paymentMethod === "wallet") {
+            toast.success("Booking successful! Payment completed using wallet.")
+            onClose()
+          } else {
+            const bookingId = response.data.booking.booking_id
+            toast.success("Booking created! Redirecting to payment...")
+            navigate(`/payment/${bookingId}`)
+          }
         }).catch((error) => {
           console.error("Booking error:", error)
           toast.error(error.response?.data?.error || "Failed to book tickets. Please try again.")
@@ -190,9 +255,7 @@ const BookingModal = ({ event, onClose, user }) => {
 
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 text-gray-500 mr-3" />
-                  <span>
-                    {formatTime(event.time)}
-                  </span>
+                  <span>{formatTime(event.time)}</span>
                 </div>
 
                 <div className="flex items-center">
@@ -231,6 +294,19 @@ const BookingModal = ({ event, onClose, user }) => {
                       placeholder="Any special requests or notes for the organizer"
                     />
                   </div>
+
+                  {/* Wallet Balance Display */}
+                  {walletChecked && walletBalance !== null && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Wallet className="h-4 w-4 text-blue-600 mr-2" />
+                          <span className="text-sm font-medium text-blue-800">Wallet Balance</span>
+                        </div>
+                        <span className="text-sm font-medium text-blue-800">₹{walletBalance}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -379,8 +455,34 @@ const BookingModal = ({ event, onClose, user }) => {
 
                 <h4 className="text-lg font-bold mb-4">Complete Your Payment</h4>
 
+                {/* Wallet Payment Button */}
                 <button
-                  onClick={handleBooking}
+                  onClick={getWalletButtonAction()}
+                  disabled={walletLoading || loading || (walletChecked && walletBalance < finalAmount)}
+                  className={`w-full py-3 rounded-md flex items-center justify-center font-medium mb-3 transition-colors ${
+                    walletChecked && walletBalance >= finalAmount
+                      ? "bg-green-500 text-white hover:bg-green-600 disabled:bg-green-300"
+                      : walletChecked && walletBalance < finalAmount
+                        ? "bg-red-500 text-white cursor-not-allowed"
+                        : "bg-purple-500 text-white hover:bg-purple-600 disabled:bg-purple-300"
+                  }`}
+                >
+                  {walletLoading || loading ? (
+                    <>
+                      <Loader className="animate-spin h-4 w-4 mr-2" />
+                      {walletLoading ? "Checking..." : "Processing..."}
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="h-4 w-4 mr-2" />
+                      {getWalletButtonText()}
+                    </>
+                  )}
+                </button>
+
+                {/* Stripe Payment Button */}
+                <button
+                  onClick={() => handleBooking("stripe")}
                   disabled={loading}
                   className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300 flex items-center justify-center font-medium"
                 >
