@@ -1,6 +1,7 @@
 from pathlib import Path
 from decouple import config, Csv
 from datetime import timedelta
+import cloudinary
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -198,4 +199,13 @@ STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
 FRONTEND_DOMAIN = config('FRONTEND_DOMAIN')
+
+
+# Cloudinary configuration
+cloudinary.config (
+    cloud_name= config('cloud_name'),
+    api_key= config('api_key'),
+    api_secret= config('api_secret'),
+    secure= True
+)
 

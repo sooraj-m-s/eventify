@@ -62,7 +62,6 @@ const BookingModal = ({ event, onClose, user }) => {
       if (response.data.success) {
         setWalletBalance(response.data.balance)
         setWalletChecked(true)
-        toast.success("Wallet balance retrieved successfully")
       } else {
         toast.error("Failed to get wallet balance")
       }

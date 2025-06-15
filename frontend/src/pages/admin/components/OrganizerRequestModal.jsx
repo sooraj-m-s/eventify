@@ -34,7 +34,6 @@ const OrganizerRequestModal = ({ isOpen, onClose, refreshData }) => {
       if (activeTab === "pending") {
             setProfiles((response.data.profiles || []).filter((profile) => !profile.is_rejected))
         } else {
-            // For rejected tab, only show rejected profiles
             setProfiles((response.data.profiles || []).filter((profile) => profile.is_rejected))
         }
     } catch (err) {
@@ -182,12 +181,6 @@ const OrganizerRequestModal = ({ isOpen, onClose, refreshData }) => {
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Date Requested
-                    </th>
-                    <th
-                      scope="col"
                       className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       Actions
@@ -220,11 +213,6 @@ const OrganizerRequestModal = ({ isOpen, onClose, refreshData }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{profile.place}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {new Date(profile.created_at).toLocaleDateString() || "N/A"}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button

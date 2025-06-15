@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { Upload, Loader2, AlertCircle, CheckCircle, XCircle, X } from "lucide-react"
+import { Upload, Loader2, AlertCircle, CheckCircle, XCircle, X, RefreshCw } from "lucide-react"
 import uploadToCloudinary from "../../utils/cloudinaryUpload"
 import ProfileSidebar from "./components/ProfileSidebar"
 import { fetchOrganizerProfile } from "@/api/organizer"
@@ -12,10 +12,10 @@ const BecomeOrganizer = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
   const [status, setStatus] = useState("loading")
   const [profileData, setProfileData] = useState(null)
   const [showFullAbout, setShowFullAbout] = useState(false)
+  const [isReapplying, setIsReapplying] = useState(false)
   const [formData, setFormData] = useState({
     place: "",
     about: "",
@@ -23,6 +23,7 @@ const BecomeOrganizer = () => {
   })
   const [errors, setErrors] = useState({})
   const [previewImage, setPreviewImage] = useState(null)
+  const [selectedFile, setSelectedFile] = useState(null)
 
   useEffect(() => {
     checkOrganizerStatus()
@@ -31,7 +32,7 @@ const BecomeOrganizer = () => {
   const checkOrganizerStatus = async () => {
     try {
       setLoading(true)
-      const response = await fetchOrganizerProfile();
+      const response = await fetchOrganizerProfile()
 
       setProfileData(response.data)
       if (response.data.is_approved) {
@@ -54,6 +55,45 @@ const BecomeOrganizer = () => {
     }
   }
 
+  const handleReapply = () => {
+    setIsReapplying(true)
+    setFormData({
+      place: "",
+      about: "",
+      id_proof: "",
+    })
+    setPreviewImage(null)
+    setSelectedFile(null)
+    setErrors({})
+
+    // Clear file input
+    const fileInput = document.getElementById("id-proof")
+    if (fileInput) {
+      fileInput.value = ""
+    }
+
+    toast.info("You can now submit a new application")
+  }
+
+  const handleCancelReapply = () => {
+    setIsReapplying(false)
+    // Reset form data
+    setFormData({
+      place: "",
+      about: "",
+      id_proof: "",
+    })
+    setPreviewImage(null)
+    setSelectedFile(null)
+    setErrors({})
+
+    // Clear file input
+    const fileInput = document.getElementById("id-proof")
+    if (fileInput) {
+      fileInput.value = ""
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData({
@@ -69,42 +109,31 @@ const BecomeOrganizer = () => {
     }
   }
 
-  const handleImageChange = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
 
-    try {
-      setUploadingImage(true)
+    // Store the file and create preview
+    setSelectedFile(file)
 
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewImage(reader.result)
-      }
-      reader.readAsDataURL(file)
-      const imageUrl = await uploadToCloudinary(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setPreviewImage(reader.result)
+    }
+    reader.readAsDataURL(file)
 
-      setFormData({
-        ...formData,
-        id_proof: imageUrl,
+    // Clear any previous errors
+    if (errors.id_proof) {
+      setErrors({
+        ...errors,
+        id_proof: "",
       })
-      if (errors.id_proof) {
-        setErrors({
-          ...errors,
-          id_proof: "",
-        })
-      }
-
-    } catch (error) {
-      console.error("Error uploading image:", error)
-      toast.error("Failed to upload ID proof")
-      setPreviewImage(null)
-    } finally {
-      setUploadingImage(false)
     }
   }
 
   const handleClearImage = () => {
     setPreviewImage(null)
+    setSelectedFile(null)
     setFormData({
       ...formData,
       id_proof: "",
@@ -136,7 +165,7 @@ const BecomeOrganizer = () => {
       newErrors.about = "About section should be at least 20 characters"
     }
 
-    if (!formData.id_proof) {
+    if (!selectedFile && !formData.id_proof) {
       newErrors.id_proof = "ID proof is required"
     }
 
@@ -153,10 +182,39 @@ const BecomeOrganizer = () => {
     try {
       setSubmitting(true)
 
-      const response = await submitOrganizerProfile(formData);
-      setProfileData(response.data?.profile || { ...formData })
-      toast.success("Organizer request submitted successfully")
+      let imageUrl = formData.id_proof
+
+      // Upload image only if a new file is selected
+      if (selectedFile) {
+        try {
+          imageUrl = await uploadToCloudinary(selectedFile)
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError)
+          toast.error("Failed to upload ID proof. Please try again.")
+          return
+        }
+      }
+
+      const submitData = {
+        ...formData,
+        id_proof: imageUrl,
+      }
+
+      const response = await submitOrganizerProfile(submitData)
+      setProfileData(response.data?.profile || submitData)
+
+      if (isReapplying) {
+        toast.success("Re-application submitted successfully! Your request is now under review.")
+        setIsReapplying(false)
+      } else {
+        toast.success("Organizer request submitted successfully")
+      }
+
       setStatus("pending")
+
+      // Clear the selected file after successful submission
+      setSelectedFile(null)
+      setPreviewImage(null)
     } catch (error) {
       console.error("Error submitting organizer request:", error)
       toast.error(error.response?.data?.error || "Failed to submit organizer request")
@@ -238,7 +296,7 @@ const BecomeOrganizer = () => {
                       </>
                     )}
                   </div>
-                  
+
                   {/* ID Proof Image */}
                   {profileData && profileData.id_proof && (
                     <div>
@@ -260,7 +318,7 @@ const BecomeOrganizer = () => {
       )
     }
 
-    if (status === "rejected") {
+    if (status === "rejected" && !isReapplying) {
       return (
         <div className="bg-red-50 p-6 rounded-lg border border-red-200">
           <div className="flex items-start">
@@ -268,55 +326,100 @@ const BecomeOrganizer = () => {
             <div>
               <h3 className="text-lg font-semibold text-red-800">Your request was not approved</h3>
               <p className="text-red-700 mt-2">
-                Unfortunately, your request to become an organizer was not approved. Please contact our admin team for
-                more information.
+                Unfortunately, your request to become an organizer was not approved. You can review the feedback below
+                and submit a new application.
               </p>
               <div className="mt-4 bg-white p-4 rounded-md border border-red-100">
                 <h4 className="font-medium text-gray-700">Reason for rejection:</h4>
-                <p className="mt-1 text-gray-600">{profileData.rejected_reason || "No specific reason provided."}</p>
+                <p className="mt-1 text-gray-600">{profileData?.rejected_reason || "No specific reason provided."}</p>
               </div>
-              <button
-                onClick={() => navigate("/contact")}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              >
-                Contact Admin
-              </button>
+
+              {/* Previous Application Details */}
+              <div className="mt-4 bg-white p-4 rounded-md border border-red-100">
+                <h4 className="font-medium text-gray-700 mb-3">Your Previous Application:</h4>
+                <div className="space-y-3">
+                  <p>
+                    <span className="font-medium">Place:</span> {profileData?.place}
+                  </p>
+                  <div>
+                    <span className="font-medium">About:</span>{" "}
+                    {profileData?.about && (
+                      <>
+                        {showFullAbout ? (
+                          profileData.about
+                        ) : (
+                          <>
+                            {profileData.about.split(" ").slice(0, 30).join(" ")}
+                            {profileData.about.split(" ").length > 30 && "..."}
+                          </>
+                        )}
+                        {profileData.about.split(" ").length > 30 && (
+                          <button
+                            onClick={() => setShowFullAbout(!showFullAbout)}
+                            className="ml-2 text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer"
+                          >
+                            {showFullAbout ? "Show less" : "Read more"}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  {profileData?.id_proof && (
+                    <div>
+                      <span className="font-medium block mb-2">ID Proof:</span>
+                      <div className="mt-2 border border-gray-200 rounded-md p-2 flex justify-center items-center max-w-xs">
+                        <img
+                          src={profileData.id_proof || "/placeholder.svg"}
+                          alt="Previous ID Proof"
+                          className="w-full h-auto object-contain rounded"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={handleReapply}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Re-apply to Become Organizer
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )
     }
 
+    // Show form for new applications or re-applications
     return (
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-yellow-400"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">Important notice</h3>
-              <div className="mt-1 text-sm text-yellow-700">
-                <p>
-                  Once submitted, these details <strong>cannot be changed</strong>. Please carefully review all
-                  information before submitting your application.
-                </p>
+        {isReapplying && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <RefreshCw className="h-5 w-5 text-blue-400" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-blue-800">Re-applying to become an organizer</h3>
+                  <div className="mt-1 text-sm text-blue-700">
+                    <p>
+                      Please review and update your information based on the previous feedback. Make sure all details
+                      are accurate before submitting.
+                    </p>
+                  </div>
+                </div>
               </div>
+              <button type="button" onClick={handleCancelReapply} className="text-blue-400 hover:text-blue-600">
+                <X className="h-5 w-5" />
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
         <div>
           <label htmlFor="place" className="block text-sm font-medium text-gray-700 mb-1">
@@ -349,7 +452,7 @@ const BecomeOrganizer = () => {
             className={`w-full px-3 py-2 border ${
               errors.about ? "border-red-300" : "border-gray-300"
             } rounded-md focus:outline-none focus:ring-1 focus:ring-black`}
-            placeholder="Tell us about yourself and why you want to become an organizer (minimum 50 characters)"
+            placeholder="Tell us about yourself and why you want to become an organizer (minimum 20 characters)"
           />
           {errors.about && <p className="mt-1 text-sm text-red-500">{errors.about}</p>}
         </div>
@@ -375,7 +478,12 @@ const BecomeOrganizer = () => {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <p className="mt-2 text-sm text-gray-500">{uploadingImage ? "Loading..." : "ID proof uploaded"}</p>
+                  <p className="mt-2 text-sm text-gray-500">
+                    {selectedFile ? `Selected: ${selectedFile.name}` : "ID proof ready for upload"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {selectedFile && `Size: ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`}
+                  </p>
                 </div>
               ) : (
                 <>
@@ -392,7 +500,6 @@ const BecomeOrganizer = () => {
                         type="file"
                         className="sr-only"
                         onChange={handleImageChange}
-                        disabled={uploadingImage}
                         accept="image/*"
                       />
                     </label>
@@ -407,20 +514,34 @@ const BecomeOrganizer = () => {
         </div>
 
         <div className="pt-4 border-t border-gray-200">
-          <button
-            type="submit"
-            disabled={submitting || uploadingImage}
-            className="w-full px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {submitting ? (
-              <span className="flex items-center justify-center">
-                <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                Submitting...
-              </span>
-            ) : (
-              "Submit Request"
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                  {selectedFile ? "Uploading & Submitting..." : isReapplying ? "Re-submitting..." : "Submitting..."}
+                </span>
+              ) : isReapplying ? (
+                "Re-submit Application"
+              ) : (
+                "Submit Request"
+              )}
+            </button>
+
+            {isReapplying && (
+              <button
+                type="button"
+                onClick={handleCancelReapply}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              >
+                Cancel
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </form>
     )
@@ -435,9 +556,13 @@ const BecomeOrganizer = () => {
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="p-6 border-b">
-            <h1 className="text-2xl font-semibold">Become an Organizer</h1>
+            <h1 className="text-2xl font-semibold">
+              {isReapplying ? "Re-apply to Become an Organizer" : "Become an Organizer"}
+            </h1>
             <p className="text-gray-600 mt-1">
-              Submit your request to become an event organizer and start hosting your own events.
+              {isReapplying
+                ? "Update your information and submit a new application based on the previous feedback."
+                : "Submit your request to become an event organizer and start hosting your own events."}
             </p>
           </div>
 

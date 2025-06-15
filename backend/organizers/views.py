@@ -11,6 +11,7 @@ from decimal import Decimal
 from rest_framework.permissions import IsAuthenticated
 from dateutil.parser import parse as parse_date
 from events.serializers import EventSerializer
+import cloudinary, cloudinary.uploader
 from booking.models import Booking
 from events.models import Event
 from .permissions import IsOrganizerUser
@@ -350,15 +351,22 @@ class OrganizerProfileView(APIView):
             
             if not place or not about or not id_proof:
                 return Response({"error": "place, about, and id_proof are required"}, status=status.HTTP_400_BAD_REQUEST)
-            if OrganizerProfile.objects.filter(user=user).exists():
-                return Response({"message": "Organizer profile already exists."}, status=status.HTTP_400_BAD_REQUEST)
             
-            organizer_profile = OrganizerProfile(
-                user=user,
-                place=place,
-                about=about,
-                id_proof=id_proof
-            )
+            organizer_profile, created = OrganizerProfile.objects.get_or_create(user=user)
+
+            # If updating and an old image exists, delete it from Cloudinary
+            if not created and organizer_profile.id_proof:
+                try:
+                    old_url = organizer_profile.id_proof
+                    public_id = old_url.split("/")[-1].split(".")[0]
+                    cloudinary.uploader.destroy(public_id)
+                except Exception as e:
+                    print(f"Cloudinary delete failed: {e}")
+
+            organizer_profile.place = place
+            organizer_profile.about = about
+            organizer_profile.id_proof = id_proof
+            organizer_profile.is_rejected = False
             organizer_profile.save()
             
             return Response({

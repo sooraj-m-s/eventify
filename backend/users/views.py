@@ -421,7 +421,7 @@ class CompleteRegistrationView(APIView):
 @permission_classes([AllowAny])
 class OrganizerListView(APIView):
     def get(self, request):
-        organizers = OrganizerProfile.objects.select_related('user').all()
+        organizers = OrganizerProfile.objects.select_related('user').filter(is_approved=True, is_rejected=False)
         serializer = OrganizerProfileSerializer(organizers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
