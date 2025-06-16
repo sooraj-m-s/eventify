@@ -1,3 +1,4 @@
+import VideoSection from "@/components/home/VideoSection"
 import HeroSection from "../../components/home/HeroSection"
 import Categories from "../../components/home/categories"
 import Events from "../../components/home/events"
@@ -11,13 +12,14 @@ const Home = () => {
       <HeroSection />
 
       <div className="container mx-auto px-4 py-8">
-        
         <Events />
-
         <Categories />
-        
+      </div>
+
+      <VideoSection />
+
+      <div className="container mx-auto px-4 py-8">
         <Organizers />
-        
         <Categories />
 
         <div className="my-16 text-center">
