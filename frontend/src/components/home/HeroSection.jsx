@@ -16,7 +16,7 @@ const HeroSection = () => {
       </video>
 
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/95"></div>
+      <div className="absolute inset-0 bg-black/80"></div>
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-white px-4">
