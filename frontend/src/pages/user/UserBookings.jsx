@@ -243,7 +243,7 @@ const UserBookings = () => {
               <h2 className="text-xl font-bold text-gray-800 mb-2">No Bookings Found</h2>
               <p className="text-gray-600 mb-6">You haven't booked any events yet.</p>
               <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/events")}
                 className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
               >
                 Explore Events

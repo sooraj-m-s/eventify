@@ -67,8 +67,9 @@ Eventify is a comprehensive event management platform with integrated real-time 
 - PostgreSQL for primary database
 - Redis for caching and WebSocket backing
 - Celery with Redis – For managing asynchronous background tasks, such as:
-      * Sending email notifications to users one day before an event.
-      * Automatically marking pending transactions as declined after a specific period.
+   - Sending email notifications to users one day before an event.
+   - Automatically marking pending transactions as declined after a specific period.
+- CI/CD – Automated build, test and deployment pipeline using GitHub Actions.
 
 
 ### Real-time Communication

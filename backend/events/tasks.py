@@ -43,3 +43,23 @@ def send_event_reminder_emails():
     
     return f"Processed {tomorrow_events.count()} events for tomorrow"
 
+
+@shared_task
+def cancel_expired_pending_bookings():
+    one_hour_ago = timezone.now() - timedelta(hours=1)
+    pending_bookings = Booking.objects.filter(payment_status='pending', booking_date__lte=one_hour_ago)
+    
+    cancelled_count = 0
+    for booking in pending_bookings:
+        event = booking.event
+        booking.payment_status = 'cancelled'
+        booking.is_booking_cancelled = True
+        booking.save()
+        
+        event.ticketsSold -= 1
+        event.save()
+        
+        cancelled_count += 1
+    
+    return f"Cancelled {cancelled_count} pending bookings"
+
