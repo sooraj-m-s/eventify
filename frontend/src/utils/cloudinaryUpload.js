@@ -3,15 +3,11 @@ import { toast } from "sonner";
 
 
 const uploadToCloudinary = async (file) => {
-    const cloudName = import.meta.env.VITE_CLOUD_NAME;
-    const uploadPreset = import.meta.env.VITE_UPLOAD_PRESET;
-
     if (!file.type.match('image.*')) {
         toast.error("Please select an image file");
         throw new Error("Invalid file type");
     }
 
-    // Check file size (limit to 5MB)
     if (file.size > 5 * 1024 * 1024) {
         toast.error("Image size should be less than 5MB");
         throw new Error("File too large");
@@ -24,22 +20,25 @@ const uploadToCloudinary = async (file) => {
     }
 
     try {
-      const cloudinaryData = new FormData()
-      cloudinaryData.append("file", file)
-      cloudinaryData.append("upload_preset", uploadPreset)
-      cloudinaryData.append("cloud_name", cloudName)
+        const formData = new FormData();
+        formData.append("image", file);
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_BASE_URL}/users/`,
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                withCredentials: true,
+            }
+        );
 
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        cloudinaryData,
-      )
-
-      return response.data.secure_url
+        return response.data.url;
     } catch (error) {
-      console.error("Error uploading to Cloudinary:", error)
-      toast.error("Failed to upload image. Please try again.")
-      throw error
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image. Please try again.");
+        throw error;
     }
-}
+};
 
 export default uploadToCloudinary;

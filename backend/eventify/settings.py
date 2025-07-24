@@ -209,3 +209,5 @@ cloudinary.config (
     secure= True
 )
 
+cloudinary_upload_preset = config('cloudinary_upload_preset')
+

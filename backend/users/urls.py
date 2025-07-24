@@ -1,4 +1,5 @@
 from django.urls import path
+from .image_upload import ImageUploadView
 from .views import (
     RegisterView, VerifyOTPView, GoogleAuthView, LoginView, CompleteRegistrationView, OrganizerListView,
     RefreshTokenView, LogoutView, UserProfileView, ResendOTPView, ForgotPasswordEmailCheckView,
@@ -7,6 +8,7 @@ from .views import (
 
 
 urlpatterns = [
+    path('', ImageUploadView.as_view(), name='image-upload'),
     path('register/', RegisterView.as_view(), name='user-register'),
     path('verify_otp/', VerifyOTPView.as_view(), name='verify-otp'),
     path('auth/google/', GoogleAuthView.as_view(), name='google-login'),

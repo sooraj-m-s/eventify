@@ -414,14 +414,6 @@ class OrganizerEventsView(APIView):
     def post(self, request, format=None):
         data = request.data.copy()
         data['hostedBy'] = request.user.user_id
-
-        try:
-            event_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
-            today = timezone.now().date()
-            if event_date < today:
-                return Response({'errors': 'Event date cannot be in the past'}, status=status.HTTP_400_BAD_REQUEST)
-        except (ValueError, TypeError):
-            return Response({'errors': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Validate event data
         validation_error = validate_event(data)
