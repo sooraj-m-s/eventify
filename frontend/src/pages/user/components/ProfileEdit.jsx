@@ -36,7 +36,7 @@ const ProfileEdit = React.memo(({ isVisible, initialFormData, profile, onSubmit,
             toast.success("Image uploaded successfully");
         } catch (error) {
             console.error("Error uploading image:", error);
-            toast.error("Failed to upload image");
+            toast.error(error.response.data['error'] || "Failed to upload image");
         } finally {
             setImageUploading(false);
         }

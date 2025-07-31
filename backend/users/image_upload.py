@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from PIL import Image, UnidentifiedImageError
 from decouple import config
 from rest_framework import status
 import cloudinary.uploader
@@ -15,13 +16,18 @@ class ImageUploadView(APIView):
         file = request.FILES.get('image')
         if not file:
             return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-        supported_formats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp']
+        supported_formats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/x-icon', 'image/svg+xml']
         if file.content_type not in supported_formats:
-            return Response({"error": "Unsupported image format. Use JPEG, PNG, GIF, WebP, or BMP"}, 
+            return Response({"error": "Unsupported image format."}, 
                           status=status.HTTP_400_BAD_REQUEST)
         if file.size > 5 * 1024 * 1024:
             return Response({"error": "Image size should be less than 5MB"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            image = Image.open(file)
+            image.verify()
+        except (UnidentifiedImageError, IOError):
+            return Response({"error": "Invalid image file."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             upload_result = cloudinary.uploader.upload(

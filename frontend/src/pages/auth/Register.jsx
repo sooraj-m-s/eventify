@@ -6,7 +6,6 @@ import OtpModal from '../../components/OTPModal';
 import image from "../../assets/login/img-2.jpg"
 import ImageSlider from '../../components/ImageSlider';
 import CustomGoogleButton from '../../components/CustomGoogleButton';
-import uploadToCloudinary from '../../utils/cloudinaryUpload';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { registerUser } from '@/api/user';
@@ -22,7 +21,6 @@ const Register = () => {
     password: '',
     confirm_password: '',
     mobile: '',
-    profile_image: null
   });
   const [errors, setErrors] = useState({});
   const sliderImages = [image]
@@ -86,20 +84,14 @@ const Register = () => {
 
     if (!validateForm()) return;
     dispatch(setLoading(true));
-    let profileImageUrl = null
 
     try {
-      if (formData.profile_image) {
-        profileImageUrl = await uploadToCloudinary(formData.profile_image)
-      }
-
       const userData = {
         full_name: formData.full_name,
         email: formData.email,
         password: formData.password,
         confirm_password: formData.confirm_password,
         mobile: formData.mobile,
-        profile_image: profileImageUrl,
       }
 
       const response = await registerUser(userData)
@@ -227,19 +219,6 @@ const Register = () => {
               className={`w-full px-3 py-2 border rounded-md ${errors.mobile ? 'border-red-500' : 'border-gray-300'}`}
             />
             {errors.mobile && <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>}
-          </div>
-
-          {/* Profile Image */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Profile Image</label>
-            <input
-              type="file"
-              name="profile_image"
-              onChange={handleChange}
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              accept="image/*"
-            />
-            {errors.profile_image && <p className="text-red-500 text-sm mt-1">{errors.profile_image}</p>}
           </div>
 
           <button
