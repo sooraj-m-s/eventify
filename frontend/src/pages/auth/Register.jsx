@@ -111,7 +111,7 @@ const Register = () => {
         }
         setErrors(newErrors);
         if (Object.keys(newErrors).length === 0) {
-          toast.error(error.response.data.detail || 'Registration failed');
+          toast.error(error.response.data['error'] || 'Registration failed');
         } else {
           toast.error('Please fix the errors in the form');
         }

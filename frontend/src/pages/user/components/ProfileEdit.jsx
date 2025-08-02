@@ -57,8 +57,8 @@ const ProfileEdit = React.memo(({ isVisible, initialFormData, profile, onSubmit,
                 await onSubmit(formData);
                 toast.success("Profile updated successfully");
             } catch (error) {
-                console.error("Error updating profile:", error);
-                toast.error(error?.response?.data?.mobile?.error || "Failed to update profile");
+                console.error("Error updating profile:", error.response);
+                toast.error(error?.response?.data?.['error'] || "Failed to update profile");
             } finally {
                 setLoading(false);
             }

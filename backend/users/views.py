@@ -10,7 +10,7 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenError, ExpiredTokenError
 from django.core.cache import cache
-import random, requests, json
+import random, requests, json, re, logging
 from datetime import datetime
 from django.conf import settings
 from organizers.models import OrganizerProfile
@@ -23,54 +23,78 @@ from .serializers import (
 from .models import Users
 
 
+logger = logging.getLogger(__name__)
+
 @permission_classes([AllowAny])
 class RegisterView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            email = serializer.validated_data['email'].lower()
-            mobile = serializer.validated_data['mobile']
+        try:
+            if serializer.is_valid():
+                full_name = serializer.validated_data['full_name']
+                password = serializer.validated_data['password']
+                confirm_password = serializer.validated_data['confirm_password']
+                email = serializer.validated_data['email'].lower()
+                mobile = serializer.validated_data['mobile']
 
-            if Users.objects.filter(email=email).exists():
-                return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-            if Users.objects.filter(mobile=mobile).exists():
-                return Response({'error': 'Mobile number already exists'}, status=status.HTTP_400_BAD_REQUEST)
+                # Validation checks
+                if not re.match(r'^[a-zA-Z\s]+$', full_name.strip()):
+                    return Response({'error': 'Full name must contain only letters and spaces'}, status=status.HTTP_400_BAD_REQUEST)
+                if not full_name or len(full_name.strip()) < 4:
+                    return Response({'error': 'Full name must be at least 4 characters long'}, status=status.HTTP_400_BAD_REQUEST)
+                if len(password) <8:
+                    return Response({'error': 'Password must be at least 8 characters long'}, status=status.HTTP_400_BAD_REQUEST)
+                if not re.search(r'[A-Z]', password):
+                    return Response({'error': 'Password must contain at least one uppercase letter'}, status=status.HTTP_400_BAD_REQUEST)
+                if not re.search(r'[a-z]', password):
+                    return Response({'error': 'Password must contain at least one lowercase letter'}, status=status.HTTP_400_BAD_REQUEST)
+                if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]', password):
+                    return Response({'error': 'Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)'}, status=status.HTTP_400_BAD_REQUEST)
+                if password != confirm_password:
+                    return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+                if not re.match(r'^(\+91|91)?[6-9]\d{9}$', str(mobile)) or len(str(mobile)) != 10:
+                    return Response({'error': 'Invalid mobile number format'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if Users.objects.filter(email=email).exists():
+                    return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+                if Users.objects.filter(mobile=mobile).exists():
+                    return Response({'error': 'Mobile number already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
-            otp = random.randint(100000, 999999)
-            print(f"Generated OTP: {otp}")
-            
-            temp_user_id = str(random.randint(1000000000, 9999999999))
-            redis_key = f"temp_user:{temp_user_id}"
-            
-            # Store user data in Redis
-            user_data = {
-                'temp_user_id': temp_user_id,
-                'full_name': serializer.validated_data['full_name'],
-                'email': email,
-                'mobile': mobile,
-                'password': serializer.validated_data['password'],
-                'profile_image': serializer.validated_data.get('profile_image', None),
-                'otp': otp,
-                'otp_created_at': timezone.now().isoformat()
-            }
-            
-            cache.set(redis_key, json.dumps(user_data), timeout=600)
+                otp = random.randint(100000, 999999)
+                temp_user_id = str(random.randint(1000000000, 9999999999))
+                redis_key = f"temp_user:{temp_user_id}"
+                
+                # Store user data in Redis
+                user_data = {
+                    'temp_user_id': temp_user_id,
+                    'full_name': full_name.strip(),
+                    'email': email,
+                    'mobile': mobile,
+                    'password': password,
+                    'otp': otp,
+                    'otp_created_at': timezone.now().isoformat()
+                }
+                
+                cache.set(redis_key, json.dumps(user_data), timeout=600)
 
-            first_name = user_data['full_name'].split()[0]
-            html_message = registration_email_template(first_name, otp)
-            plain_message = strip_tags(html_message)
-            send_mail(
-                'Eventify: Verify Your Email Address',
-                plain_message,
-                settings.EMAIL_HOST_USER,
-                [email],
-                fail_silently=False,
-                html_message=html_message,
-            )
+                first_name = user_data['full_name'].split()[0]
+                html_message = registration_email_template(first_name, otp)
+                plain_message = strip_tags(html_message)
+                send_mail(
+                    'Eventify: Verify Your Email Address',
+                    plain_message,
+                    settings.EMAIL_HOST_USER,
+                    [email],
+                    fail_silently=False,
+                    html_message=html_message,
+                )
 
-            return Response({'temp_user_id': str(temp_user_id), 'message': 'OTP sent to your email'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                logger.info(f"Registration initiated for email: {email}, temp_user_id: {temp_user_id}")
+                return Response({'temp_user_id': str(temp_user_id), 'message': 'OTP sent to your email'}, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logging.error(f"Error during registration: {str(e)}")
+            return Response({'error': f'Unexpected error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([AllowAny])
@@ -138,7 +162,6 @@ class VerifyOTPView(APIView):
                 password=user_data['password'],
                 full_name=user_data['full_name'],
                 mobile=user_data['mobile'],
-                profile_image=user_data.get('profile_image')
             )
         except Exception as e:
             return Response({'error': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -283,14 +306,26 @@ class UserProfileView(APIView):
     def patch(self, request):
         try:
             user = request.user
-            serializer = UserProfileSerializer(user, data=request.data, partial=True)
+            full_name = request.data.get('full_name', '').strip()
+            mobile = request.data.get('mobile', '')
 
+            if full_name:
+                if not re.match(r'^[a-zA-Z\s]+$', full_name.strip()):
+                    return Response({'error': 'Full name must contain only letters and spaces'}, status=status.HTTP_400_BAD_REQUEST)
+                if not full_name or len(full_name.strip()) < 4:
+                    return Response({'error': 'Full name must be at least 4 characters long'}, status=status.HTTP_400_BAD_REQUEST)
+            if mobile:
+                if not re.match(r'^(\+91|91)?[6-9]\d{9}$', str(mobile)) or len(str(mobile)) != 10:
+                    return Response({'error': 'Invalid mobile number format'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = UserProfileSerializer(user, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
 
+                return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error updating user profile: {str(e)}")
             return Response({"error": f"Failed to update profile: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
