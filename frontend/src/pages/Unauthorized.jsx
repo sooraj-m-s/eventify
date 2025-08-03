@@ -14,7 +14,7 @@ const Unauthorized = () => {
         <h2 className="text-2xl font-semibold text-gray-800 mb-2">Access Denied</h2>
         <p className="text-gray-600 mb-8">You don't have permission to access this page.</p>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors mx-auto"
         >
           <ArrowLeft className="h-5 w-5" />

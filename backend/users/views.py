@@ -392,7 +392,8 @@ class RefreshTokenView(APIView):
             token = RefreshToken(refresh_token)
             response = Response({'detail': 'Token refreshed successfully'}, status=status.HTTP_200_OK)
             response.set_cookie(key='access_token', value=str(token.access_token), httponly=True, secure=True, samesite='None')
-            
+            response.set_cookie(key='refresh_token', value=str(token), httponly=True, secure=True, samesite='None')
+
             return response
         except Exception as e:
             logger.error(f"Error refreshing token: {str(e)}")
@@ -468,7 +469,11 @@ class CompleteRegistrationView(APIView):
 @permission_classes([AllowAny])
 class OrganizerListView(APIView):
     def get(self, request):
-        organizers = OrganizerProfile.objects.select_related('user').filter(is_approved=True, is_rejected=False)
-        serializer = OrganizerProfileSerializer(organizers, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            organizers = OrganizerProfile.objects.select_related('user').filter(is_approved=True, is_rejected=False)
+            serializer = OrganizerProfileSerializer(organizers, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error fetching organizers: {str(e)}")
+            return Response({'detail': 'Failed to fetch organizers'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

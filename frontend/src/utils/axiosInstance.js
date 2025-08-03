@@ -12,6 +12,7 @@ const axiosInstance = axios.create({
 let isRefreshing = false;
 let failedQueue = [];
 
+// Function to process the failed requests queue
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -43,6 +44,12 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Skip token refresh for auth endpoints
+    const authEndpoints = ['/users/login/', '/users/register/', '/users/refresh_token/'];
+    if (authEndpoints.some(endpoint => originalRequest.url.includes(endpoint))) {
+      return Promise.reject(error);
+    }
+
     // Existing 401/403 Handling
     if (status === 401 || status === 403) {
       if (detail === "User is blocked.") {
@@ -54,18 +61,15 @@ axiosInstance.interceptors.response.use(
       } else if (detail === "Authentication credentials were not provided.") {
         toast.warning("Something went wrong. Please log in again.");
         store.dispatch(logout());
-      } else {
-        toast.error("Authentication failed.");
-        store.dispatch(logout());
       }
     }
     
     if (
-      (originalRequest.url === "/users/refresh_token/" && error.response?.status === 401) || originalRequest._retry
+      (originalRequest.url === "/users/refresh_token/" && (error.response?.status === 401 || error.response?.status === 403)) || originalRequest._retry
     ) {
       return Promise.reject(error)
     }
-    if (error.response?.status !== 401) {
+    if (error.response?.status !== 401 && error.response?.status !== 403) {
       return Promise.reject(error)
     }
     originalRequest._retry = true;
@@ -82,7 +86,8 @@ axiosInstance.interceptors.response.use(
         });
     }
     isRefreshing = true;
-    
+
+    // Attempt to refresh token
     try {
       await axiosInstance.post('/users/refresh_token/');
       processQueue(null);

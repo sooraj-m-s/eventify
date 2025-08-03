@@ -17,9 +17,14 @@ const UserPublicRoute = ({ children }) => {
 const AdminPublicRoute = ({ children }) => {
   const { isAuthenticated, userRole } = useSelector((state) => state.auth)
   
-  // If user is authenticated, redirect to home page
+  // If authenticated and is admin, redirect to admin dashboard
   if (isAuthenticated && userRole === "admin") {
     return <Navigate to="/admin/dashboard" replace />;
+  }
+  
+  // If authenticated but not admin, redirect to home page
+  if (isAuthenticated && userRole !== "admin") {
+    return <Navigate to="/" replace />;
   }
   
   return children;
