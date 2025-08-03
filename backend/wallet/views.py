@@ -6,6 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import permission_classes
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+import logging
 from organizers.permissions import IsOrganizerUser
 from .models import Wallet, WalletTransaction, OrganizerWallet, OrganizerWalletTransaction
 from .serializers import (
@@ -14,8 +15,7 @@ from .serializers import (
 )
 
 
-# Create your views here.
-
+logger = logging.getLogger(__name__)
 
 class TransactionPagination(PageNumberPagination):
     page_size = 10
@@ -40,8 +40,8 @@ class WalletTransactionsView(APIView):
             response_data = {'wallet': wallet_data, 'transactions': transaction_serializer.data}
             
             return paginator.get_paginated_response(response_data)
-            
         except Exception as e:
+            logger.error(f"Error fetching wallet transactions: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -62,10 +62,9 @@ class OrganizerWalletTransactionsView(APIView):
             response_data = {'wallet': wallet_data, 'transactions': transaction_serializer.data}
             
             return paginator.get_paginated_response(response_data)
-            
         except Exception as e:
+            logger.error(f"Error fetching organizer wallet transactions: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 @permission_classes([IsAuthenticated])
@@ -76,10 +75,7 @@ class WithdrawAllMoneyView(APIView):
             serializer = WithdrawAllMoneySerializer(data=request.data)
 
             if not serializer.is_valid():
-                return Response(
-                    {'error': 'Invalid request data', 'details': serializer.errors},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({'error': 'Invalid request data', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
             if wallet.balance <= 0:
                 return Response({'error': 'You have no money to withdraw'}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -105,8 +101,10 @@ class WithdrawAllMoneyView(APIView):
             }, status=status.HTTP_200_OK)
             
         except OrganizerWallet.DoesNotExist:
+            logger.error(f"Organizer wallet not found for user {request.user.id}")
             return Response({'error': 'Organizer wallet not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error occurred during withdrawal: {str(e)}")
             return Response({'error': f'An error occurred during withdrawal: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def get(self, request):
@@ -120,8 +118,10 @@ class WithdrawAllMoneyView(APIView):
             }, status=status.HTTP_200_OK)
             
         except OrganizerWallet.DoesNotExist:
+            logger.error(f"Organizer wallet not found for user {request.user.id}")
             return Response({'error': 'Organizer wallet not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error fetching wallet balance: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -133,7 +133,9 @@ class WalletBalanceView(APIView):
 
             return Response({"success": True, "balance": wallet.balance}, status=status.HTTP_200_OK)
         except OrganizerWallet.DoesNotExist:
-                return Response({'error': 'Organizer wallet not found'}, status=status.HTTP_404_NOT_FOUND)
+            logger.error(f"Wallet not found for user {request.user.id}")
+            return Response({'error': 'Wallet not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error fetching wallet balance: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

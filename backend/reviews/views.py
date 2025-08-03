@@ -4,13 +4,13 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
+import logging
 from events.models import Event
 from .models import OrganizerReview
 from .serializers import OrganizerReviewSerializer
 
 
-# Create your views here.
-
+logger = logging.getLogger(__name__)
 
 class OrganizerReviewView(APIView):
     def get(self, request):
@@ -60,6 +60,7 @@ class SingleReviewView(APIView):
         try:
             event = Event.objects.get(eventId=event_id)
         except Event.DoesNotExist:
+            logger.error(f"Event not found: {event_id}")
             return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if not event.is_completed:
@@ -70,5 +71,6 @@ class SingleReviewView(APIView):
             serializer = OrganizerReviewSerializer(review)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except OrganizerReview.DoesNotExist:
+            logger.error(f"Review not found for user {user_id} and event {event_id}")
             return Response({"detail": "Review not found."}, status=status.HTTP_404_NOT_FOUND)
 

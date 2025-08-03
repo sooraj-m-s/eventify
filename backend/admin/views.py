@@ -19,6 +19,7 @@ from events.models import Event
 from events.serializers import EventSerializer
 from wallet.models import OrganizerWallet, OrganizerWalletTransaction, CompanyWallet
 from wallet.serializers import CompanyWalletSerializer
+import logging
 from categories.models import Category
 from booking.models import Booking
 from .permissions import IsAdminUser
@@ -27,35 +28,47 @@ from .email_utils import send_organizer_approval_email, send_organizer_rejection
 from .report_generators import ExcelReportGenerator, PDFReportGenerator
 
 
+logger = logging.getLogger(__name__)
+
+class PaginationData(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    page_query_param = 'page'
+
+
 @permission_classes([AllowAny])
 class AdminLoginView(APIView):
     def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
-        user = authenticate(username=email, password=password)
-        if not user:
-            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
-        if user.role != 'admin':
-            return Response({"error": "Access denied. Admin privileges required."}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            email = request.data.get('email')
+            password = request.data.get('password')
+            
+            user = authenticate(username=email, password=password)
+            if not user:
+                return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+            if user.role != 'admin':
+                return Response({"error": "Access denied. Admin privileges required."}, status=status.HTTP_403_FORBIDDEN)
 
-        refresh = RefreshToken.for_user(user)
-        response = Response(
-            {
-                'detail': 'Login successful',
-                'user_id': user.user_id,
-                'full_name': user.full_name,
-                'profile_image': user.profile_image,
-                'email': user.email,
-                'role': user.role
-            },
-            status=status.HTTP_200_OK
-        )
-        
-        response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
-        response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
-        return response
-
+            refresh = RefreshToken.for_user(user)
+            response = Response(
+                {
+                    'detail': 'Login successful',
+                    'user_id': user.user_id,
+                    'full_name': user.full_name,
+                    'profile_image': user.profile_image,
+                    'email': user.email,
+                    'role': user.role
+                },
+                status=status.HTTP_200_OK
+            )
+            
+            response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
+            response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
+            return response
+        except Exception as e:
+            logger.error(f"Error during admin login: {e}")
+            return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([IsAdminUser])
@@ -65,17 +78,10 @@ class AdminDashboardView(APIView):
             filters = self._get_filter_parameters(request)
             dashboard_data = self._get_dashboard_data(filters)
             
-            return Response({
-                "success": True,
-                "data": dashboard_data,
-                "filters_applied": filters
-            }, status=status.HTTP_200_OK)
-            
+            return Response({"success": True, "data": dashboard_data, "filters_applied": filters}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Error fetching admin dashboard data: {e}")
+            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def _get_filter_parameters(self, request):
         return {
@@ -241,6 +247,7 @@ class DownloadRevenueReportViewPDF(APIView):
             
             return response
         except Exception as e:
+            logger.error(f"Error generating PDF report: {e}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -263,6 +270,7 @@ class DownloadRevenueReportViewExcel(APIView):
         
             return response
         except Exception as e:
+            logger.error(f"Error generating Excel report: {e}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
@@ -370,14 +378,8 @@ class AdminFiltersView(APIView):
                 }
             }, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error fetching admin filters: {e}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class PaginationData(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-    page_query_param = 'page'
 
 
 @permission_classes([IsAdminUser])
@@ -385,26 +387,30 @@ class UserListView(APIView):
     pagination_class = PaginationData
     
     def get(self, request):
-        search_query = request.query_params.get('search', '')
-        role = request.query_params.get('role')
-        page = request.query_params.get('page', 1)
-        
-        queryset = Users.objects.exclude(role='admin')
-        
-        if search_query:
-            queryset = queryset.filter(full_name__istartswith=search_query)
-        
-        queryset = queryset.filter(role=role).order_by('-created_at')
-        
-        paginator = PaginationData()
-        page = paginator.paginate_queryset(queryset, request)
-        
-        if page is not None:
-            serializer = UserListSerializer(page, many=True)
-            return paginator.get_paginated_response(serializer.data)
-        
-        serializer = UserListSerializer(queryset, many=True)
-        return Response({'count': queryset.count(), 'results': serializer.data})
+        try:
+            search_query = request.query_params.get('search', '')
+            role = request.query_params.get('role')
+            page = request.query_params.get('page', 1)
+            
+            queryset = Users.objects.exclude(role='admin')
+            
+            if search_query:
+                queryset = queryset.filter(full_name__istartswith=search_query)
+            
+            queryset = queryset.filter(role=role).order_by('-created_at')
+            
+            paginator = PaginationData()
+            page = paginator.paginate_queryset(queryset, request)
+            
+            if page is not None:
+                serializer = UserListSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            
+            serializer = UserListSerializer(queryset, many=True)
+            return Response({'count': queryset.count(), 'results': serializer.data})
+        except Exception as e:
+            logger.error(f"Error fetching user list: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([IsAdminUser])
@@ -427,8 +433,10 @@ class UserStatusUpdateView(APIView):
             else:
                 return Response({'status': 'error', 'message': "is_blocked field is required"}, status=status.HTTP_400_BAD_REQUEST)
         except Users.DoesNotExist:
+            logger.error(f"User with ID {user_id} not found")
             return Response({'status': 'error', 'message': "User not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error updating user status: {e}")
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -441,6 +449,7 @@ class PendingOrganizerProfilesView(APIView):
             
             return Response({"count": profiles.count(), "profiles": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error fetching pending organizer profiles: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request):
@@ -482,8 +491,10 @@ class PendingOrganizerProfilesView(APIView):
 
                 return Response({"message": "Profile updated successfully"}, status=status.HTTP_200_OK)
             except OrganizerProfile.DoesNotExist:
+                logger.error(f"OrganizerProfile with ID {profile_id} not found")
                 return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error updating organizer profile: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -538,11 +549,8 @@ class AdminEventListView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            return Response({
-                'success': False,
-                'message': 'An error occurred while fetching events',
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Error fetching events: {e}")
+            return Response({'success': False, 'message': 'An error occurred while fetching events', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([IsAdminUser])
@@ -566,8 +574,10 @@ class EventHoldStatusView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Event.DoesNotExist:
+            logger.error(f"Event with ID {event_id} not found")
             return Response({"success": False, "message": "Event not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error updating event hold status: {e}")
             return Response({"success": False, "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -633,6 +643,7 @@ class EventSettlementView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
+            logger.error(f"Error settling event: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -685,9 +696,6 @@ class AdminWalletView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            return Response({
-                'success': False,
-                'message': 'An error occurred while fetching wallet data',
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Error fetching wallet data: {e}")
+            return Response({'success': False, 'message': 'An error occurred while fetching wallet data', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

@@ -11,7 +11,7 @@ from decimal import Decimal
 from rest_framework.permissions import IsAuthenticated
 from dateutil.parser import parse as parse_date
 from events.serializers import EventSerializer
-import cloudinary, cloudinary.uploader
+import cloudinary, cloudinary.uploader, logging
 from booking.models import Booking
 from events.models import Event
 from .permissions import IsOrganizerUser
@@ -20,6 +20,8 @@ from .serializers import OrganizerBookingSerializer, OrganizerEventSerializer
 from .models import OrganizerProfile
 from .organizer_report_generators import OrganizerExcelGenerator, OrganizerPDFGenerator
 
+
+logger = logging.getLogger(__name__)
 
 @permission_classes([IsOrganizerUser])
 class OrganizerDashboardView(APIView):
@@ -30,6 +32,7 @@ class OrganizerDashboardView(APIView):
             
             return Response({"success": True, "data": dashboard_data, "filters_applied": filters}, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error in OrganizerDashboardView: {str(e)}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def _get_filter_parameters(self, request):
@@ -221,6 +224,7 @@ class OrganizerRevenueReportViewPDF(APIView):
             
             return response
         except Exception as e:
+            logger.error(f"Error generating PDF report: {str(e)}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -244,6 +248,7 @@ class OrganizerRevenueReportViewExcel(APIView):
             
             return response
         except Exception as e:
+            logger.error(f"Error generating Excel report: {str(e)}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -338,8 +343,10 @@ class OrganizerProfileView(APIView):
                     "rejected_reason": organizer_profile.rejected_reason
                 }, status=status.HTTP_200_OK)
             except OrganizerProfile.DoesNotExist:
+                logger.error(f"OrganizerProfile not found for user: {user.user_id}")
                 return Response({"message": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error fetching OrganizerProfile: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
@@ -382,6 +389,7 @@ class OrganizerProfileView(APIView):
                 }
             }, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error updating OrganizerProfile: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -468,6 +476,7 @@ class OrganizerEventUpdateView(APIView):
                 return Response({"success": True, "message": "Event updated successfully", "event": serializer.data}, status=status.HTTP_200_OK)
             return Response({"success": False, "message": "Failed to update event", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except Event.DoesNotExist:
+            logger.error(f"Event with ID {pk} not found for user {request.user.user_id}")
             return Response({"success": False, "message": "Event not found or you don't have permission"}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -517,5 +526,6 @@ class OrganizerBookingsView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
+            logger.error(f"Error fetching organizer bookings: {str(e)}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

@@ -6,6 +6,7 @@ from rest_framework.decorators import permission_classes
 from django.db import transaction
 from django.utils import timezone
 from django.http import HttpResponse
+import logging
 from wallet.models import Wallet, WalletTransaction
 from events.models import Event
 from coupon.models import Coupon, CouponUsage
@@ -14,8 +15,7 @@ from .models import Booking
 from .serializers import UserBookingSerializer
 
 
-# Create your views here.
-
+logger = logging.getLogger(__name__)
 
 @permission_classes([IsAuthenticated])
 class BookEventView(APIView):
@@ -38,7 +38,6 @@ class BookEventView(APIView):
                 return Response({"error": "Sorry, this event has already taken place."}, status=status.HTTP_400_BAD_REQUEST)
             if event.ticketsSold >= event.ticketLimit:
                 return Response({"error": "Sorry, this event is sold out"}, status=status.HTTP_400_BAD_REQUEST)
-            
             if coupon_code:
                 coupon = Coupon.objects.filter(code=coupon_code, is_active=True).first()
                 total_price = event.pricePerTicket - coupon.discount_amount
@@ -46,6 +45,7 @@ class BookEventView(APIView):
                 try:
                     CouponUsage.objects.create(user=request.user, coupon=coupon, eventId=event)
                 except Exception as e:
+                    logger.error(f"Error applying coupon: {e}")
                     return Response({"error": "Error applying coupon!"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 total_price = event.pricePerTicket
@@ -82,13 +82,14 @@ class BookEventView(APIView):
             
             event.ticketsSold += 1
             event.save()
-            
             serializer = UserBookingSerializer(booking)
+
             return Response({"message": "Booking successful", "booking": serializer.data}, status=status.HTTP_201_CREATED)
-            
         except Event.DoesNotExist:
+            logger.error(f"Event with ID {event_id} not found")
             return Response({"error": "Event not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error occurred while creating booking: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -98,8 +99,10 @@ class BookingDetailView(APIView):
         try:
             booking = Booking.objects.get(booking_id=booking_id, user=request.user)
             serializer = UserBookingSerializer(booking)
+
             return Response(serializer.data)
         except Booking.DoesNotExist:
+            logger.error(f"Booking with ID {booking_id} not found for user {request.user.id}")
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -112,6 +115,7 @@ class UserBookingsView(APIView):
             
             return Response({"success": True, "bookings": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error fetching user bookings: {e}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -153,8 +157,10 @@ class CancelBookingView(APIView):
                 
                 return Response({"success": True, "message": "Booking cancelled successfully", "booking": serializer.data}, status=status.HTTP_200_OK)
         except Booking.DoesNotExist:
+            logger.error(f"Booking with ID {booking_id} not found for user {request.user.id}")
             return Response({"success": False, "error": "Booking not found or does not belong to you"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error cancelling booking: {e}")
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -172,13 +178,14 @@ class DownloadTicketView(APIView):
             
             ticket_generator = TicketGenerator()
             pdf_buffer = ticket_generator.generate_ticket_pdf(booking)
-            
             response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="ticket_{booking.booking_id}.pdf"'
             
             return response
         except Booking.DoesNotExist:
+            logger.error(f"Booking with ID {booking_id} not found for user {request.user.id}")
             return Response({"error": "Booking not found or does not belong to you"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error generating ticket for booking {booking_id}: {e}")
             return Response({"error": f"Error generating ticket: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

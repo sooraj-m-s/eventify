@@ -105,8 +105,7 @@ class ResendOTPView(APIView):
         user_data_json = cache.get(redis_key)
         
         if not user_data_json:
-            return Response({'error': 'Registration expired. Please register again.'}, 
-                        status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Registration expired. Please register again.'}, status=status.HTTP_400_BAD_REQUEST)
         
         user_data = json.loads(user_data_json)
         new_otp = random.randint(100000, 999999)
@@ -142,11 +141,9 @@ class VerifyOTPView(APIView):
         if not otp:
             return Response({'error': 'OTP is required'}, status=status.HTTP_400_BAD_REQUEST)
         if not user_data_json:
-            return Response({'error': 'Registration expired. Please register again.'}, 
-                        status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Registration expired. Please register again.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user_data = json.loads(user_data_json)
-
         if str(user_data['otp']) != str(otp):
             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -164,7 +161,8 @@ class VerifyOTPView(APIView):
                 mobile=user_data['mobile'],
             )
         except Exception as e:
-            return Response({'error': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Error creating user: {str(e)}")
+            return Response({'error': 'Unexpected error occurred while creating user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         cache.delete(redis_key)
     
         refresh = RefreshToken.for_user(user)
@@ -196,8 +194,6 @@ class ForgotPasswordEmailCheckView(APIView):
             return Response({"message": "If your email is registered, you will receive an OTP shortly"}, status=status.HTTP_200_OK)
         
         otp = random.randint(100000, 999999)
-        print(f"Generated OTP: {otp}")
-        
         temp_user_id = str(random.randint(1000000000, 9999999999))
         redis_key = f"temp_user:{temp_user_id}"
         
@@ -234,17 +230,21 @@ class ForgotPasswordSetView(APIView):
         redis_key = f"temp_user:{temp_user_id}"
         reset_data_json = cache.get(redis_key)
 
-        if not new_password:
-            return Response({'error': 'Password is required'}, status=status.HTTP_400_BAD_REQUEST)
-        if len(new_password) < 8:
-            return Response({'error': 'Password should be at least 8 characters long'}, status=status.HTTP_400_BAD_REQUEST)
-        if new_password != confirm_password:
-            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+        # Validation checks
         if not reset_data_json:
             return Response({'error': 'Password reset session expired. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(new_password) <8:
+            return Response({'error': 'Password must be at least 8 characters long'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[A-Z]', new_password):
+            return Response({'error': 'Password must contain at least one uppercase letter'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[a-z]', new_password):
+            return Response({'error': 'Password must contain at least one lowercase letter'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]', new_password):
+            return Response({'error': 'Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)'}, status=status.HTTP_400_BAD_REQUEST)
+        if new_password != confirm_password:
+            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
         
         reset_data = json.loads(reset_data_json)
-        
         if str(reset_data['otp']) != str(otp):
             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -262,32 +262,40 @@ class ForgotPasswordSetView(APIView):
             
             return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
         except Users.DoesNotExist:
-            return Response({"error": "Unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"User with email {reset_data['email']} not found for password reset.")
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error resetting password: {str(e)}")
+            return Response({"error": "Failed to reset password"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([AllowAny])
 class LoginView(APIView):
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        try:
+            serializer = LoginSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.validated_data['user']
 
-        refresh = RefreshToken.for_user(user)
-        response = Response(
-            {
-                'detail': 'Login successful',
-                'user_id': user.user_id,
-                'full_name': user.full_name,
-                'email': user.email,
-                'profile_image': user.profile_image,
-                'role': user.role
-            },
-            status=status.HTTP_200_OK
-        )
-        response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
-        response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
+            refresh = RefreshToken.for_user(user)
+            response = Response(
+                {
+                    'detail': 'Login successful',
+                    'user_id': user.user_id,
+                    'full_name': user.full_name,
+                    'email': user.email,
+                    'profile_image': user.profile_image,
+                    'role': user.role
+                },
+                status=status.HTTP_200_OK
+            )
+            response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
+            response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
 
-        return response
+            return response
+        except Exception as e:
+            logger.error(f"Error logging in user: {str(e)}")
+            return Response({"error": f"Failed to log in: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([IsAuthenticated])
@@ -298,10 +306,8 @@ class UserProfileView(APIView):
             serializer = UserProfileSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(
-                {"error": f"Failed to retrieve profile: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            logger.error(f"Error retrieving user profile: {str(e)}")
+            return Response({"error": f"Failed to retrieve profile: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def patch(self, request):
         try:
@@ -343,30 +349,35 @@ class ChangePasswordView(APIView):
                 return Response({"detail": "Password changed successfully"}, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error changing password: {str(e)}")
             return Response({"error": f"Failed to change password: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([IsAuthenticated])
 class LogoutView(APIView):
     def post(self, request):
-        refresh_token = request.COOKIES.get("refresh_token")
+        try:
+            refresh_token = request.COOKIES.get("refresh_token")
 
-        if refresh_token:
-            try:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            except ExpiredTokenError:
-                print("Token already expired — skipping blacklist.")
-            except SimpleJWTTokenError as e:
-                print("Other token error:", e)
-            except Exception as e:
-                print("Unexpected logout error:", e)
+            if refresh_token:
+                try:
+                    token = RefreshToken(refresh_token)
+                    token.blacklist()
+                except ExpiredTokenError:
+                    print("Token already expired — skipping blacklist.")
+                except SimpleJWTTokenError as e:
+                    print("Other token error:", e)
+                except Exception as e:
+                    print("Unexpected logout error:", e)
 
-        response = Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
-        response.set_cookie(key='access_token', value='', httponly=True, secure=True, samesite='None')
-        response.set_cookie(key='refresh_token', value='', httponly=True, secure=True, samesite='None')
+            response = Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+            response.set_cookie(key='access_token', value='', httponly=True, secure=True, samesite='None')
+            response.set_cookie(key='refresh_token', value='', httponly=True, secure=True, samesite='None')
 
-        return response
+            return response
+        except Exception as e:
+            logger.error(f"Error logging out user: {str(e)}")
+            return Response({"error": f"Failed to log out: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([AllowAny])
@@ -379,12 +390,12 @@ class RefreshTokenView(APIView):
             
         try:
             token = RefreshToken(refresh_token)
-            
             response = Response({'detail': 'Token refreshed successfully'}, status=status.HTTP_200_OK)
             response.set_cookie(key='access_token', value=str(token.access_token), httponly=True, secure=True, samesite='None')
             
             return response
         except Exception as e:
+            logger.error(f"Error refreshing token: {str(e)}")
             return Response({'detail': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -402,6 +413,7 @@ class GoogleAuthView(APIView):
             name = token_data.get('name', '')
             picture = token_data.get('picture', '')
         except requests.RequestException:
+            logger.error("Error verifying Google ID token")
             return Response({'detail': 'Failed to verify token'}, status=status.HTTP_400_BAD_REQUEST)
         user = Users.objects.filter(email=email).first()
         if user:

@@ -7,14 +7,14 @@ from django.utils import timezone
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+import logging
 from admin.permissions import IsAdminUser
 from events.models import Event
 from .serializers import CouponSerializer
 from .models import Coupon, CouponUsage
 
 
-# Create your views here.
-
+logger = logging.getLogger(__name__)
 
 class CouponPagination(PageNumberPagination):
     page_size = 10
@@ -24,14 +24,6 @@ class CouponPagination(PageNumberPagination):
 
 @permission_classes([IsAdminUser])
 class CouponViewSet(viewsets.ModelViewSet):
-    """
-    - list (GET    /api/coupons/)
-    - retrieve (GET    /api/coupons/{couponId}/)
-    - create   (POST   /api/coupons/)
-    - update   (PUT    /api/coupons/{couponId}/)
-    - partial_update (PATCH /api/coupons/{couponId}/)
-    - destroy  (DELETE /api/coupons/{couponId}/)
-    """
     serializer_class = CouponSerializer
     pagination_class = CouponPagination
 
@@ -92,6 +84,7 @@ class ApplyCouponView(APIView):
         try:
             coupon = Coupon.objects.get(code=code)
         except Coupon.DoesNotExist:
+            logger.error(f"Coupon with code {code} does not exist.")
             return Response({'error': 'Invalid coupon code.'}, status=status.HTTP_404_NOT_FOUND)
 
         today = timezone.now().date()
@@ -103,7 +96,9 @@ class ApplyCouponView(APIView):
         try:
             event = Event.objects.get(eventId=event_id)
         except Event.DoesNotExist:
+            logger.error(f"Event with ID {event_id} does not exist.")
             return Response({'error': 'Event not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
         if str(event.hostedBy.user_id) != str(coupon.organizer.user_id):
             return Response({'error': 'This coupon cannot apply for this event.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -112,6 +107,7 @@ class ApplyCouponView(APIView):
             return Response({'error': 'You have already used this coupon.'}, status=status.HTTP_400_BAD_REQUEST)
         if event.pricePerTicket < coupon.minimum_purchase_amt:
             return Response({'error': f'Minimum purchase amount to use this coupon is ₹{coupon.minimum_purchase_amt}.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         serialized_coupon = CouponSerializer(coupon).data
         return Response({'success': 'Coupon applied successfully.', "coupon": serialized_coupon}, status=status.HTTP_200_OK)
 

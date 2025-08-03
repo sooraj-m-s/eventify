@@ -7,14 +7,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.decorators import permission_classes
-import stripe
+import stripe, logging
 from django.utils import timezone
 from booking.models import Booking
 
 
-# Create your views here.
-
-
+logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 @permission_classes([IsAuthenticated])
@@ -27,10 +25,8 @@ class CreatePaymentIntentView(APIView):
             try:
                 booking = Booking.objects.get(booking_id=booking_id, user=request.user)
             except Booking.DoesNotExist:
-                return Response(
-                    {'error': 'Booking not found or does not belong to this user'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
+                logger.error(f"Booking not found or does not belong to this user: {booking_id}")
+                return Response({'error': 'Booking not found or does not belong to this user'}, status=status.HTTP_404_NOT_FOUND)
             
             if booking.payment_id:
                 if booking.payment_status == 'pending':
@@ -70,6 +66,7 @@ class CreatePaymentIntentView(APIView):
             })
             
         except Exception as e:
+            logger.error(f"Error creating payment intent: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -78,7 +75,6 @@ class PaymentStatusView(APIView):
     def get(self, request, booking_id):
         try:
             booking = Booking.objects.get(booking_id=booking_id, user=request.user)
-            
             if not booking.payment_id:
                 return Response({'status': 'no_payment'})
             
@@ -90,6 +86,7 @@ class PaymentStatusView(APIView):
             })
             
         except Booking.DoesNotExist:
+            logger.error(f"Booking not found: {booking_id}")
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -104,8 +101,10 @@ def stripe_webhook(request):
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
         )
     except ValueError as e:
+        logger.error(f"Invalid payload: {str(e)}")
         return HttpResponse(status=400)
     except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Signature verification failed: {str(e)}")
         return HttpResponse(status=400)
     
     if event['type'] == 'payment_intent.succeeded':
@@ -127,8 +126,9 @@ def handle_payment_intent_succeeded(payment_intent):
         
         booking.confirm()
     except Booking.DoesNotExist:
-        print(f"Error: No booking found with payment_id {payment_intent['id']}")
+        logger.error(f"Booking not found: {payment_intent['id']}")
         pass
+
 
 def handle_payment_intent_failed(payment_intent):
     try:
@@ -136,6 +136,6 @@ def handle_payment_intent_failed(payment_intent):
         booking.payment_status = 'failed'
         booking.save()
     except Booking.DoesNotExist:
-        print(f"Error: No booking found with payment_id {payment_intent['id']}")
+        logger.error(f"Booking not found for failed payment: {payment_intent['id']}")
         pass
 

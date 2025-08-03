@@ -9,13 +9,13 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.db.models import Q
 from django.utils import timezone
+import logging
 from users.models import Users
 from .models import ChatRoom
 from .serializers import ChatRoomSerializer, MessageSerializer, CreateMessageSerializer
 
 
-# Create your views here.
-
+logger = logging.getLogger(__name__)
 
 class ChatRoomPagination(PageNumberPagination):
     page_size = 10
@@ -49,6 +49,7 @@ class ChatRoomListView(APIView):
             
             return paginator.get_paginated_response({'chat_rooms': serializer.data})
         except Exception as e:
+            logger.error(f"Error fetching chat rooms: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -69,6 +70,7 @@ class StartChatView(APIView):
             
             return Response({'room': serializer.data, 'created': created}, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error starting chat: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -91,6 +93,7 @@ class ChatMessagesView(APIView):
             
             return paginator.get_paginated_response(serializer.data)
         except Exception as e:
+            logger.error(f"Error fetching messages for room {room_id}: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request, room_id):
@@ -114,6 +117,7 @@ class ChatMessagesView(APIView):
                 return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error sending message in room {room_id}: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def send_message_notification(self, message, recipient, room):
@@ -139,10 +143,10 @@ class ChatMessagesView(APIView):
                     'notification': notification_data
                 }
             )
-            print(f"Sent message notification to user {recipient.user_id}")
+            logging.info(f"Notification sent to {recipient.full_name} for new message in room {room.room_id}")
             
         except Exception as e:
-            print(f"Error sending message notification: {e}")
+            logger.error(f"Error sending message notification: {e}")
 
 
 @permission_classes([IsAuthenticated])
@@ -156,5 +160,6 @@ class MarkMessagesReadView(APIView):
             
             return Response({'marked_read': updated_count}, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error marking messages as read in room {room_id}: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

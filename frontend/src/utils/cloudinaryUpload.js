@@ -22,7 +22,7 @@ const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
     const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/`,
+        `${import.meta.env.VITE_API_BASE_URL}users/`,
         formData,
         {
             headers: {
