@@ -3,6 +3,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.html import strip_tags
@@ -293,9 +294,12 @@ class LoginView(APIView):
             response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
 
             return response
+        except ValidationError as e:
+            logger.error(f"Login validation error: {str(e)}")
+            return Response({"detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error logging in user: {str(e)}")
-            return Response({"error": f"Failed to log in: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "An unexpected error occurred during login"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([IsAuthenticated])

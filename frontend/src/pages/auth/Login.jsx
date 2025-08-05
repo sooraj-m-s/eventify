@@ -57,9 +57,9 @@ const Login = () => {
       newErrors.password = "Password is required"
       toast.error("Password is required")
       isValid = false
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
-      toast.error("Password must be at least 6 characters")
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters"
+      toast.error("Password must be at least 8 characters")
       isValid = false
     }
 
@@ -88,16 +88,12 @@ const Login = () => {
       toast.success("Login successful! Redirecting to home...")
       navigate("/")
     } catch (error) {
-      if (error.response?.data?.detail) {
-        if (Array.isArray(error.response.data.detail)) {
-          error.response.data.detail.forEach(message => toast.error(message))
-        } else {
-          toast.error(error.response.data.detail)
-        }
+      if (error.response?.data?.detail?.detail) {
+        toast.error(error.response.data.detail.detail)
       } else {
         toast.error("Login failed")
       }
-      console.error("Error:", error.response ? error.response.data : error.message)
+      console.error("Error:", error.response)
     } finally {
       setLoading(false)
     }
