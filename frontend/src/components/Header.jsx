@@ -80,17 +80,15 @@ const Header = () => {
                 aria-haspopup="true"
               >
                 <div className="relative w-10 h-10 overflow-hidden bg-gray-200 rounded-full cursor-pointer group">
-                  {profile_image ? (
-                    <img
-                      src={profile_image || "/placeholder.svg"}
-                      alt={userName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center w-full h-full bg-gray-100 text-gray-800 font-medium">
-                      {getInitials(userName)}
-                    </div>
-                  )}
+                  <img
+                    src={profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                    alt={userName}
+                    className="w-full h-full object-cover"
+                    onError={e => {
+                      e.target.onerror = null;
+                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                    }}
+                  />
                 </div>
               </button>
               {dropdownOpen && (

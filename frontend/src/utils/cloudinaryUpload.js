@@ -18,21 +18,33 @@ const uploadToCloudinary = async (file) => {
         toast.error("Unsupported image format.");
         throw new Error("Unsupported format");
     }
+    try {
+        const formData = new FormData();
+        formData.append("image", file);
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_BASE_URL}users/`,
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                withCredentials: true,
+            }
+        );
 
-    const formData = new FormData();
-    formData.append("image", file);
-    const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}users/`,
-        formData,
-        {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-            withCredentials: true,
+        return response.data.url;
+    } catch (error) {
+        console.error("Upload failed:", error);
+        console.error("Error response:", error.response);
+        
+        if (error.response?.data?.error) {
+            toast.error(error.response.data.error);
+        } else {
+            toast.error("Upload failed");
         }
-    );
-
-    return response.data.url;
+        
+        throw error;
+    }
 };
 
 export default uploadToCloudinary;

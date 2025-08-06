@@ -296,9 +296,13 @@ const Messages = () => {
                               {/* Avatar with online status */}
                               <div className="relative flex-shrink-0">
                                 <img
-                                  src={otherUser?.profile_image || "/placeholder.svg"}
+                                  src={otherUser?.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
                                   alt={otherUser?.full_name || "User"}
                                   className="w-12 h-12 rounded-full object-cover"
+                                  onError={e => {
+                                    e.target.onerror = null;
+                                    e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                                  }}
                                 />
                                 <div
                                   className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white transition-colors duration-300 ${

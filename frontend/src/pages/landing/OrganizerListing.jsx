@@ -201,17 +201,15 @@ const OrganizerListing = () => {
               >
                 <div className="p-6 text-center">
                   <div className="relative w-20 h-20 mx-auto mb-4">
-                    {organizer.profile_image ? (
-                      <img
-                        src={organizer.profile_image || "/placeholder.svg"}
-                        alt={organizer.full_name}
-                        className="w-full h-full object-cover rounded-full border-4 border-gray-100"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold border-4 border-gray-100">
-                        {organizer.full_name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    <img
+                      src={organizer.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                      alt={organizer.full_name}
+                      className="w-full h-full object-cover rounded-full border-4 border-gray-100"
+                      onError={e => {
+                      e.target.onerror = null;
+                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                    }}
+                    />
                   </div>
 
                   <h3 className="font-semibold text-lg text-gray-900 mb-2">{organizer.full_name}</h3>

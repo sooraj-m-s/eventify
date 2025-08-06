@@ -255,17 +255,15 @@ const UserBookings = () => {
                 <div key={booking.booking_id} className="bg-white rounded-lg shadow-sm overflow-hidden">
                   <div className="md:flex">
                     <div className="md:w-1/4">
-                      {booking.event.posterImage ? (
-                        <img
-                          src={booking.event.posterImage || "/placeholder.svg"}
-                          alt={booking.event.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full min-h-[160px] bg-gray-200 flex items-center justify-center">
-                          <Calendar className="h-12 w-12 text-gray-400" />
-                        </div>
-                      )}
+                      <img
+                        src={booking.event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
+                        alt={booking.event.title}
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          e.target.onerror = null;
+                          e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                        }}
+                      />
                     </div>
                     <div className="p-6 md:w-3/4">
                       <div className="flex justify-between items-start mb-4">

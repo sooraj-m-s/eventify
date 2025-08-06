@@ -85,9 +85,13 @@ const Categories = () => {
               <div className="relative group cursor-pointer p-1">
                 <div className="overflow-hidden rounded-lg">
                   <img
-                    src={category.image || `/placeholder.svg?height=200&width=300`}
+                    src={category.image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464515/konkan-training-contact_rk6yyh.jpg"}
                     alt={category.categoryName}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={e => {
+                      e.target.onerror = null;
+                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464515/konkan-training-contact_rk6yyh.jpg";
+                    }}
                   />
                 </div>
                 <h3 className="mt-2 text-center font-medium">{category.categoryName}</h3>

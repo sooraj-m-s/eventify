@@ -134,17 +134,15 @@ const EventDetail = () => {
           {/* Left Column - Event Image */}
           <div className="md:col-span-1">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              {event.posterImage ? (
-                <img
-                  src={event.posterImage || "/placeholder.svg"}
-                  alt={event.title}
-                  className="w-full h-64 object-cover"
-                />
-              ) : (
-                <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                  <Calendar className="h-16 w-16 text-gray-400" />
-                </div>
-              )}
+              <img
+                src={event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
+                alt={event.title}
+                className="w-full h-64 object-cover"
+                onError={e => {
+                  e.target.onerror = null;
+                  e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                }}
+              />
             </div>
           </div>
 

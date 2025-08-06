@@ -101,9 +101,13 @@ const Events = () => {
               <div className="cursor-pointer group p-1" onClick={() => handleEventClick(event.eventId)}>
                 <div className="overflow-hidden rounded-lg">
                   <img
-                    src={event.posterImage || `/placeholder.svg?height=200&width=300`}
+                    src={event.posterImage || `https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg`}
                     alt={event.title}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={e => {
+                      e.target.onerror = null;
+                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                    }}
                   />
                 </div>
                 <h3 className="mt-2 font-medium">{event.title}</h3>

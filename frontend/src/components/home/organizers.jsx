@@ -75,9 +75,13 @@ const Organizers = () => {
                 <div className="p-1 cursor-pointer group">
                   <div className="overflow-hidden rounded-lg h-64">
                     <img
-                      src={organizer.user.profile_image || `/placeholder.svg?height=300&width=200`}
+                      src={organizer.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
                       alt={organizer.user.full_name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={e => {
+                        e.target.onerror = null;
+                        e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                      }}
                     />
                   </div>
                   <h3 className="mt-2 text-center font-medium">{organizer.user.full_name}</h3>

@@ -31,16 +31,6 @@ const OrganizerProfile = () => {
     fetchProfile()
   }, [])
 
-  // Get initials from name
-  const getInitials = (name) => {
-    if (!name) return "U"
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-  }
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       <OrganizerSidebar />
@@ -82,15 +72,14 @@ const OrganizerProfile = () => {
               <div className="bg-white border-b p-8">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                   <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-600 shadow-sm">
-                    {user?.profile_image ? (
-                      <img
-                        src={user.profile_image || "/placeholder.svg"}
-                        alt={user?.userName}
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    ) : (
-                      getInitials(user?.userName || "")
-                    )}
+                    <img
+                      src={user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                      className="w-full h-full object-cover rounded-full"
+                      onError={e => {
+                        e.target.onerror = null;
+                        e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                      }}
+                    />
                   </div>
                   <div className="text-center md:text-left">
                     <h2 className="text-2xl font-bold">{user?.full_name}</h2>

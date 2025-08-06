@@ -20,9 +20,13 @@ const ProfileSidebar = () => {
       <div className="p-6 border-b">
         <div className="flex items-center">
           <img
-            src={userData.profile_image || "/placeholder.svg"}
+            src={userData.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
             alt={userData.userName}
             className="w-12 h-12 rounded-full object-cover"
+            onError={e => {
+              e.target.onerror = null;
+              e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+            }}
           />
           <div className="ml-3">
             <h3 className="font-semibold text-gray-900">{userData?.userName}</h3>

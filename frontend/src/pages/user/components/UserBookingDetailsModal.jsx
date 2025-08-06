@@ -168,17 +168,15 @@ const UserBookingDetailsModal = ({
               <h3 className="text-lg font-semibold mb-4">Event Information</h3>
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 <div className="flex items-center">
-                  {booking.event.posterImage ? (
-                    <img
-                      src={booking.event.posterImage || "/placeholder.svg"}
-                      alt={booking.event.title}
-                      className="w-16 h-16 object-cover rounded-md mr-4"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center mr-4">
-                      <Calendar className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
+                  <img
+                    src={booking.event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
+                    alt={booking.event.title}
+                    className="w-16 h-16 object-cover rounded-md mr-4"
+                    onError={e => {
+                      e.target.onerror = null;
+                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                    }}
+                  />
                   <div>
                     <h4 className="font-medium">{booking.event.title}</h4>
                     <p className="text-sm text-gray-600">{booking.event.category_name}</p>

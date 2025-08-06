@@ -338,15 +338,15 @@ const OrganizerBookings = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                              {booking.user.profile_image ? (
-                                <img
-                                  src={booking.user.profile_image || "/placeholder.svg"}
-                                  alt={booking.user.full_name}
-                                  className="h-10 w-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <User className="h-5 w-5 text-gray-500" />
-                              )}
+                              <img
+                                src={booking.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                                alt={booking.user.full_name}
+                                className="h-10 w-10 rounded-full object-cover"
+                                onError={e => {
+                                  e.target.onerror = null;
+                                  e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                                }}
+                              />
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">{booking.user.full_name}</div>
@@ -471,11 +471,15 @@ const OrganizerBookings = () => {
                   <div className="space-y-4">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center mr-4">
-                        {<img
-                            src={selectedBooking.user.profile_image || "/placeholder.svg"}
+                        <img
+                            src={selectedBooking.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
                             alt={selectedBooking.user.full_name}
                             className="h-16 w-16 rounded-full object-cover"
-                          />}
+                            onError={e => {
+                              e.target.onerror = null;
+                              e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                            }}
+                        />
                       </div>
                       <div>
                         <h4 className="text-lg font-medium">{selectedBooking.user.full_name}</h4>
@@ -593,17 +597,15 @@ const OrganizerBookings = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-4 border-b pb-2">Event Information</h3>
                   <div className="space-y-4">
-                    {selectedBooking.event.posterImage ? (
-                      <img
-                        src={selectedBooking.event.posterImage || "/placeholder.svg"}
-                        alt={selectedBooking.event.title}
-                        className="w-full h-48 object-cover rounded-md mb-4"
-                      />
-                    ) : (
-                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md mb-4">
-                        <Calendar className="h-12 w-12 text-gray-400" />
-                      </div>
-                    )}
+                    <img
+                      src={selectedBooking.event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
+                      alt={selectedBooking.event.title}
+                      className="w-full h-48 object-cover rounded-md mb-4"
+                      onError={e => {
+                        e.target.onerror = null;
+                        e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                      }}
+                    />
 
                     <h4 className="text-xl font-bold">{selectedBooking.event.title}</h4>
 

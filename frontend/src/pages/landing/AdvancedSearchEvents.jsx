@@ -499,9 +499,13 @@ const AdvancedSearchEvents = () => {
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={event.posterImage || `/placeholder.svg?height=200&width=300&query=event`}
+                    src={event.posterImage || `https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg`}
                     alt={event.title}
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    onError={e => {
+                      e.target.onerror = null;
+                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                    }}
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                     <p className="text-white text-sm font-medium">

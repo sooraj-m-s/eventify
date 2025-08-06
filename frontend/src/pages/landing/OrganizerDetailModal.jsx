@@ -46,17 +46,15 @@ const OrganizerDetailModal = ({ organizer, isOpen, onClose, onViewEvents, averag
           <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
             {/* Profile Image */}
             <div className="relative w-32 h-32 mx-auto md:mx-0">
-              {organizer.user.profile_image ? (
-                <img
-                  src={organizer.user.profile_image || "/placeholder.svg"}
-                  alt={organizer.user.full_name}
-                  className="w-full h-full object-cover rounded-full border-4 border-gray-100 shadow-lg"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-gray-100 shadow-lg">
-                  {organizer.user.full_name.charAt(0).toUpperCase()}
-                </div>
-              )}
+              <img
+                src={organizer.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                alt={organizer.user.full_name}
+                className="w-full h-full object-cover rounded-full border-4 border-gray-100 shadow-lg"
+                onError={e => {
+                  e.target.onerror = null;
+                  e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                }}
+              />
             </div>
 
             {/* Basic Info */}

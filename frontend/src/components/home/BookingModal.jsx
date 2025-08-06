@@ -228,17 +228,15 @@ const BookingModal = ({ event, onClose, user }) => {
             <div>
               <div className="flex items-center space-x-4 mb-6">
                 <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
-                  {event.posterImage ? (
                     <img
-                      src={event.posterImage || "/placeholder.svg"}
+                      src={event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
                       alt={event.title}
                       className="w-full h-full object-cover"
+                      onError={e => {
+                          e.target.onerror = null;
+                          e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                      }}
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Calendar className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">{event.title}</h3>

@@ -200,17 +200,15 @@ const OrganizerEventManagement = () => {
                           <td className="px-6 py-4">
                             <div className="flex items-center">
                               <div className="h-12 w-12 flex-shrink-0 rounded-md bg-gray-200 overflow-hidden">
-                                {event.posterImage ? (
-                                  <img
-                                    src={event.posterImage || "/placeholder.svg"}
-                                    alt={event.title}
-                                    className="h-full w-full object-cover"
+                                <img
+                                  src={event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
+                                  alt={event.title}
+                                  className="h-full w-full object-cover"
+                                  onError={e => {
+                                    e.target.onerror = null;
+                                    e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                                  }}
                                   />
-                                ) : (
-                                  <div className="h-full w-full flex items-center justify-center bg-gray-300">
-                                    <Calendar className="h-6 w-6 text-gray-500" />
-                                  </div>
-                                )}
                               </div>
                               <div className="ml-4">
                                 <div className="text-sm font-medium text-gray-900">{event.title}</div>

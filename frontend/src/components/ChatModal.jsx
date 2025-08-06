@@ -557,9 +557,13 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) =
           <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className="relative flex-shrink-0">
               <img
-                src={otherUser?.profile_image || "/placeholder.svg"}
+                src={otherUser?.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
                 alt={otherUser?.full_name || "User"}
                 className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                onError={e => {
+                  e.target.onerror = null;
+                  e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                }}
               />
               <div
                 className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm transition-colors duration-300 ${
@@ -660,9 +664,13 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) =
                       {/* Show sender avatar for received messages */}
                       {!isOwn && (
                         <img
-                          src={message.sender.profile_image || "/placeholder.svg"}
+                          src={message.sender.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
                           alt={message.sender.full_name}
                           className="w-8 h-8 rounded-full object-cover mr-3 mt-1 flex-shrink-0 ring-2 ring-white shadow-sm"
+                          onError={e => {
+                            e.target.onerror = null;
+                            e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                          }}
                         />
                       )}
 
@@ -700,9 +708,13 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) =
             <div className="flex items-center space-x-3">
               {imagePreview && (
                 <img
-                  src={imagePreview.url || "/placeholder.svg"}
+                  src={imagePreview.url || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
                   alt="Preview"
                   className="w-12 h-12 rounded-lg object-cover shadow-sm"
+                  onError={e => {
+                    e.target.onerror = null;
+                    e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                  }}
                 />
               )}
               <div className="flex-1">
