@@ -83,7 +83,7 @@ const CompleteRegistration = () => {
     formDataToSend.append('picture', userData.picture || '');
 
     try {
-      const response = await axiosInstance.post('/users/complete_registration/',
+      const response = await axiosInstance.post('/users/complete-registration/',
         formDataToSend,
         {
           headers: {

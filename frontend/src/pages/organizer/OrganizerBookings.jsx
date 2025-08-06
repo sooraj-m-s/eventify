@@ -48,7 +48,7 @@ const OrganizerBookings = () => {
     try {
       setLoading(true)
 
-      let url = `/organizer/organizer_bookings/?page=${page}`
+      let url = `/organizer/organizer-bookings/?page=${page}`
       if (selectedEvent) url += `&event_id=${selectedEvent}`
       if (selectedStatus) url += `&status=${selectedStatus}`
       if (debouncedSearchQuery) url += `&search=${debouncedSearchQuery}`

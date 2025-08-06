@@ -132,12 +132,12 @@ const AdminDashboard = () => {
 
       let response = null
       if (format === "pdf") {
-        response = await axiosInstance.get(`/admin/dashboard/download_report_pdf/`, {
+        response = await axiosInstance.get(`/admin/dashboard/download-report-pdf/`, {
           responseType: "blob",
         })
       }
       else if (format === "excel") {
-        response = await axiosInstance.get(`/admin/dashboard/download_report_excel/`, {
+        response = await axiosInstance.get(`/admin/dashboard/download-report-excel/`, {
           responseType: "blob",
         })
       }

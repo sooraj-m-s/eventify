@@ -5,8 +5,8 @@ from .views import BookEventView, UserBookingsView, CancelBookingView, BookingDe
 urlpatterns = [
     path('book/', BookEventView.as_view(), name='book-event'),
     path('detail/<uuid:booking_id>/', BookingDetailView.as_view(), name='booking-detail'),
-    path('my_bookings/', UserBookingsView.as_view(), name='user-bookings'),
+    path('my-bookings/', UserBookingsView.as_view(), name='user-bookings'),
     path('cancel/<uuid:booking_id>/', CancelBookingView.as_view(), name='cancel-booking'),
-    path('download_ticket/<uuid:booking_id>/', DownloadTicketView.as_view(), name='download-ticket'),
+    path('download-ticket/<uuid:booking_id>/', DownloadTicketView.as_view(), name='download-ticket'),
 ]
 

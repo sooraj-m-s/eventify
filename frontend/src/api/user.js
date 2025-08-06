@@ -2,7 +2,7 @@ import axiosInstance from "@/utils/axiosInstance"
 
 
 export const getEventDetails = (eventId) => {
-  return axiosInstance.get(`/events/event_detail/${eventId}/`)
+  return axiosInstance.get(`/events/event-detail/${eventId}/`)
 }
 
 export const getOrganizers = (page, search) => {
@@ -29,7 +29,7 @@ export const loginUser = (formData) => {
 }
 
 export const forgotPassword = (email) => {
-  return axiosInstance.post("/users/forgot_password/", { email })
+  return axiosInstance.post("/users/forgot-password/", { email })
 }
 
 export const getUserProfile = () => {
@@ -45,7 +45,7 @@ export const submitOrganizerProfile = (formData) => {
 };
 
 export const getUserBookings = () => {
-  return axiosInstance.get("/booking/my_bookings/");
+  return axiosInstance.get("/booking/my-bookings/");
 };
 
 export const cancelBooking = (bookingId) => {
@@ -57,7 +57,7 @@ export const getWalletTransactions = (page) => {
 };
 
 export const downloadTicket = async (bookingId) => {
-  const response = await axiosInstance.get(`/booking/download_ticket/${bookingId}/`, {
+  const response = await axiosInstance.get(`/booking/download-ticket/${bookingId}/`, {
     responseType: 'blob',
   });
   return response;

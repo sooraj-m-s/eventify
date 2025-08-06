@@ -33,7 +33,7 @@ const BookingModal = ({ event, onClose, user }) => {
     try {
       setFetchingCoupons(true)
       const organizerId = event.hostedBy
-      const response = await axiosInstance.get(`/coupon/organizer_coupon/?organizerId=${organizerId}`)
+      const response = await axiosInstance.get(`/coupon/organizer-coupon/?organizerId=${organizerId}`)
 
       const couponsData = response.data.results || response.data || []
       setAvailableCoupons(couponsData)

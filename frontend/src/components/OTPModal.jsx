@@ -114,7 +114,7 @@ const OtpModal = () => {
     }
 
     try {
-      const response = await axiosInstance.post('/users/verify_otp/', {
+      const response = await axiosInstance.post('/users/verify-otp/', {
         temp_user_id: tempUserId,
         otp: otpValue,
       });
@@ -143,7 +143,7 @@ const OtpModal = () => {
     setResendDisabled(true)
 
     try {
-      const response = await axiosInstance.post("/users/resend_otp/", {
+      const response = await axiosInstance.post("/users/resend-otp/", {
         temp_user_id: tempUserId,
       })
 

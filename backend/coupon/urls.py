@@ -7,7 +7,7 @@ router = DefaultRouter()
 router.register(r'coupons', CouponViewSet, basename='coupon')
 
 urlpatterns = [
-    path('organizer_coupon/', ValidCouponsByOrganizerView.as_view(), name='organizer-valid-coupons'),
+    path('organizer-coupon/', ValidCouponsByOrganizerView.as_view(), name='organizer-valid-coupons'),
     path('coupons/apply/', ApplyCouponView.as_view(), name='apply-coupon'),
     path('', include(router.urls)),
 ]

@@ -7,19 +7,19 @@ export const adminLogin = async (email, password) => {
 };
 
 export const fetchUserList = async (role, page, search) => {
-  const response = await axiosInstance.get("/admin/user_list/", {params: {role, page, search}});
+  const response = await axiosInstance.get("/admin/user-list/", {params: {role, page, search}});
   return response;
 };
 
 export const getPendingOrganizerProfiles = async () => {
-  const response = await axiosInstance.get("/admin/pending_organizers/", {
+  const response = await axiosInstance.get("/admin/pending-organizers/", {
     params: { status: "pending", count_only: true },
   });
   return response;
 };
 
 export const updateUserBlockStatus = async (userId, isBlocked) => {
-  const response = await axiosInstance.patch(`/admin/users_status/${userId}/`, {is_blocked: isBlocked});
+  const response = await axiosInstance.patch(`/admin/users-status/${userId}/`, {is_blocked: isBlocked});
   return response;
 };
 

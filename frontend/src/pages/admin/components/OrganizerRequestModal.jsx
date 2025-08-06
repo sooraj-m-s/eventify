@@ -28,7 +28,7 @@ const OrganizerRequestModal = ({ isOpen, onClose, refreshData }) => {
     setError(null)
     try {
       const status = activeTab === "pending" ? "pending" : "rejected"
-      const response = await axiosInstance.get("/admin/pending_organizers/", {
+      const response = await axiosInstance.get("/admin/pending-organizers/", {
         params: { status },
       })
       if (activeTab === "pending") {
@@ -48,7 +48,7 @@ const OrganizerRequestModal = ({ isOpen, onClose, refreshData }) => {
   const handleApprove = async (profileId) => {
     setProcessingId(profileId)
     try {
-      await axiosInstance.post("/admin/pending_organizers/", {
+      await axiosInstance.post("/admin/pending-organizers/", {
         profile_id: profileId,
         action: "approve",
       })
@@ -80,7 +80,7 @@ const OrganizerRequestModal = ({ isOpen, onClose, refreshData }) => {
 
     setProcessingId(selectedProfile.id)
     try {
-      await axiosInstance.post("/admin/pending_organizers/", {
+      await axiosInstance.post("/admin/pending-organizers/", {
         profile_id: selectedProfile.id,
         action: "reject",
         reason: rejectionReason,

@@ -109,7 +109,7 @@ const AddEventModal = ({ onClose, onEventAdded }) => {
         termsAndConditions: formData.termsAndConditions,
       }
 
-      await axiosInstance.post("/organizer/organizer_events/", eventData)
+      await axiosInstance.post("/organizer/organizer-events/", eventData)
 
       if (onEventAdded) {
         onEventAdded()

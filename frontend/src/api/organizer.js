@@ -10,7 +10,7 @@ export const startChatWithUser = async (userId) => {
 };
 
 export const fetchOrganizerEvents = (page, filterCompleted) => {
-  let url = `/organizer/organizer_events/?page=${page}`;
+  let url = `/organizer/organizer-events/?page=${page}`;
   if (filterCompleted !== null && filterCompleted !== undefined) {
     url += `&is_completed=${filterCompleted}`;
   }

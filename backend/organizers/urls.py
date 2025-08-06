@@ -7,11 +7,11 @@ from .views import (
 
 urlpatterns = [
     path('dashboard/', OrganizerDashboardView.as_view(), name='organizer-dashboard'),
-    path('download_report_pdf/', OrganizerRevenueReportViewPDF.as_view(), name='organizer-download-report-pdf'),
-    path('download_report_excel/', OrganizerRevenueReportViewExcel.as_view(), name='organizer-download-report-excel'),
+    path('download-report-pdf/', OrganizerRevenueReportViewPDF.as_view(), name='organizer-download-report-pdf'),
+    path('download-report-excel/', OrganizerRevenueReportViewExcel.as_view(), name='organizer-download-report-excel'),
     path('profile/', OrganizerProfileView.as_view(), name='organizer-profile'),
-    path('organizer_events/', OrganizerEventsView.as_view(), name='organizer-events'),
+    path('organizer-events/', OrganizerEventsView.as_view(), name='organizer-events'),
     path('<uuid:pk>/', OrganizerEventUpdateView.as_view(), name='event-update'),
-    path('organizer_bookings/', OrganizerBookingsView.as_view(), name='organizer-bookings'),
+    path('organizer-bookings/', OrganizerBookingsView.as_view(), name='organizer-bookings'),
 ]
 

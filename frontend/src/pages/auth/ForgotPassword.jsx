@@ -86,7 +86,6 @@ const ForgotPassword = () => {
                   name="email"
                   type="text"
                   autoComplete="email"
-                  required
                   className="pl-10 w-full py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   placeholder="Enter your email"
                   value={email}

@@ -43,7 +43,7 @@ const EventDetail = () => {
   const handleBookNow = () => {
     if (!isAuthenticated) {
       toast.info("Please login to book tickets")
-      navigate("/login", { state: { from: `/events/event_detail/${eventId}` } })
+      navigate("/login", { state: { from: `/events/event-detail/${eventId}` } })
       return
     }
     setShowBookingModal(true)

@@ -25,7 +25,7 @@ const AdminEventDetailsModal = ({ event, onClose, onEventUpdated }) => {
     try {
       setUpdatingHoldStatus(true)
 
-      const response = await axiosInstance.patch(`/admin/toggle_hold/${currentEvent.eventId}/`)
+      const response = await axiosInstance.patch(`/admin/toggle-hold/${currentEvent.eventId}/`)
 
       if (response.data.success) {
         toast.success(response.data.message)

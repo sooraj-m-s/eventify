@@ -45,7 +45,7 @@ axiosInstance.interceptors.response.use(
     }
 
     // Skip token refresh for auth endpoints
-    const authEndpoints = ['/users/login/', '/users/register/', '/users/refresh_token/'];
+    const authEndpoints = ['/users/login/', '/users/register/', '/users/refresh-token/'];
     if (authEndpoints.some(endpoint => originalRequest.url.includes(endpoint))) {
       return Promise.reject(error);
     }
@@ -65,7 +65,7 @@ axiosInstance.interceptors.response.use(
     }
     
     if (
-      (originalRequest.url === "/users/refresh_token/" && (error.response?.status === 401 || error.response?.status === 403)) || originalRequest._retry
+      (originalRequest.url === "/users/refresh-token/" && (error.response?.status === 401 || error.response?.status === 403)) || originalRequest._retry
     ) {
       return Promise.reject(error)
     }
@@ -89,7 +89,7 @@ axiosInstance.interceptors.response.use(
 
     // Attempt to refresh token
     try {
-      await axiosInstance.post('/users/refresh_token/');
+      await axiosInstance.post('/users/refresh-token/');
       processQueue(null);
       isRefreshing = false;
       
