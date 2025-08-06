@@ -19,6 +19,7 @@ import WalletPage from '@/pages/user/wallet'
 import Messages from '@/pages/user/Messages'
 import AdvancedSearchEvents from '@/pages/landing/AdvancedSearchEvents'
 import OrganizerListing from '@/pages/landing/OrganizerListing'
+import About from '@/pages/landing/About'
 
 
 const UserRoutes = () => {
@@ -32,6 +33,7 @@ const UserRoutes = () => {
                     <Route path="events" element={<AdvancedSearchEvents />} />
                     <Route path="event_detail/:eventId" element={<EventDetail />} />
                     <Route path="organizers/" element={<OrganizerListing />} />
+                    <Route path="about/" element={<About />} />
 
                     {/* Auth Routes */}
                     <Route path="register" element={<UserPublicRoute><Register /></UserPublicRoute>} />

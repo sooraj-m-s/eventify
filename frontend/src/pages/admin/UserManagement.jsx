@@ -2,10 +2,69 @@ import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
-import { Loader2, Search, UserPlus } from "lucide-react"
+import { Loader2, Search, UserPlus, AlertTriangle } from "lucide-react"
 import OrganizerRequestModal from "./components/OrganizerRequestModal"
 import { fetchUserList, getPendingOrganizerProfiles, updateUserBlockStatus } from "@/api/admin"
 
+
+// Confirmation Modal Component
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, user, action, loading }) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 backdrop-blur-sm bg-black/30 bg-opacity-50"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+        <div className="flex items-center mb-4">
+          <AlertTriangle className="h-6 w-6 text-yellow-500 mr-3" />
+          <h3 className="text-lg font-semibold text-gray-900">
+            Confirm {action}
+          </h3>
+        </div>
+        
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to {action.toLowerCase()} <strong>{user?.full_name}</strong>?
+          {action === "Block" && " This will prevent them from accessing the platform."}
+          {action === "Unblock" && " This will restore their access to the platform."}
+        </p>
+        
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="px-4 py-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className={`px-4 py-2 text-white rounded-md flex items-center disabled:opacity-50 ${
+              action === "Block" 
+                ? "bg-red-600 hover:bg-red-700" 
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              action
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const UserManagement = () => {
   const [activeTab, setActiveTab] = useState("clients")
@@ -20,6 +79,13 @@ const UserManagement = () => {
   const [showOrganizerModal, setShowOrganizerModal] = useState(false)
   const [pendingOrganizerCount, setPendingOrganizerCount] = useState(0)
   const searchTimeoutRef = useRef(null)
+
+  // Confirmation modal state
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    user: null,
+    action: null
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,20 +134,42 @@ const UserManagement = () => {
     }
   }
 
-  const handleStatusChange = async (userId, isBlocked) => {
-    setUpdatingUserId(userId)
-    try {
-      const newStatus = !isBlocked
-      await updateUserBlockStatus(userId, newStatus);
+  // Open confirmation modal
+  const handleStatusChangeClick = (user) => {
+    const action = user.is_blocked ? "Unblock" : "Block"
+    setConfirmationModal({
+      isOpen: true,
+      user: user,
+      action: action
+    })
+  }
 
-      setUsers(users.map((user) => (user.user_id === userId ? { ...user, is_blocked: newStatus } : user)))
+  // Handle confirmed status change
+  const handleConfirmedStatusChange = async () => {
+    const { user } = confirmationModal
+    setUpdatingUserId(user.user_id)
+    
+    try {
+      const newStatus = !user.is_blocked
+      await updateUserBlockStatus(user.user_id, newStatus);
+
+      setUsers(users.map((u) => (u.user_id === user.user_id ? { ...u, is_blocked: newStatus } : u)))
       toast.success(`User ${newStatus ? "blocked" : "unblocked"} successfully`)
+      
+      // Close modal
+      setConfirmationModal({ isOpen: false, user: null, action: null })
     } catch (err) {
       console.error("Error updating user status:", err)
       toast.error("Failed to update user status")
     } finally {
       setUpdatingUserId(null)
     }
+  }
+
+  // Close confirmation modal
+  const closeConfirmationModal = () => {
+    if (updatingUserId) return // Prevent closing while updating
+    setConfirmationModal({ isOpen: false, user: null, action: null })
   }
 
   const handleSearchChange = (value) => {
@@ -220,8 +308,9 @@ const UserManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => handleStatusChange(user.user_id, user.is_blocked)}
-                            className={`px-4 py-1 text-xs font-medium rounded ${
+                            onClick={() => handleStatusChangeClick(user)}
+                            disabled={updatingUserId === user.user_id}
+                            className={`px-4 py-1 text-xs font-medium rounded disabled:opacity-50 ${
                               user.is_blocked
                                 ? "bg-red-200 text-red-800 hover:bg-red-300"
                                 : "bg-green-200 text-green-800 hover:bg-green-300"
@@ -292,6 +381,16 @@ const UserManagement = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={closeConfirmationModal}
+        onConfirm={handleConfirmedStatusChange}
+        user={confirmationModal.user}
+        action={confirmationModal.action}
+        loading={updatingUserId !== null}
+      />
     </div>
   )
 }
