@@ -1,8 +1,18 @@
 ### Eventify - Tech Event Management Platform
 
-## Overview
-
 Eventify is a comprehensive event management platform with integrated real-time messaging capabilities. The platform allows event organizers and attendees to communicate seamlessly before, during, and after events. The messaging system features real-time updates, online status indicators, and unread message tracking.
+
+[![Repo](https://img.shields.io/badge/repo-eventify-181717?logo=github)](https://github.com/sooraj-m-s/eventify)
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)
+![Django REST Framework](https://img.shields.io/badge/DRF-API-092E20?logo=django&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?logo=postgresql&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-secure-000000?logo=jsonwebtokens&logoColor=white)
+![Celery](https://img.shields.io/badge/Celery-Distributed-37814A?logo=celery&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Media-3448C5?logo=cloudinary&logoColor=white)
+
+---
 
 ## Features
 
@@ -257,7 +267,6 @@ The real-time messaging system uses a dual WebSocket architecture:
 
 
 
-
 This architecture ensures efficient real-time communication while minimizing connection overhead.
 
 ## Security Considerations
@@ -279,21 +288,23 @@ We welcome contributions to Eventify! Please follow these steps:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-
 Please ensure your code follows our coding standards and includes appropriate tests.
+
 
 
 
 ## Acknowledgements
 
-- [React](https://reactjs.org/)
-- [Redux](https://redux.js.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
 - [Django](https://www.djangoproject.com/)
-- [Django Channels](https://channels.readthedocs.io/)
+- [React](https://reactjs.org/)
+- [PostgreSQL](https://www.postgresql.org/)
 - [Celery](https://docs.celeryq.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Redis](https://redis.io/)
+
+---
 
 
-📞 Contact
+## 📞 Contact
 
-For any queries or suggestions, reach out at soorajms4@gmail.com
+For questions or feedback, reach out to **[soorajms4@gmail.com](mailto:soorajms4@gmail.com)**.
