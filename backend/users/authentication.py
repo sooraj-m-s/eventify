@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class JWTAuthenticationFromCookies(BaseAuthentication):
     def authenticate(self, request):
-        if request.path in ['/users/login/', '/users/register/', '/users/refresh_token/']:
+        if request.path in ['/users/login/', '/users/register/', '/users/refresh-token/']:
             return None
         
         access_token = request.COOKIES.get("access_token")

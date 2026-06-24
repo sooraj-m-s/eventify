@@ -5,6 +5,7 @@ import OrganizerSidebar from "./components/OrganizerSidebar"
 import ChatModal from "@/components/ChatModal"
 import { toast } from "sonner"
 import { fetchOrganizerBookings, startChatWithUser } from "@/api/organizer"
+import defaultUser from "../../assets/images/default-user.png"
 
 
 const OrganizerBookings = () => {
@@ -339,12 +340,12 @@ const OrganizerBookings = () => {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
                               <img
-                                src={booking.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                                src={booking.user.profile_image || defaultUser}
                                 alt={booking.user.full_name}
                                 className="h-10 w-10 rounded-full object-cover"
                                 onError={e => {
                                   e.target.onerror = null;
-                                  e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                                  e.target.src = defaultUser;
                                 }}
                               />
                             </div>
@@ -472,12 +473,12 @@ const OrganizerBookings = () => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center mr-4">
                         <img
-                            src={selectedBooking.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                            src={selectedBooking.user.profile_image || defaultUser}
                             alt={selectedBooking.user.full_name}
                             className="h-16 w-16 rounded-full object-cover"
                             onError={e => {
                               e.target.onerror = null;
-                              e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                              e.target.src = defaultUser;
                             }}
                         />
                       </div>

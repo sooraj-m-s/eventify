@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, MapPin, AlertCircle, Eye, Loader, CheckCircle,
-    XCircle, RefreshCw, IndianRupee, Download } from "lucide-react"
+import { 
+  Calendar, Clock, MapPin, AlertCircle, Eye, Loader, CheckCircle,
+  XCircle, RefreshCw, IndianRupee, Download
+ } from "lucide-react"
 import { toast } from "sonner"
 import BookingDetailsModal from "./components/UserBookingDetailsModal"
 import ProfileSidebar from "./components/ProfileSidebar"
 import { cancelBooking, downloadTicket, getUserBookings } from "@/api/user"
+import defaultEvent from "../../assets/images/default-event.avif"
 
 
 const UserBookings = () => {
@@ -256,12 +259,12 @@ const UserBookings = () => {
                   <div className="md:flex">
                     <div className="md:w-1/4">
                       <img
-                        src={booking.event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
+                        src={booking.event.posterImage || defaultEvent}
                         alt={booking.event.title}
                         className="w-full h-full object-cover"
                         onError={e => {
                           e.target.onerror = null;
-                          e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                          e.target.src = defaultEvent;
                         }}
                       />
                     </div>

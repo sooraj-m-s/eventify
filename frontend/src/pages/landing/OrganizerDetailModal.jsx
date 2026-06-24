@@ -1,4 +1,5 @@
 import { X, MapPin, Phone, Mail, Calendar, Users, Eye, Star } from "lucide-react"
+import defaultUser from "../../assets/images/default-user.png"
 
 
 const OrganizerDetailModal = ({ organizer, isOpen, onClose, onViewEvents, averageRating }) => {
@@ -47,12 +48,12 @@ const OrganizerDetailModal = ({ organizer, isOpen, onClose, onViewEvents, averag
             {/* Profile Image */}
             <div className="relative w-32 h-32 mx-auto md:mx-0">
               <img
-                src={organizer.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                src={organizer.user.profile_image || defaultUser}
                 alt={organizer.user.full_name}
                 className="w-full h-full object-cover rounded-full border-4 border-gray-100 shadow-lg"
                 onError={e => {
                   e.target.onerror = null;
-                  e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                  e.target.src = defaultUser;
                 }}
               />
             </div>

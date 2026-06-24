@@ -4,6 +4,7 @@ import { useSelector } from "react-redux"
 import OrganizerSidebar from "./components/OrganizerSidebar"
 import { toast } from "sonner"
 import { fetchOrganizerProfile } from "@/api/organizer"
+import defaultUser from "../../assets/images/default-user.png"
 
 
 const OrganizerProfile = () => {
@@ -73,11 +74,11 @@ const OrganizerProfile = () => {
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                   <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-600 shadow-sm">
                     <img
-                      src={user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                      src={user.profile_image || defaultUser}
                       className="w-full h-full object-cover rounded-full"
                       onError={e => {
                         e.target.onerror = null;
-                        e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                        e.target.src = defaultUser;
                       }}
                     />
                   </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import axiosInstance from "../../utils/axiosInstance"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { useNavigate } from "react-router-dom"
+import defaultEvent from "../../assets/images/default-event.avif"
 
 
 const Categories = () => {
@@ -85,12 +86,12 @@ const Categories = () => {
               <div className="relative group cursor-pointer p-1">
                 <div className="overflow-hidden rounded-lg">
                   <img
-                    src={category.image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464515/konkan-training-contact_rk6yyh.jpg"}
+                    src={category.image || defaultEvent}
                     alt={category.categoryName}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={e => {
                       e.target.onerror = null;
-                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464515/konkan-training-contact_rk6yyh.jpg";
+                      e.target.src = defaultEvent;
                     }}
                   />
                 </div>

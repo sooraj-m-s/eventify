@@ -50,7 +50,7 @@ class RegisterView(APIView):
                 if not re.search(r'[a-z]', password):
                     return Response({'error': 'Password must contain at least one lowercase letter'}, status=status.HTTP_400_BAD_REQUEST)
                 if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]', password):
-                    return Response({'error': 'Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': 'Password must contain at least one special character'}, status=status.HTTP_400_BAD_REQUEST)
                 if password != confirm_password:
                     return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
                 if not re.match(r'^(\+91|91)?[6-9]\d{9}$', str(mobile)) or len(str(mobile)) != 10:

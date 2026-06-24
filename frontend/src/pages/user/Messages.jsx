@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import axiosInstance from "@/utils/axiosInstance"
 import ProfileSidebar from "./components/ProfileSidebar"
 import ChatModal from "@/components/ChatModal"
+import defaultUser from "../../assets/images/default-user.png"
 
 
 const Messages = () => {
@@ -296,12 +297,12 @@ const Messages = () => {
                               {/* Avatar with online status */}
                               <div className="relative flex-shrink-0">
                                 <img
-                                  src={otherUser?.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                                  src={otherUser?.profile_image || defaultUser}
                                   alt={otherUser?.full_name || "User"}
                                   className="w-12 h-12 rounded-full object-cover"
                                   onError={e => {
                                     e.target.onerror = null;
-                                    e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                                    e.target.src = defaultUser;
                                   }}
                                 />
                                 <div

@@ -4,6 +4,7 @@ import CancellationConfirmationModal from "./CancellationConfirmationModal"
 import { toast } from "sonner"
 import ChatModal from "@/components/ChatModal"
 import { createReview, getSingleReview, startChatWithOrganizer, updateReview } from "@/api/user"
+import defaultEvent from "../../../assets/images/default-event.avif"
 
 
 const UserBookingDetailsModal = ({
@@ -169,12 +170,12 @@ const UserBookingDetailsModal = ({
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 <div className="flex items-center">
                   <img
-                    src={booking.event.posterImage || "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg"}
+                    src={booking.event.posterImage || defaultEvent}
                     alt={booking.event.title}
                     className="w-16 h-16 object-cover rounded-md mr-4"
                     onError={e => {
                       e.target.onerror = null;
-                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                      e.target.src = defaultEvent;
                     }}
                   />
                   <div>

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { User, Briefcase, Calendar, Wallet, BarChart3 } from "lucide-react"
 import { useSelector } from "react-redux"
+import defaultUser from "../../../assets/images/default-user.png"
 
 
 const OrganizerSidebar = () => {
@@ -45,12 +46,12 @@ const OrganizerSidebar = () => {
       <div className="flex flex-col items-center mb-8">
         <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-xl font-semibold mb-4 overflow-hidden">
           <img 
-            src={user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"} 
+            src={user.profile_image || defaultUser} 
             alt={user?.userName || "Profile"} 
             className="w-full h-full object-cover"
             onError={e => {
               e.target.onerror = null;
-              e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+              e.target.src = defaultUser;
             }}
           />
         </div>

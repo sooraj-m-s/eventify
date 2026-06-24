@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import axiosInstance from "../../utils/axiosInstance"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import defaultUser from "../../assets/images/default-user.png"
 
 
 const Organizers = () => {
@@ -75,12 +76,12 @@ const Organizers = () => {
                 <div className="p-1 cursor-pointer group">
                   <div className="overflow-hidden rounded-lg h-64">
                     <img
-                      src={organizer.user.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                      src={organizer.user.profile_image || defaultUser}
                       alt={organizer.user.full_name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={e => {
                         e.target.onerror = null;
-                        e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                        e.target.src = defaultUser;
                       }}
                     />
                   </div>

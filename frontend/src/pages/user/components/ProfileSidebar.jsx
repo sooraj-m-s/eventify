@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { User, BookOpen, Wallet, MessageSquare } from "lucide-react"
 import { useSelector } from "react-redux"
+import defaultUser from "../../../assets/images/default-user.png"
 
 
 const ProfileSidebar = () => {
@@ -20,12 +21,12 @@ const ProfileSidebar = () => {
       <div className="p-6 border-b">
         <div className="flex items-center">
           <img
-            src={userData.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+            src={userData.profile_image || defaultUser}
             alt={userData.userName}
             className="w-12 h-12 rounded-full object-cover"
             onError={e => {
               e.target.onerror = null;
-              e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+              e.target.src = defaultUser;
             }}
           />
           <div className="ml-3">

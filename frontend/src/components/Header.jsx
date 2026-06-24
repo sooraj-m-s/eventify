@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner";
 import axiosInstance from '../utils/axiosInstance';
 import NotificationBell from './NotificationBell';
+import defaultUser from '../assets/images/default-user.png'
 
 
 const Header = () => {
@@ -81,12 +82,12 @@ const Header = () => {
               >
                 <div className="relative w-10 h-10 overflow-hidden bg-gray-200 rounded-full cursor-pointer group">
                   <img
-                    src={profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                    src={profile_image || defaultUser}
                     alt={userName}
                     className="w-full h-full object-cover"
                     onError={e => {
                       e.target.onerror = null;
-                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                      e.target.src = defaultUser;
                     }}
                   />
                 </div>

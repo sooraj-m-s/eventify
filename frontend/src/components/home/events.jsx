@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import axiosInstance from "../../utils/axiosInstance"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { useNavigate } from "react-router-dom"
+import defaultEvent from "../../assets/images/default-event.avif"
 
 
 const Events = () => {
@@ -101,12 +102,12 @@ const Events = () => {
               <div className="cursor-pointer group p-1" onClick={() => handleEventClick(event.eventId)}>
                 <div className="overflow-hidden rounded-lg">
                   <img
-                    src={event.posterImage || `https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg`}
+                    src={event.posterImage || defaultEvent}
                     alt={event.title}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={e => {
                       e.target.onerror = null;
-                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754464574/digital-transformation-technology-strategy-digitization-and-digitalization-of-business-processes-and-data-optimize-and-automate-operations-customer-service-management-internet-and-cloud-computing-free-photo_fhn8cc.jpg";
+                      e.target.src = defaultEvent;
                     }}
                   />
                 </div>

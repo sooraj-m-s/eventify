@@ -4,6 +4,8 @@ import { useSelector } from "react-redux"
 import { toast } from "sonner"
 import uploadToCloudinary from "@/utils/cloudinaryUpload"
 import axiosInstance from "@/utils/axiosInstance"
+import defaultUser from '../assets/images/default-user.png'
+import defaultWarning from '../assets/images/default-warning.png'
 
 
 const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) => {
@@ -557,12 +559,12 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) =
           <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className="relative flex-shrink-0">
               <img
-                src={otherUser?.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                src={otherUser?.profile_image || defaultUser}
                 alt={otherUser?.full_name || "User"}
                 className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
                 onError={e => {
                   e.target.onerror = null;
-                  e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                  e.target.src = defaultUser;
                 }}
               />
               <div
@@ -664,12 +666,12 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) =
                       {/* Show sender avatar for received messages */}
                       {!isOwn && (
                         <img
-                          src={message.sender.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                          src={message.sender.profile_image || defaultUser}
                           alt={message.sender.full_name}
                           className="w-8 h-8 rounded-full object-cover mr-3 mt-1 flex-shrink-0 ring-2 ring-white shadow-sm"
                           onError={e => {
                             e.target.onerror = null;
-                            e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                            e.target.src = defaultUser;
                           }}
                         />
                       )}
@@ -708,12 +710,12 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) =
             <div className="flex items-center space-x-3">
               {imagePreview && (
                 <img
-                  src={imagePreview.url || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                  src={imagePreview.url || defaultWarning}
                   alt="Preview"
                   className="w-12 h-12 rounded-lg object-cover shadow-sm"
                   onError={e => {
                     e.target.onerror = null;
-                    e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                    e.target.src = defaultWarning;
                   }}
                 />
               )}

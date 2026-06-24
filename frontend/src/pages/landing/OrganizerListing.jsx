@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Search, Loader, Users, ChevronLeft, ChevronRight, Eye, X } from "lucide-react"
 import OrganizerDetailModal from "./OrganizerDetailModal"
 import { getOrganizerDetails, getOrganizers } from "@/api/user"
+import defaultUser from "../../assets/images/default-user.png"
 
 
 const OrganizerListing = () => {
@@ -202,12 +203,12 @@ const OrganizerListing = () => {
                 <div className="p-6 text-center">
                   <div className="relative w-20 h-20 mx-auto mb-4">
                     <img
-                      src={organizer.profile_image || "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif"}
+                      src={organizer.profile_image || defaultUser}
                       alt={organizer.full_name}
                       className="w-full h-full object-cover rounded-full border-4 border-gray-100"
                       onError={e => {
                       e.target.onerror = null;
-                      e.target.src = "https://res.cloudinary.com/dogt3mael/image/upload/v1754460252/blue-circle-with-white-user_78370-4707_sqk7qc.avif";
+                      e.target.src = defaultUser;
                     }}
                     />
                   </div>
