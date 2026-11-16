@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { X, Upload, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import uploadToCloudinary from "@/utils/cloudinaryUpload"
 import axiosInstance from "@/utils/axiosInstance"
 
 
@@ -13,7 +12,6 @@ const EditCategoryModal = ({ isOpen, onClose, category, onSuccess }) => {
   const [image, setImage] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [imageUploading, setImageUploading] = useState(false)
 
   useEffect(() => {
     if (category) {
@@ -67,22 +65,16 @@ const EditCategoryModal = ({ isOpen, onClose, category, onSuccess }) => {
     setLoading(true)
 
     try {
-      let imageUrl = category.image
+      const payload = new FormData()
+      payload.append("categoryName", formData.categoryName.trim())
+      payload.append("is_listed", formData.is_listed)
       if (image) {
-        setImageUploading(true)
-        imageUrl = await uploadToCloudinary(image)
-        setImageUploading(false)
+        payload.append("image", image)
+      } else if (!previewUrl && category.image) {
+        payload.append("remove_image", "true")
       }
 
-      if (!previewUrl && category.image) {
-        imageUrl = null
-      }
-
-      const response = await axiosInstance.patch(`/categories/update/${category.categoryId}/`, {
-        categoryName: formData.categoryName,
-        image: imageUrl,
-        is_listed: formData.is_listed,
-      })
+      const response = await axiosInstance.patch(`/categories/update/${category.categoryId}/`, payload)
 
       toast.success("Category updated successfully")
 
@@ -210,13 +202,13 @@ const EditCategoryModal = ({ isOpen, onClose, category, onSuccess }) => {
             </button>
             <button
               type="submit"
-              disabled={loading || imageUploading}
+              disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 flex items-center"
             >
-              {loading || imageUploading ? (
+              {loading ? (
                 <>
                   <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                  {imageUploading ? "Uploading Image..." : "Updating..."}
+                  {image ? "Uploading & Updating..." : "Updating..."}
                 </>
               ) : (
                 "Update Category"

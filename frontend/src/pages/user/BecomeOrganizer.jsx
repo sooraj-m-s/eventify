@@ -187,7 +187,7 @@ const BecomeOrganizer = () => {
       // Upload image only if a new file is selected
       if (selectedFile) {
         try {
-          imageUrl = await uploadToCloudinary(selectedFile)
+          imageUrl = await uploadToCloudinary(selectedFile, "id_proofs")
         } catch (uploadError) {
           console.error("Error uploading image:", uploadError)
           toast.error("Failed to upload ID proof. Please try again.")

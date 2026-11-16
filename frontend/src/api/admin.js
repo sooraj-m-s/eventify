@@ -30,8 +30,10 @@ export const fetchAdminEvent = async (settlementStatus, page, searchQuery) => {
   return response;
 };
 
-export const fetchCategoryList = async () => {
-  const response = await axiosInstance.get("/categories/");
+export const fetchCategoryList = async (page = 1, search = "") => {
+  const response = await axiosInstance.get("/categories/", {
+    params: { page, ...(search ? { search } : {}) },
+  });
   return response;
 };
 

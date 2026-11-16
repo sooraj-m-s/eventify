@@ -273,7 +273,7 @@ const ChatModal = ({ isOpen, onClose, roomId, otherUser, onUserStatusUpdate }) =
         })
       }, 200)
 
-      const mediaUrl = await uploadToCloudinary(file)
+      const mediaUrl = await uploadToCloudinary(file, "chat")
       clearInterval(progressInterval)
       setUploadProgress(100)
 

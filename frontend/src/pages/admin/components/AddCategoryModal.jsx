@@ -2,7 +2,6 @@ import { useState } from "react"
 import { X, Upload, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import axiosInstance from "@/utils/axiosInstance"
-import uploadToCloudinary from "@/utils/cloudinaryUpload"
 
 
 const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
@@ -13,7 +12,6 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
   const [image, setImage] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [imageUploading, setImageUploading] = useState(false)
 
   if (!isOpen) return null
 
@@ -49,19 +47,12 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
     setLoading(true)
 
     try {
-      let imageUrl = null
+      const payload = new FormData()
+      payload.append("categoryName", formData.categoryName.trim())
+      payload.append("is_listed", formData.is_listed)
+      if (image) payload.append("image", image)
 
-      if (image) {
-        setImageUploading(true)
-        imageUrl = await uploadToCloudinary(image)
-        setImageUploading(false)
-      }
-
-      const response = await axiosInstance.post("/categories/", {
-        categoryName: formData.categoryName,
-        image: imageUrl,
-        is_listed: formData.is_listed,
-      })
+      const response = await axiosInstance.post("/categories/", payload)
 
       toast.success("Category created successfully")
       setFormData({
@@ -173,13 +164,13 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
             </button>
             <button
               type="submit"
-              disabled={loading || imageUploading}
+              disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 flex items-center"
             >
-              {loading || imageUploading ? (
+              {loading ? (
                 <>
                   <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                  {imageUploading ? "Uploading Image..." : "Creating..."}
+                  {image ? "Uploading & Creating..." : "Creating..."}
                 </>
               ) : (
                 "Create Category"

@@ -88,7 +88,7 @@ const EditEventModal = ({ event, onClose, onEventUpdated }) => {
     if (file) {
       try {
         setImageUploading(true)
-        const imageUrl = await uploadToCloudinary(file)
+        const imageUrl = await uploadToCloudinary(file, "events")
         setFormData({
           ...formData,
           posterImage: imageUrl,

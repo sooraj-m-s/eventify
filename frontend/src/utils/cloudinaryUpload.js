@@ -1,8 +1,14 @@
-import axios from "axios";
+import axiosInstance from "./axiosInstance";
 import { toast } from "sonner";
 
 
-const uploadToCloudinary = async (file) => {
+/**
+ * Upload an image through the backend to Cloudinary.
+ * @param {File} file
+ * @param {"events"|"profiles"|"id_proofs"|"chat"|"categories"} folder - Cloudinary subfolder key (see backend ASSET_FOLDERS)
+ * @returns {Promise<string>} the uploaded image URL
+ */
+const uploadToCloudinary = async (file, folder) => {
     if (!file.type.match('image.*')) {
         toast.error("Please select an image file");
         throw new Error("Invalid file type");
@@ -21,16 +27,8 @@ const uploadToCloudinary = async (file) => {
     try {
         const formData = new FormData();
         formData.append("image", file);
-        const response = await axios.post(
-            `${import.meta.env.VITE_API_BASE_URL}users/`,
-            formData,
-            {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-                withCredentials: true,
-            }
-        );
+        formData.append("folder", folder);
+        const response = await axiosInstance.post("/users/", formData);
 
         return response.data.url;
     } catch (error) {

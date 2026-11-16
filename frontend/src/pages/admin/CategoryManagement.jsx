@@ -7,6 +7,8 @@ import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
 import { fetchCategoryList, updateCategoryStatus } from "@/api/admin"
 
+const PAGE_SIZE = 10
+
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([])
@@ -17,18 +19,37 @@ const CategoryManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [updatingStatus, setUpdatingStatus] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim())
+      setCurrentPage(1)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   useEffect(() => {
     fetchCategories()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, debouncedSearch])
 
   const fetchCategories = async () => {
     setLoading(true)
     try {
-      const response = await fetchCategoryList();
-      setCategories(response.data.categories || [])
+      const response = await fetchCategoryList(currentPage, debouncedSearch)
+      setCategories(response.data.results || [])
+      setTotalCount(response.data.count || 0)
       setError(null)
     } catch (err) {
+      if (err?.response?.status === 404 && currentPage > 1) {
+        setCurrentPage((p) => p - 1)
+        return
+      }
       console.error("Error fetching categories:", err)
       setError("Failed to load categories. Please try again.")
       toast.error("Failed to load categories")
@@ -67,9 +88,11 @@ const CategoryManagement = () => {
     }
   }
 
-  const filteredCategories = searchTerm
-    ? categories.filter((cat) => cat.categoryName.toLowerCase().includes(searchTerm.toLowerCase()))
-    : categories
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f0e8] flex flex-col">
@@ -135,14 +158,14 @@ const CategoryManagement = () => {
                         {error}
                       </td>
                     </tr>
-                  ) : filteredCategories.length === 0 ? (
+                  ) : categories.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                         {searchTerm ? "No categories match your search" : "No categories found"}
                       </td>
                     </tr>
                   ) : (
-                    filteredCategories.map((category) => (
+                    categories.map((category) => (
                       <tr key={category.categoryId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.categoryId}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -198,6 +221,48 @@ const CategoryManagement = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            {!error && totalCount > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t">
+                <div className="text-sm text-gray-500">
+                  Showing {(currentPage - 1) * PAGE_SIZE + 1} to {Math.min(currentPage * PAGE_SIZE, totalCount)} of{" "}
+                  {totalCount} categories
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center flex-wrap gap-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1 || loading}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        disabled={loading}
+                        className={`px-3 py-1 text-sm border rounded-md ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages || loading}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

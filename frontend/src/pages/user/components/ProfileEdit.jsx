@@ -28,7 +28,7 @@ const ProfileEdit = React.memo(({ isVisible, initialFormData, profile, onSubmit,
 
         try {
             setImageUploading(true);
-            const imageUrl = await uploadToCloudinary(file);
+            const imageUrl = await uploadToCloudinary(file, "profiles");
             setFormData((prev) => ({
                 ...prev,
                 profile_image: imageUrl,
