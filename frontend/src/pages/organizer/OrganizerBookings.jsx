@@ -4,6 +4,7 @@ import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, RefreshCw, 
 import OrganizerSidebar from "./components/OrganizerSidebar"
 import ChatModal from "@/components/ChatModal"
 import { toast } from "sonner"
+import { useNavigate } from "react-router-dom"
 import { fetchOrganizerBookings, startChatWithUser } from "@/api/organizer"
 import defaultUser from "../../assets/images/default-user.png"
 
@@ -24,6 +25,8 @@ const OrganizerBookings = () => {
   const [startingChat, setStartingChat] = useState(false)
   const [showChatModal, setShowChatModal] = useState(false)
   const [chatRoomId, setChatRoomId] = useState(null)
+  const [hasEvents, setHasEvents] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -57,15 +60,17 @@ const OrganizerBookings = () => {
       const response = await fetchOrganizerBookings(url);
 
       if (response.data.success) {
-        setBookings(response.data.bookings)
-        setTotalPages(Math.ceil(response.data.count / 10))
+        setBookings(response.data.bookings || [])
+        setTotalPages(Math.ceil((response.data.count || 0) / 10))
+        setHasEvents(response.data.has_events !== false)
         setError(null)
       } else {
-        setError("Failed to load bookings")
+        setError(response.data.message || "Failed to load bookings")
       }
     } catch (err) {
       console.error("Error fetching bookings:", err)
-      setError("Failed to load bookings. Please try again later.")
+      const data = err?.response?.data
+      setError(data?.message || data?.error || "Failed to load bookings. Please try again later.")
     } finally {
       setLoading(false)
     }
@@ -179,6 +184,30 @@ const OrganizerBookings = () => {
           <div className="flex flex-col items-center">
             <Loader className="h-8 w-8 animate-spin text-gray-500" />
             <p className="mt-2 text-gray-600">Loading bookings...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!error && !hasEvents) {
+    return (
+      <div className="flex min-h-screen">
+        <OrganizerSidebar />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">No events yet</h2>
+            <p className="text-gray-600">
+              You haven't created any events, so there are no bookings to show. Create an event and your client
+              bookings will appear here.
+            </p>
+            <button
+              onClick={() => navigate("/organizer/events")}
+              className="mt-6 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+            >
+              Go to My Events
+            </button>
           </div>
         </div>
       </div>

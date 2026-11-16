@@ -4,6 +4,7 @@ import { Calendar, Clock, AlertCircle, Loader, CheckCircle, XCircle, Search,
 import AdminEventDetailsModal from "./components/AdminEventDetailsModal"
 import Sidebar from "./components/Sidebar"
 import { fetchAdminEvents } from "@/api/admin"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 
 const AdminEventManagement = () => {
@@ -18,6 +19,7 @@ const AdminEventManagement = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
   const searchInputRef = useRef(null)
   const searchTimeoutRef = useRef(null)
 
@@ -64,6 +66,7 @@ const AdminEventManagement = () => {
       setError("Failed to load events. Please try again later.")
     } finally {
       setLoading(false)
+      setHasLoaded(true)
     }
   }
 
@@ -140,15 +143,12 @@ const AdminEventManagement = () => {
     }
   }
 
-  if (loading && page === 1) {
+  if (loading && !hasLoaded) {
     return (
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen bg-gray-50 pt-16">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center">
-            <Loader className="h-8 w-8 animate-spin text-gray-500" />
-            <p className="mt-2 text-gray-600">Loading events...</p>
-          </div>
+          <LoadingSpinner />
         </div>
       </div>
     )
@@ -156,7 +156,7 @@ const AdminEventManagement = () => {
 
   if (error && events.length === 0) {
     return (
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen bg-gray-50 pt-16">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -244,9 +244,7 @@ const AdminEventManagement = () => {
             </div>
 
             {loading && (
-              <div className="flex justify-center my-4">
-                <Loader className="h-6 w-6 animate-spin text-gray-500" />
-              </div>
+              <LoadingSpinner className="my-4" />
             )}
 
             {events.length === 0 && !loading ? (

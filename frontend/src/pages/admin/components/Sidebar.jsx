@@ -15,7 +15,7 @@ const Sidebar = () => {
   ]
 
   return (
-    <div className="bg-[#f5f0e8] w-64 min-h-screen shadow-md">
+    <div className="bg-[#f5f0e8] w-64 shrink-0 self-start sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto shadow-md">
       {navItems.map((item) => (
         <Link
           key={item.name}

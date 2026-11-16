@@ -6,6 +6,7 @@ import EditCategoryModal from "./components/EditCategoryModal"
 import AdminHeader from "./components/AdminHeader"
 import Sidebar from "./components/Sidebar"
 import { fetchCategoryList, updateCategoryStatus } from "@/api/admin"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 const PAGE_SIZE = 10
 
@@ -145,11 +146,8 @@ const CategoryManagement = () => {
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                        <div className="flex justify-center items-center">
-                          <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                          Loading categories...
-                        </div>
+                      <td colSpan="6">
+                        <LoadingSpinner />
                       </td>
                     </tr>
                   ) : error ? (

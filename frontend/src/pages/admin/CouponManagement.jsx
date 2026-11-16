@@ -4,6 +4,7 @@ import axiosInstance from "@/utils/axiosInstance"
 import CreateCouponModal from "./components/CreateCouponModal"
 import EditCouponModal from "./components/EditCouponModal"
 import Sidebar from "./components/Sidebar"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 
 const CouponManagement = () => {
@@ -168,9 +169,7 @@ const CouponManagement = () => {
 
           <div className="p-6">
             {loading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
+              <LoadingSpinner />
             ) : (
               <>
                 <div className="overflow-x-auto">

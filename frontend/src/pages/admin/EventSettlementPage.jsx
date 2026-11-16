@@ -4,6 +4,7 @@ import Sidebar from "./components/Sidebar"
 import EventDetailsModal from "./components/EventDetailsModal"
 import SettlementModal from "./components/SettlementModal"
 import { fetchAdminEvent } from "@/api/admin"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 
 const EventSettlementPage = () => {
@@ -153,9 +154,7 @@ const EventSettlementPage = () => {
         {/* Events Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           {loading ? (
-            <div className="p-8 flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-            </div>
+            <LoadingSpinner />
           ) : events.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />

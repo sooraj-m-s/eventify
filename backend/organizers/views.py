@@ -487,12 +487,17 @@ class OrganizerBookingsView(APIView):
     def get(self, request):
         try:
             organizer_events = Event.objects.filter(hostedBy=request.user)
-            
+
             if not organizer_events.exists():
                 return Response({
-                    "success": False,
-                    "message": "You don't have any events yet"
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "success": True,
+                    "has_events": False,
+                    "message": "You don't have any events yet",
+                    "count": 0,
+                    "next": None,
+                    "previous": None,
+                    "bookings": []
+                }, status=status.HTTP_200_OK)
             
             event_id = request.query_params.get('event_id')
             status_filter = request.query_params.get('status')
@@ -519,6 +524,7 @@ class OrganizerBookingsView(APIView):
             
             return Response({
                 "success": True,
+                "has_events": True,
                 "count": bookings_query.count(),
                 "next": paginator.get_next_link(),
                 "previous": paginator.get_previous_link(),

@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar"
 import { Loader2, Search, UserPlus, AlertTriangle } from "lucide-react"
 import OrganizerRequestModal from "./components/OrganizerRequestModal"
 import { fetchUserList, getPendingOrganizerProfiles, updateUserBlockStatus } from "@/api/admin"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 
 // Confirmation Modal Component
@@ -268,8 +269,8 @@ const UserManagement = () => {
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                        Loading...
+                      <td colSpan="6">
+                        <LoadingSpinner />
                       </td>
                     </tr>
                   ) : error ? (

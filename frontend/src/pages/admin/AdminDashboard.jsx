@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Calendar, FileSpreadsheet, FileIcon as FilePdf, RefreshCw, IndianRupee, Users, ShoppingBag } from "lucide-react"
 import Sidebar from "./components/Sidebar"
 import axiosInstance from "../../utils/axiosInstance"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 
 const AdminDashboard = () => {
@@ -271,12 +272,7 @@ const AdminDashboard = () => {
 
             {/* Loading State */}
             {loading && (
-              <div className="flex justify-center items-center h-64">
-                <div className="flex flex-col items-center">
-                  <RefreshCw className="h-8 w-8 animate-spin text-gray-500" />
-                  <p className="mt-2 text-gray-600">Loading dashboard data...</p>
-                </div>
-              </div>
+              <LoadingSpinner className="items-center h-64" />
             )}
 
             {/* Error State */}

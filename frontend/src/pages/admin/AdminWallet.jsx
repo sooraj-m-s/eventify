@@ -3,6 +3,7 @@ import { Search, Calendar, ChevronLeft, ChevronRight, ArrowUpRight,
         ArrowDownLeft, RefreshCw, Wallet} from "lucide-react"
 import Sidebar from "./components/Sidebar"
 import { fetchAdminWalletData } from "@/api/admin"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 
 const AdminWallet = () => {
@@ -174,9 +175,7 @@ const AdminWallet = () => {
 
           {/* Transactions Table */}
           {loading ? (
-            <div className="p-8 flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-            </div>
+            <LoadingSpinner />
           ) : transactions.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <Wallet className="h-12 w-12 mx-auto mb-4 text-gray-400" />
