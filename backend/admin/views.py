@@ -39,6 +39,8 @@ class PaginationData(PageNumberPagination):
 
 @permission_classes([AllowAny])
 class AdminLoginView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         try:
             email = request.data.get('email')

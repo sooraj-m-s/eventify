@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 
 @permission_classes([AllowAny])
 class RegisterView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         try:
@@ -100,6 +102,8 @@ class RegisterView(APIView):
 
 @permission_classes([AllowAny])
 class ResendOTPView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         temp_user_id = request.data.get('temp_user_id')
         redis_key = f"temp_user:{temp_user_id}"
@@ -133,6 +137,8 @@ class ResendOTPView(APIView):
 
 @permission_classes([AllowAny])
 class VerifyOTPView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         temp_user_id = request.data.get('temp_user_id')
         otp = int(request.data.get('otp'))
@@ -186,6 +192,8 @@ class VerifyOTPView(APIView):
 
 @permission_classes([AllowAny])
 class ForgotPasswordEmailCheckView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         email = request.data.get('email')
         
@@ -223,6 +231,8 @@ class ForgotPasswordEmailCheckView(APIView):
 
 @permission_classes([AllowAny])
 class ForgotPasswordSetView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         temp_user_id = request.data.get('temp_user_id')
         otp = request.data.get('otp')
@@ -272,6 +282,8 @@ class ForgotPasswordSetView(APIView):
 
 @permission_classes([AllowAny])
 class LoginView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         try:
             serializer = LoginSerializer(data=request.data)
@@ -386,6 +398,8 @@ class LogoutView(APIView):
 
 @permission_classes([AllowAny])
 class RefreshTokenView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         refresh_token = request.COOKIES.get('refresh_token')
         
@@ -406,6 +420,8 @@ class RefreshTokenView(APIView):
 
 @permission_classes([AllowAny])
 class GoogleAuthView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         id_token = request.data.get('id_token')
         try:
@@ -449,6 +465,8 @@ class GoogleAuthView(APIView):
 
 @permission_classes([AllowAny])
 class CompleteRegistrationView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         serializer = CompleteRegistrationSerializer(data=request.data)
         
