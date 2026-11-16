@@ -11,12 +11,18 @@ const HeroSection = () => {
 
   return (
     <div className="relative h-screen overflow-hidden">
-      <video className="absolute inset-0 w-full h-full object-cover" autoPlay muted loop playsInline>
-        <source src="https://res.cloudinary.com/dogt3mael/video/upload/v1/4907-360_ypkgtn.mp4" type="video/mp4" />
-      </video>
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        src="https://res.cloudinary.com/dogt3mael/video/upload/v1794821475/event-hero-background_ttghie.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+      />
 
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/80"></div>
+      <div className="absolute inset-0 bg-black/50"></div>
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-white px-4">

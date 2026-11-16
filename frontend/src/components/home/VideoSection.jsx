@@ -1,16 +1,9 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 
 const VideoSection = () => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
-  const videoUrl = "https://res.cloudinary.com/dogt3mael/video/upload/q_auto,f_auto/203987-923133879_tiny_qwpe2c.mp4"
-
-  useEffect(() => {
-    const video = document.createElement("video")
-    video.src = videoUrl
-    video.onloadeddata = () => setIsVideoLoaded(true)
-    video.load()
-  }, [videoUrl])
+  const videoUrl = "https://res.cloudinary.com/dogt3mael/video/upload/v1794821472/event-experience-background_ezqmez.mp4"
 
   return (
     <>
@@ -32,20 +25,12 @@ const VideoSection = () => {
           }}
         >
           <source src={videoUrl} type="video/mp4" />
-          <source
-            src="https://res.cloudinary.com/dogt3mael/video/upload/q_auto,f_webm/203987-923133879_tiny_qwpe2c.webm"
-            type="video/webm"
-          />
           Your browser does not support the video tag.
         </video>
 
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60"></div>
         {!isVideoLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-white text-lg">Loading video...</div>
-            </div>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black"></div>
         )}
 
         {/* Text Content */}
