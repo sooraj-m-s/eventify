@@ -139,7 +139,7 @@ const ResetPassword = () => {
     setResettingPassword(true)
 
     try {
-      await axiosInstance.post("/users/change-password/", {
+      await axiosInstance.post("/users/change-forgot-password/", {
         temp_user_id: tempUserId,
         otp: otpValue,
         new_password: password,
