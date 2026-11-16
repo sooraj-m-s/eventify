@@ -67,11 +67,12 @@ const EventDetail = () => {
   }
 
   const getGoogleMapUrl = (location) => {
-    if (!location || location.includes("Online") || location.includes("Zoom")) {
+    const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    if (!mapsApiKey || !location || location.includes("Online") || location.includes("Zoom")) {
       return null
     }
     const encodedLocation = encodeURIComponent(location)
-    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodedLocation}`
+    return `https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${encodedLocation}`
   }
 
   if (loading) {
