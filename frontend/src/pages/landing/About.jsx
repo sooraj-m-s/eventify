@@ -1,15 +1,36 @@
 import { useState, useEffect } from "react"
-import { Calendar, Users, Globe, Zap, Shield, Heart, Github, ArrowRight, Star, Code, Database, Linkedin } from "lucide-react"
+import { Calendar, Users, Globe, Zap, Shield, Heart, Github, ArrowRight, Star, Code, Linkedin, UserCheck } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import axiosInstance from "@/utils/axiosInstance"
+
+
+const ABOUT_HERO_IMAGE =
+  "https://res.cloudinary.com/dogt3mael/image/upload/c_fill,w_1920,h_640,q_auto,f_auto/v1794824774/gmlvr6hf1zdwu03oubne.jpg"
 
 
 const About = () => {
   const [isVisible, setIsVisible] = useState(false)
   const navigate = useNavigate()
 
+  const [platformStats, setPlatformStats] = useState(null)
+  const [statsFailed, setStatsFailed] = useState(false)
+
   useEffect(() => {
     setIsVisible(true)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    axiosInstance.get("/stats/")
+      .then((res) => { if (!cancelled) setPlatformStats(res.data) })
+      .catch((err) => {
+        console.error("Error fetching platform stats:", err)
+        if (!cancelled) setStatsFailed(true)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  const formatCount = (n) => (typeof n === "number" ? n.toLocaleString("en-IN") : "-")
 
   const features = [
     {
@@ -53,34 +74,33 @@ const About = () => {
     { name: "Tailwind CSS", description: "Modern styling", color: "bg-cyan-100 text-cyan-800" }
   ]
 
+  // Live counts from GET /stats/ (cached 5 min on the backend)
   const stats = [
-    { number: "50+", label: "Events Hosted", icon: <Calendar className="h-6 w-6" /> },
-    { number: "1000+", label: "Active Users", icon: <Users className="h-6 w-6" /> },
-    { number: "25+", label: "Tech Categories", icon: <Code className="h-6 w-6" /> },
-    { number: "99.9%", label: "Uptime", icon: <Database className="h-6 w-6" /> }
+    { key: "events", label: "Events Hosted", icon: <Calendar className="h-6 w-6" /> },
+    { key: "users", label: "Active Users", icon: <Users className="h-6 w-6" /> },
+    { key: "categories", label: "Tech Categories", icon: <Code className="h-6 w-6" /> },
+    { key: "organizers", label: "Organizers", icon: <UserCheck className="h-6 w-6" /> }
   ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600">
-        <div className="absolute inset-0 bg-black/20"></div>
+      <div className="relative overflow-hidden bg-black">
+        <img
+          src={ABOUT_HERO_IMAGE}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/70"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className={`text-center transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
-              About <span className="text-yellow-300">Eventify</span>
+              About Eventify
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto mb-8">
+            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8">
               The future of tech event management. Where innovation meets community.
             </p>
           </div>
-        </div>
-        
-        {/* Animated background elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-          <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-16 h-16 bg-yellow-300/20 rounded-full animate-bounce" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-blue-300/20 rounded-full animate-ping" style={{ animationDelay: '2s' }}></div>
         </div>
       </div>
 
@@ -94,18 +114,24 @@ const About = () => {
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex justify-center mb-4 text-blue-600">
-                {stat.icon}
+        {/* Stats (hidden if they can't be loaded) */}
+        {!statsFailed && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+            {stats.map((stat) => (
+              <div key={stat.key} className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="flex justify-center mb-4 text-blue-600">
+                  {stat.icon}
+                </div>
+                {platformStats ? (
+                  <div className="text-3xl font-bold text-gray-900 mb-2">{formatCount(platformStats[stat.key])}</div>
+                ) : (
+                  <div className="h-9 w-20 mx-auto mb-2 rounded-md bg-gray-200 animate-pulse" aria-label="Loading" />
+                )}
+                <div className="text-gray-600">{stat.label}</div>
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-2">{stat.number}</div>
-              <div className="text-gray-600">{stat.label}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Features Section */}

@@ -1,11 +1,19 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner";
 import axiosInstance from '../utils/axiosInstance';
 import NotificationBell from './NotificationBell';
 import defaultUser from '../assets/images/default-user.png'
+
+const NAV_LINKS = [
+  { to: "/", label: "Home" },
+  { to: "/events", label: "Events" },
+  { to: "/organizers", label: "Organizers" },
+  { to: "/about", label: "About" },
+  { to: "/contact", label: "Contact Us" },
+];
 
 
 const Header = () => {
@@ -53,7 +61,7 @@ const Header = () => {
     <header className="bg-black text-white p-4 fixed top-0 left-0 right-0 z-50 shadow-md">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <a href="/" className="text-xl font-bold">Eventify</a>
+          <Link to="/" className="text-xl font-bold">Eventify</Link>
           <button
             className="md:hidden text-white focus:outline-none"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -64,11 +72,16 @@ const Header = () => {
           </button>
         </div>
         <nav className={`md:flex md:space-x-6 ${isMenuOpen ? 'block' : 'hidden'} md:block absolute md:static top-16 left-0 right-0 bg-black md:bg-transparent z-40`}>
-          <a href="/" className="block py-2 px-4 md:inline-block md:p-0 hover:text-gray-300">Home</a>
-          <a href="/events" className="block py-2 px-4 md:inline-block md:p-0 hover:text-gray-300">Events</a>
-          <a href="/organizers" className="block py-2 px-4 md:inline-block md:p-0 hover:text-gray-300">Organizers</a>
-          <a href="/about" className="block py-2 px-4 md:inline-block md:p-0 hover:text-gray-300">About</a>
-          <a href="/contact" className="block py-2 px-4 md:inline-block md:p-0 hover:text-gray-300">Contact Us</a>
+          {NAV_LINKS.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              onClick={() => setIsMenuOpen(false)}
+              className="block py-2 px-4 md:inline-block md:p-0 hover:text-gray-300"
+            >
+              {label}
+            </Link>
+          ))}
         </nav>
         <div className="flex items-center space-x-4">
           <NotificationBell />
