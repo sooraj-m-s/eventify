@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
@@ -22,6 +22,14 @@ const CompleteRegistration = () => {
     confirm_password: '',
     profile_image: userData.picture || '',
   });
+
+  const hasSignupSession = Boolean(userData.signup_token);
+  useEffect(() => {
+    if (!hasSignupSession) {
+      toast.error('Please sign in with Google to complete registration');
+      navigate('/login', { replace: true });
+    }
+  }, [hasSignupSession, navigate]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -72,25 +80,15 @@ const CompleteRegistration = () => {
     if (!validateForm()) return;
     setLoading(true)
 
-    const formDataToSend = new FormData();
-    for (const key in formData) {
-      if (formData[key] !== null) {
-        formDataToSend.append(key, formData[key]);
-      }
-    }
-    formDataToSend.append('email', userData.email);
-    formDataToSend.append('name', userData.name);
-    formDataToSend.append('picture', userData.picture || '');
-
     try {
-      const response = await axiosInstance.post('/users/complete-registration/',
-        formDataToSend,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      // Email, name and picture are NOT sent: the backend reads them from the signed
+      // signup_token it issued after verifying the Google sign-in.
+      const response = await axiosInstance.post('/users/complete-registration/', {
+        signup_token: userData.signup_token,
+        mobile: formData.mobile,
+        password: formData.password,
+        confirm_password: formData.confirm_password,
+      });
       toast.success('Registration completed successfully and redirecting to home!');
       dispatch(setUser({
         id: response.data.user_id,
@@ -113,7 +111,8 @@ const CompleteRegistration = () => {
         }
         setErrors(newErrors);
         if (Object.keys(newErrors).length === 0) {
-          toast.error(error.response.data.detail || 'Registration failed');
+          const { detail, email } = error.response.data;
+          toast.error(detail || (Array.isArray(email) ? email[0] : email) || 'Registration failed');
         } else {
           toast.error('Please fix the errors in the form');
         }
@@ -124,6 +123,8 @@ const CompleteRegistration = () => {
       setLoading(false)
     }
   };
+
+  if (!hasSignupSession) return null;
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">

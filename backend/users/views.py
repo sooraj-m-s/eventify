@@ -11,7 +11,10 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError as SimpleJWTTokenError, ExpiredTokenError
 from django.core.cache import cache
-import random, requests, json, re, logging
+from django.core import signing
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
+import random, json, re, logging
 from datetime import datetime
 from django.conf import settings
 from organizers.models import OrganizerProfile
@@ -25,6 +28,9 @@ from .models import Users
 
 
 logger = logging.getLogger(__name__)
+
+GOOGLE_SIGNUP_SALT = 'users.google-signup'
+GOOGLE_SIGNUP_MAX_AGE = 15 * 60  # seconds
 
 @permission_classes([AllowAny])
 class RegisterView(APIView):
@@ -423,21 +429,34 @@ class GoogleAuthView(APIView):
     authentication_classes = []
 
     def post(self, request):
-        id_token = request.data.get('id_token')
-        try:
-            response = requests.get(f'https://oauth2.googleapis.com/tokeninfo?id_token={id_token}')
-            if response.status_code != 200:
-                return Response({'detail': 'Invalid ID token'}, status=status.HTTP_400_BAD_REQUEST)
-            token_data = response.json()
+        token = request.data.get('id_token')
+        if not token:
+            return Response({'detail': 'ID token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-            email = token_data.get('email')
-            name = token_data.get('name', '')
-            picture = token_data.get('picture', '')
-        except requests.RequestException:
-            logger.error("Error verifying Google ID token")
-            return Response({'detail': 'Failed to verify token'}, status=status.HTTP_400_BAD_REQUEST)
-        user = Users.objects.filter(email=email).first()
+        try:
+            token_data = google_id_token.verify_oauth2_token(
+                token, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+            )
+        except ValueError as e:
+            logger.warning(f"Rejected Google ID token: {e}")
+            return Response({'detail': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error verifying Google ID token: {e}")
+            return Response({'detail': 'Failed to verify Google token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = (token_data.get('email') or '').strip().lower()
+        if not email or not token_data.get('email_verified'):
+            return Response({'detail': 'Your Google email address is not verified'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        name = token_data.get('name', '')
+        picture = token_data.get('picture', '')
+
+        user = Users.objects.filter(email__iexact=email).first()
         if user:
+            if user.is_blocked:
+                logger.warning(f"Blocked user attempted Google login: {user.email}")
+                return Response({'detail': 'Your account is blocked, please contact support'}, status=status.HTTP_400_BAD_REQUEST)
+
             refresh = RefreshToken.for_user(user)
             response = Response(
                 {
@@ -453,14 +472,21 @@ class GoogleAuthView(APIView):
             response.set_cookie(key='access_token', value=str(refresh.access_token), httponly=True, secure=True, samesite='None')
             response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, secure=True, samesite='None')
             return response
-        else:
-            user_data = {
-                'status': 'new',
-                'email': email,
-                'name': name,
-                'picture': picture
-            }
-            return Response({'status': 'new','redirect': 'complete_registration','user_data': user_data}, status=status.HTTP_200_OK)
+
+        signup_token = signing.dumps(
+            {'email': email, 'name': name, 'picture': picture}, salt=GOOGLE_SIGNUP_SALT
+        )
+        user_data = {
+            'status': 'new',
+            'email': email,
+            'name': name,
+            'picture': picture,
+            'signup_token': signup_token,
+        }
+        return Response(
+            {'status': 'new', 'redirect': 'complete_registration', 'user_data': user_data},
+            status=status.HTTP_200_OK
+        )
 
 
 @permission_classes([AllowAny])
@@ -468,8 +494,35 @@ class CompleteRegistrationView(APIView):
     authentication_classes = []
 
     def post(self, request):
-        serializer = CompleteRegistrationSerializer(data=request.data)
-        
+        signup_token = request.data.get('signup_token')
+        if not signup_token:
+            return Response(
+                {'detail': 'Google sign-up session is missing. Please sign in with Google again.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            google_identity = signing.loads(signup_token, salt=GOOGLE_SIGNUP_SALT, max_age=GOOGLE_SIGNUP_MAX_AGE)
+        except signing.SignatureExpired:
+            return Response(
+                {'detail': 'Your Google sign-up session has expired. Please sign in with Google again.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except signing.BadSignature:
+            return Response(
+                {'detail': 'Invalid Google sign-up session. Please sign in with Google again.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        data = {
+            'email': google_identity['email'],
+            'name': google_identity.get('name') or google_identity['email'].split('@')[0],
+            'picture': google_identity.get('picture') or '',
+            'mobile': request.data.get('mobile'),
+            'password': request.data.get('password'),
+            'confirm_password': request.data.get('confirm_password'),
+        }
+        serializer = CompleteRegistrationSerializer(data=data)
+
         if serializer.is_valid():
             user = serializer.create(serializer.validated_data)
             

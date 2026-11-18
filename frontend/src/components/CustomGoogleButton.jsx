@@ -32,7 +32,7 @@ const CustomGoogleButton = () => {
       }
     } catch (error) {
       console.error("Google auth error:", error)
-      toast.error("Google authentication failed")
+      toast.error(error?.response?.data?.detail || "Google authentication failed")
     }
   }
 

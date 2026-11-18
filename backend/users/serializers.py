@@ -73,7 +73,7 @@ class CompleteRegistrationSerializer(serializers.Serializer):
         return Users.objects.create(
             email=validated_data['email'].lower(),
             full_name=validated_data['name'],
-            profile_image=validated_data['picture'],
+            profile_image=validated_data.get('picture') or None,
             mobile=validated_data['mobile'],
             password=validated_data['password']
         )
