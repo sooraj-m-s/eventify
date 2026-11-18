@@ -1,4 +1,6 @@
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.views import APIView
+from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
@@ -18,6 +20,28 @@ from .serializers import OrganizerListSerializer
 
 
 logger = logging.getLogger(__name__)
+
+PLATFORM_STATS_CACHE_KEY = 'homepage:platform_stats'
+PLATFORM_STATS_CACHE_SECONDS = 5 * 60
+
+
+@permission_classes([AllowAny])
+class PlatformStatsView(APIView):
+    """Public platform counters for the About page. Cached for 5 minutes."""
+    authentication_classes = []
+
+    def get(self, request):
+        stats = cache.get(PLATFORM_STATS_CACHE_KEY)
+        if stats is None:
+            stats = {
+                'events': Event.objects.filter(on_hold=False).count(),
+                'users': Users.objects.filter(is_blocked=False).exclude(role='admin').count(),
+                'categories': Category.objects.filter(is_listed=True).count(),
+                'organizers': Users.objects.filter(role='organizer', is_blocked=False).count(),
+            }
+            cache.set(PLATFORM_STATS_CACHE_KEY, stats, PLATFORM_STATS_CACHE_SECONDS)
+        return Response(stats, status=status.HTTP_200_OK)
+
 
 class EventPagination(PageNumberPagination):
     page_size = 12
